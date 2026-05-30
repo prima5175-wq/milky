@@ -140,6 +140,14 @@ function setupSheet() {
   rules2.push(cfFormula_(nextRange, `=AND($${jCol}2<>"",$${jCol}2<=TODAY()+3)`, C_NEXT3));
   sh.setConditionalFormatRules(rules2);
 
+  // G 등록회차 — 옵션별 무지개색(차례대로). 선택하면 그 칸이 색칠됩니다.
+  let rules3 = sh.getConditionalFormatRules().filter(r =>
+    r.getRanges().every(rg => rg.getColumn() !== COL_PLAN));
+  const opts = planOptions_();
+  const gRange = sh.getRange(DATA_START_ROW, COL_PLAN, n, 1);
+  opts.forEach((opt, i) => rules3.push(cfEq_(gRange, opt, rainbow_(i, opts.length))));
+  sh.setConditionalFormatRules(rules3);
+
   // K~ 주차 띠 머리글(1주~5주, 한 줄=한 달)
   const wHead = [];
   for (let i = 1; i <= WEEK_COLS; i++) wHead.push(i + '주');
@@ -177,6 +185,21 @@ function cfEq_(range, text, color) {
 function cfFormula_(range, formula, color) {
   return SpreadsheetApp.newConditionalFormatRule()
     .whenFormulaSatisfied(formula).setBackground(color).setRanges([range]).build();
+}
+
+// 무지개색: i번째/전체 n개 → 파스텔 HSV 색
+function rainbow_(i, n) {
+  return hsvToHex_((i / n) * 300, 0.45, 1.0);
+}
+function hsvToHex_(h, s, v) {
+  h = h / 60;
+  const c = v * s, x = c * (1 - Math.abs((h % 2) - 1)), m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (h < 1) { r = c; g = x; } else if (h < 2) { r = x; g = c; }
+  else if (h < 3) { g = c; b = x; } else if (h < 4) { g = x; b = c; }
+  else if (h < 5) { r = x; b = c; } else { r = c; b = x; }
+  const to = t => ('0' + Math.round((t + m) * 255).toString(16)).slice(-2);
+  return '#' + to(r) + to(g) + to(b);
 }
 
 function columnLetter_(n) {

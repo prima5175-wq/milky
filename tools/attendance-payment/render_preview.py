@@ -17,6 +17,19 @@ C_HDR='#5b9bd5'; C_WHDR='#f9cb9c'; C_GHDR='#9dc3e6'; GRID='#cccccc'
 C_N3='#ffe599'; C_N1='#f6b26b'; C_N0='#e06666'
 FREQ_PM={'주1회':4,'주2회':8,'주3회':12}
 
+def _hsv(h,s,v):
+    h=h/60.0; c=v*s; x=c*(1-abs((h%2)-1)); m=v-c
+    r,g,b=[(c,x,0),(x,c,0),(0,c,x),(0,x,c),(x,0,c),(c,0,x)][int(h)%6]
+    return '#%02x%02x%02x'%(round((r+m)*255),round((g+m)*255),round((b+m)*255))
+def rainbow(i,n): return _hsv(i/n*300,0.45,1.0)
+PLAN_OPTS=[]
+for f in ['주1회','주2회','주3회']:
+    for d in ['60분','90분','120분']:
+        for c in ['월','분기']: PLAN_OPTS.append(f'{f} {d} {c}')
+for d in ['60분','90분','120분']: PLAN_OPTS.append(f'매일반 {d}')
+def plan_color(s):
+    return rainbow(PLAN_OPTS.index(s), len(PLAN_OPTS)) if s in PLAN_OPTS else '#eeeeee'
+
 D=datetime.date
 # (이름, 등록여부, 금액, 횟수, 시간, 납부, 형제할인, 등록일, 출석들, 다음등록일)
 STUDENTS=[
@@ -74,7 +87,7 @@ def next_color(nextd):
 info_w=sum(w for _,w in INFO)
 total_rows=sum(plan(s[3],s[4],s[5])[1]+1 for s in STUDENTS)
 W=info_w + WEEKN*WCELL + GAP + GRIDN*GCELL + 30
-H=64 + RH + total_rows*RH + 44
+H=64 + RH + total_rows*RH + 44 + 150
 img=Image.new('RGB',(W*S,H*S),'white'); d=ImageDraw.Draw(img)
 
 def box(x,y,w,h,fillc=None,outline=GRID,wd=1):
@@ -114,7 +127,7 @@ for idx,st in enumerate(STUDENTS):
     for (nm,w),v in zip(INFO,vals):
         fc=None
         if nm=='등록여부': fc=C_REG.get(v)
-        if nm=='등록회차': fc=C_DUR[dur]
+        if nm=='등록회차': fc=plan_color(v)
         if nm=='형제\n할인' and sib: fc='#b6d7a8'
         if nm=='다음\n등록일': fc=next_color(nextd)
         box(x,y,w,rows*RH,fc)
@@ -138,4 +151,15 @@ for idx,st in enumerate(STUDENTS):
 
 ly=y+4
 d.text((x0*S,ly*S),'다음등록일 색: 3일전 노랑·1일전 주황·당일/지남 진한 빨강   |   주차 초록=출석/빨강=결석   |   형제할인=5%할인',font=f_small,fill='#555')
+
+# 등록회차 드롭다운 무지개 색상표
+ly2=ly+26
+d.text((x0*S,ly2*S),'▼ 등록회차 드롭다운 색(무지개 순) — 고르면 그 칸이 이 색으로 칠해집니다',font=f_cell,fill='#000')
+lx=x0; lyy=ly2+22; cw=150; chh=24; perrow=7
+for i,opt in enumerate(PLAN_OPTS):
+    col=i%perrow; rr=i//perrow
+    bx=x0+col*cw; by=lyy+rr*(chh+4)
+    box(bx,by,cw-6,chh,plan_color(opt))
+    ctext(bx+(cw-6)/2,by+6,opt,f_small,'#222')
 img.save('미리보기.png'); print('saved', img.size)
+H_EXTRA=True
