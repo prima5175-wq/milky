@@ -65,6 +65,7 @@ function onOpen() {
     .addItem('🗑 선택 학생 삭제 (휴원)', 'deleteStudent')
     .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
+    .addItem('🔎 코드 버전 확인', 'showVersion')
     .addSeparator()
     .addSubMenu(ui.createMenu('🌴 방학특강')
       .addItem('방학특강 시트 만들기', 'makeSpecialSheet')
@@ -107,6 +108,12 @@ function tidyNumberBorders() {
   renumber_(sh);
   redrawBorders_(sh);
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
+}
+
+const CODE_VERSION = 'v7 (2026-05-30) 결제방식+주차숫자고정+방학특강';
+function showVersion() {
+  SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
+    '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
 }
 
 // 등록회차 드롭다운 항목 만들기
