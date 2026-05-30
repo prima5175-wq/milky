@@ -110,7 +110,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v11 (2026-05-30) 주차칸 날짜검증 제거(오류삼각형)';
+const CODE_VERSION = 'v12 (2026-05-30) 방학특강 부 색상(정규시간방특 추가)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -824,8 +824,13 @@ function recalcAllSpecial() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   if (sh.getName() !== T_SHEET) { _toastT_('방학특강 시트에서 사용하세요'); return; }
   const last = sh.getLastRow();
+  const n = Math.max(last - 1, 1);
+  // 기존 시트에도 '정규시간방특' 옵션 + 부 색을 다시 적용
+  sh.getRange(2, TC_PART, n, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(T_PARTS, true).build());
+  T_applyPartColors_(sh, n);
   for (let r = 2; r <= last; r++) T_recalcMakeup_(sh, r);
-  _toastT_('보강 수 다시 계산 완료');
+  _toastT_('정규시간방특 옵션·부 색·보강 수 적용 완료');
 }
 
 function _toastT_(msg) { SpreadsheetApp.getActiveSpreadsheet().toast(msg, '방학특강', 3); }
