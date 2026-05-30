@@ -686,6 +686,17 @@ const T_MEMBERS = ['현재재원생', '비재원생', '예전재원생(현재휴
 
 function T_weekColor_(c) { return T_WEEK[Math.floor((c - T_GRID) / 5)]; }
 
+// 부(A열) 값에 따라 칸 색칠: 1부 분홍·2부 연노랑·3부 민트·정규시간방특 하늘색
+function T_applyPartColors_(sh, n) {
+  const partRange = sh.getRange(2, TC_PART, n, 1);
+  const rules = (sh.getConditionalFormatRules() || []).filter(r =>
+    r.getRanges().every(rg => rg.getColumn() !== TC_PART));
+  T_PARTS.forEach(p => rules.push(
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo(p).setBackground(T_PARTS_COLOR[p]).setRanges([partRange]).build()));
+  sh.setConditionalFormatRules(rules);
+}
+
 // 방학특강 시트 생성
 function makeSpecialSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -708,6 +719,7 @@ function makeSpecialSheet() {
     SpreadsheetApp.newDataValidation().requireValueInList(T_PARTS, true).build());
   sh.getRange(2, TC_MEMBER, n, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(T_MEMBERS, true).build());
+  T_applyPartColors_(sh, n); // 부 색칠(1부 분홍·2부 연노랑·3부 민트·정규시간방특 하늘색)
   // 결제일 달력
   sh.getRange(2, TC_PAY, n, 1).setNumberFormat('yyyy-mm-dd')
     .setDataValidation(SpreadsheetApp.newDataValidation().requireDate().build());
