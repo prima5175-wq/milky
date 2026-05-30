@@ -54,8 +54,8 @@ const CONT = 'CONT';
 
 // ===== 메뉴 ================================================================
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('📚 학원관리')
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('📚 학원관리')
     .addItem('① 설치 / 드롭다운 적용', 'setupSheet')
     .addSeparator()
     .addItem('✅ 선택 칸 오늘 출석 체크', 'markAttendanceToday')
@@ -64,6 +64,13 @@ function onOpen() {
     .addItem('🗑 선택 학생 삭제 (휴원)', 'deleteStudent')
     .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
+    .addSeparator()
+    .addSubMenu(ui.createMenu('🌴 방학특강')
+      .addItem('방학특강 시트 만들기', 'makeSpecialSheet')
+      .addItem('오늘 출석 (선택 칸)', 'todaySpecial')
+      .addItem('🩶 보강 처리 (선택 칸 회색)', 'markMakeupSpecial')
+      .addItem('↩️ 출석/보강 취소 (선택 칸)', 'cancelSpecial')
+      .addItem('🔄 보강 수 다시 계산', 'recalcAllSpecial'))
     .addToUi();
 }
 
@@ -90,7 +97,7 @@ function onChangeHandler(e) {
   if (!e || (e.changeType !== 'REMOVE_ROW' && e.changeType !== 'INSERT_ROW')) return;
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getActiveSheet();
-  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0) return;
+  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0 || sh.getName() === T_SHEET) return;
   renumber_(sh);
 }
 
@@ -115,7 +122,7 @@ function planOptions_() {
 function setupSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getActiveSheet();
-  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0) {
+  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0 || sh.getName() === T_SHEET) {
     SpreadsheetApp.getUi().alert('명단 시트(이름·등록회차가 있는 시트)에서 실행하세요.');
     return;
   }
@@ -486,6 +493,7 @@ function priceLookup_(freq, dur, cycle) {
 // ===== onEdit ==============================================================
 function onEdit(e) {
   const sh = e.range.getSheet();
+  if (sh.getName() === T_SHEET) { T_onEdit_(e); return; }
   if (HELPER_SHEETS.indexOf(sh.getName()) >= 0) return;
   const row = e.range.getRow();
   const col = e.range.getColumn();
@@ -634,3 +642,153 @@ function refreshWeekStrips() {
   }
   SpreadsheetApp.getActiveSpreadsheet().toast('주차 띠 새로고침 완료', '학원관리', 3);
 }
+
+// ====================================================================
+// 🌴 방학특강 시트 (별도 탭) — 부/재원생여부 드롭다운, 20칸(4주 색), 보강 카운트
+// ====================================================================
+const T_SHEET = '방학특강';
+const TC_PART = 1, TC_NAME = 2, TC_GRADE = 3, TC_SCHOOL = 4, TC_PHONE = 5,
+      TC_MEMBER = 6, TC_PAY = 7, TC_LEFT = 8, TC_MAKEUP = 9;
+const T_GRID = 10, T_N = 20, T_NOTE = T_GRID + T_N; // 특이사항 = 30
+const T_TOTAL = 20;
+const T_ROWS_INIT = 80;
+const T_WEEK = ['#fce4ec', '#fff2cc', '#ccf2e3', '#cfe2f3']; // 연분홍·연노랑·민트·연하늘
+const T_GRAY = '#cfcfcf';                                    // 보강
+const T_PARTS = ['1부', '2부', '3부'];
+const T_MEMBERS = ['현재재원생', '비재원생', '예전재원생(현재휴원)', '대치점 재원생'];
+
+function T_weekColor_(c) { return T_WEEK[Math.floor((c - T_GRID) / 5)]; }
+
+// 방학특강 시트 생성
+function makeSpecialSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(T_SHEET);
+  if (sh) { ss.setActiveSheet(sh); SpreadsheetApp.getUi().alert('이미 "방학특강" 시트가 있어요.'); return; }
+  sh = ss.insertSheet(T_SHEET);
+  const n = T_ROWS_INIT;
+
+  const head = ['부', '이름', '학년', '학교', '전화번호', '재원생여부', '결제일', '남은회차', '보강'];
+  for (let i = 1; i <= T_N; i++) head.push(String(i));
+  head.push('특이사항');
+  sh.getRange(1, 1, 1, T_NOTE).setValues([head])
+    .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
+  // 헤더 주차색
+  for (let i = 0; i < T_N; i++) sh.getRange(1, T_GRID + i).setBackground(T_weekColor_(T_GRID + i));
+  sh.getRange(1, T_GRID).setNote('20칸 = 4주 × 주중 5일. 5칸씩 연분홍·연노랑·민트·연하늘.\n칸에 날짜 입력 = 출석(남은회차 차감).\n회색 = 보강(보강 수 +, 회차에도 포함).');
+
+  // 드롭다운
+  sh.getRange(2, TC_PART, n, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(T_PARTS, true).build());
+  sh.getRange(2, TC_MEMBER, n, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(T_MEMBERS, true).build());
+  // 결제일 달력
+  sh.getRange(2, TC_PAY, n, 1).setNumberFormat('yyyy-mm-dd')
+    .setDataValidation(SpreadsheetApp.newDataValidation().requireDate().build());
+
+  // 남은회차 수식(=20 - 날짜 들어간 칸 수, 보강 포함)
+  const gA = columnLetter_(T_GRID), gB = columnLetter_(T_GRID + T_N - 1);
+  for (let r = 2; r < 2 + n; r++) {
+    sh.getRange(r, TC_LEFT).setFormula('=IF($B' + r + '="","",' + T_TOTAL + '-COUNT($' + gA + r + ':$' + gB + r + '))');
+  }
+  sh.getRange(2, TC_LEFT, n, 1).setHorizontalAlignment('center');
+  sh.getRange(2, TC_MAKEUP, n, 1).setHorizontalAlignment('center');
+
+  // 20칸 색칠 + 서식
+  for (let i = 0; i < T_N; i++) {
+    sh.getRange(2, T_GRID + i, n, 1).setBackground(T_weekColor_(T_GRID + i))
+      .setNumberFormat('M/d').setHorizontalAlignment('center').setFontSize(9);
+    sh.setColumnWidth(T_GRID + i, 32);
+  }
+  sh.setColumnWidth(TC_PAY, 90); sh.setColumnWidth(TC_NAME, 80); sh.setColumnWidth(T_NOTE, 160);
+  sh.setFrozenRows(1); sh.setFrozenColumns(2);
+
+  ss.setActiveSheet(sh);
+  SpreadsheetApp.getUi().alert('방학특강 시트 생성 완료! 🌴\n부·재원생여부 드롭다운, 20칸(4주 색), 회차 차감, 보강 카운트가 적용됐어요.');
+}
+
+// 방학특강 onEdit (회차 칸 편집)
+function T_onEdit_(e) {
+  const sh = e.range.getSheet();
+  const row = e.range.getRow(), col = e.range.getColumn();
+  if (row < 2) return;
+  const c0 = col, c1 = col + e.range.getNumColumns() - 1;
+  if (c1 < T_GRID || c0 > T_GRID + T_N - 1) return;
+  const rows = {};
+  for (let r = row; r < row + e.range.getNumRows(); r++) {
+    for (let c = Math.max(c0, T_GRID); c <= Math.min(c1, T_GRID + T_N - 1); c++) T_styleCell_(sh, r, c);
+    rows[r] = true;
+  }
+  Object.keys(rows).forEach(r => T_recalcMakeup_(sh, Number(r)));
+}
+
+function T_styleCell_(sh, r, c) {
+  const cell = sh.getRange(r, c);
+  const v = cell.getValue();
+  if (v === '' || v === null) {
+    cell.setBackground(T_weekColor_(c));               // 비우면 주차색 복원
+  } else if (v instanceof Date) {
+    if (cell.getBackground().toLowerCase() !== T_GRAY) // 보강(회색)이면 그대로, 아니면 정규=주차색
+      cell.setBackground(T_weekColor_(c));
+  } else {
+    cell.setValue(new Date()).setBackground(T_weekColor_(c)); // 날짜 아닌 입력 → 오늘 출석(정규)
+  }
+}
+
+function T_recalcMakeup_(sh, row) {
+  const bg = sh.getRange(row, T_GRID, 1, T_N).getBackgrounds()[0];
+  const vals = sh.getRange(row, T_GRID, 1, T_N).getValues()[0];
+  let m = 0;
+  for (let i = 0; i < T_N; i++)
+    if (String(bg[i]).toLowerCase() === T_GRAY && vals[i] !== '' && vals[i] !== null) m++;
+  sh.getRange(row, TC_MAKEUP).setValue(m || '');
+}
+
+// 메뉴: 오늘 출석(정규) — 선택 칸에 오늘 날짜, 주차색 유지
+function todaySpecial() { T_fillSelected_(false); }
+// 메뉴: 보강 처리 — 선택 칸 회색 + (비어있으면)오늘 날짜
+function markMakeupSpecial() { T_fillSelected_(true); }
+
+function T_fillSelected_(isMakeup) {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sh.getName() !== T_SHEET) { _toastT_('방학특강 시트에서 사용하세요'); return; }
+  const today = new Date(); const rows = {};
+  sh.getActiveRangeList().getRanges().forEach(rg => {
+    for (let r = rg.getRow(); r < rg.getRow() + rg.getNumRows(); r++)
+      for (let c = rg.getColumn(); c < rg.getColumn() + rg.getNumColumns(); c++) {
+        if (c < T_GRID || c > T_GRID + T_N - 1 || r < 2) continue;
+        const cell = sh.getRange(r, c);
+        if (cell.getValue() === '' || cell.getValue() === null) cell.setValue(today);
+        cell.setBackground(isMakeup ? T_GRAY : T_weekColor_(c));
+        rows[r] = true;
+      }
+  });
+  Object.keys(rows).forEach(r => T_recalcMakeup_(sh, Number(r)));
+  _toastT_(isMakeup ? '보강 처리 완료' : '오늘 출석 완료');
+}
+
+// 메뉴: 출석/보강 취소 — 선택 칸 비우고 주차색 복원
+function cancelSpecial() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sh.getName() !== T_SHEET) { _toastT_('방학특강 시트에서 사용하세요'); return; }
+  const rows = {};
+  sh.getActiveRangeList().getRanges().forEach(rg => {
+    for (let r = rg.getRow(); r < rg.getRow() + rg.getNumRows(); r++)
+      for (let c = rg.getColumn(); c < rg.getColumn() + rg.getNumColumns(); c++) {
+        if (c < T_GRID || c > T_GRID + T_N - 1 || r < 2) continue;
+        sh.getRange(r, c).clearContent().setBackground(T_weekColor_(c));
+        rows[r] = true;
+      }
+  });
+  Object.keys(rows).forEach(r => T_recalcMakeup_(sh, Number(r)));
+  _toastT_('취소 완료');
+}
+
+function recalcAllSpecial() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sh.getName() !== T_SHEET) { _toastT_('방학특강 시트에서 사용하세요'); return; }
+  const last = sh.getLastRow();
+  for (let r = 2; r <= last; r++) T_recalcMakeup_(sh, r);
+  _toastT_('보강 수 다시 계산 완료');
+}
+
+function _toastT_(msg) { SpreadsheetApp.getActiveSpreadsheet().toast(msg, '방학특강', 3); }
