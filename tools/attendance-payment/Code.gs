@@ -110,7 +110,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v9 (2026-05-30) 조건부서식 잔재제거';
+const CODE_VERSION = 'v10 (2026-05-30) 조건부서식 완전초기화';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -151,9 +151,7 @@ function setupSheet() {
   sh.getRange(DATA_START_ROW, COL_REG, n, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(regList, true).build());
   const regRange = sh.getRange(DATA_START_ROW, COL_REG, n, 1);
-  const rules = sh.getConditionalFormatRules().filter(r =>
-    r.getRanges().every(rg => rg.getColumn() !== COL_REG));
-  rules.push(cfEq_(regRange, '결제완료_정상등록', '#b6d7a8'));
+  const rules = []; // 기존 조건부서식 전부 제거 후 새로 구성(주차칸 빨강 잔재 방지)
   rules.push(cfEq_(regRange, '결제대기 중', '#ffe599'));
   rules.push(cfEq_(regRange, '등록안함', '#ea9999'));
   sh.setConditionalFormatRules(rules);
@@ -185,16 +183,14 @@ function setupSheet() {
   // 다음등록일(J) 색 경고: 당일/지남 빨강 → 1일전 주황 → 3일전 노랑 (위에서부터 우선)
   const nextRange = sh.getRange(DATA_START_ROW, COL_NEXTREG, n, 1);
   const jCol = columnLetter_(COL_NEXTREG);
-  let rules2 = sh.getConditionalFormatRules().filter(r =>
-    r.getRanges().every(rg => rg.getColumn() !== COL_NEXTREG));
+  let rules2 = sh.getConditionalFormatRules();
   rules2.push(cfFormula_(nextRange, `=AND($${jCol}2<>"",$${jCol}2<=TODAY())`, C_NEXT0));
   rules2.push(cfFormula_(nextRange, `=AND($${jCol}2<>"",$${jCol}2<=TODAY()+1)`, C_NEXT1));
   rules2.push(cfFormula_(nextRange, `=AND($${jCol}2<>"",$${jCol}2<=TODAY()+3)`, C_NEXT3));
   sh.setConditionalFormatRules(rules2);
 
   // G 등록회차 — 옵션별 무지개색(차례대로). 선택하면 그 칸이 색칠됩니다.
-  let rules3 = sh.getConditionalFormatRules().filter(r =>
-    r.getRanges().every(rg => rg.getColumn() !== COL_PLAN));
+  let rules3 = sh.getConditionalFormatRules();
   const opts = planOptions_();
   const gRange = sh.getRange(DATA_START_ROW, COL_PLAN, n, 1);
   opts.forEach((opt, i) => rules3.push(cfEq_(gRange, opt, rainbow_(i, opts.length))));
