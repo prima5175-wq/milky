@@ -41,12 +41,29 @@ def plan(freq,dur,cyc):
     daily=freq=='매일반'; per=GRIDN if daily else FREQ_PM[freq]
     rows=3 if (daily or cyc=='분기') else 1
     return per,rows,daily
-def wcounts(reg,dates,weeks):
-    out=[]
-    for i in range(weeks):
-        ws=reg+datetime.timedelta(days=7*i); we=ws+datetime.timedelta(days=7)
-        out.append(None if ws>TODAY else sum(1 for d in dates if ws<=d<we))
-    return out
+import calendar as _cal
+def _monday_of(d): return d-datetime.timedelta(days=d.weekday())
+def _first_monday_day(y,m):
+    off=datetime.date(y,m,1).weekday(); return 1 if off==0 else 1+(7-off)
+def week_grid(reg,dates,rows):
+    base=reg.year*12+reg.month; counts=[[0]*5 for _ in range(rows)]
+    for d in dates:
+        mon=_monday_of(d); r=mon.year*12+mon.month-base
+        if 0<=r<rows:
+            w=(mon.day-_first_monday_day(mon.year,mon.month))//7
+            if 0<=w<5: counts[r][w]+=1
+    grid=[]
+    for r in range(rows):
+        y=reg.year+(reg.month-1+r)//12; m=(reg.month-1+r)%12+1
+        fmd=_first_monday_day(y,m); dim=_cal.monthrange(y,m)[1]; cells=[None]*5
+        for w in range(5):
+            monday=fmd+w*7
+            if monday>dim: break
+            wmon=datetime.date(y,m,monday); wsun=wmon+datetime.timedelta(days=6)
+            if wmon>TODAY or wsun<reg: continue
+            cells[w]=counts[r][w]
+        grid.append(cells)
+    return grid
 def next_color(nextd):
     dd=(nextd-TODAY).days
     if dd<=0: return C_N0
@@ -103,11 +120,11 @@ for idx,st in enumerate(STUDENTS):
         box(x,y,w,rows*RH,fc)
         ctext(x+w/2,y+rows*RH/2-7,v,f_cell,'#b06000' if (nm=='금액' and sib) else '#222')
         x+=w
-    wc=wcounts(regd,dates,WEEKN*rows); slots=[]
+    wg=week_grid(regd,dates,rows); slots=[]
     for r in range(rows):
         for c in range(WEEKN):
             box(week_x+c*WCELL,y+r*RH,WCELL,RH,None)
-            w=r*WEEKN+c; cnt=wc[w] if w<len(wc) else None
+            cnt=wg[r][c]
             if cnt is not None:
                 box(week_x+c*WCELL,y+r*RH,WCELL,RH,C_OK if cnt>0 else C_MISS)
                 ctext(week_x+c*WCELL+WCELL/2,y+r*RH+8,str(cnt),f_cell,'#222')

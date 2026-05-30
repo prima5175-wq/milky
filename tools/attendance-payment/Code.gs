@@ -321,29 +321,56 @@ function handlePlanChange_(sh, row) {
   computeWeekStrip_(sh, row, plan, desiredExtra);
 }
 
-// ===== 주차 띠: 한 줄=한 달(5주), 등록일 기준 주별 출석 표시 ==============
+// ===== 주차 띠: 한 줄=한 달, 달력의 월~일 주(월요일 시작) 기준 ============
+//   각 주는 '그 주 월요일이 속한 달'에 넣어, 한 주가 두 번 세지지 않게 함.
+function mondayOf_(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // 월요일로 당기기
+  return x;
+}
+function firstMondayDay_(y, m) {
+  const off = (new Date(y, m, 1).getDay() + 6) % 7; // 1일의 요일(월=0)
+  return off === 0 ? 1 : 1 + (7 - off);
+}
+
 function computeWeekStrip_(sh, owner, plan, extra) {
   const rows = extra + 1;
   sh.getRange(owner, WEEK_START, rows, WEEK_COLS).setBackground(null).clearContent();
   const reg = sh.getRange(owner, COL_REGDATE).getValue();
   if (!(reg instanceof Date) || !plan) return;
-
-  const dates = scanDates_(sh, owner, extra);
-  const regMid = new Date(reg.getFullYear(), reg.getMonth(), reg.getDate());
+  const regD = new Date(reg.getFullYear(), reg.getMonth(), reg.getDate());
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const DAY = 86400000;
-  const weeksTotal = WEEK_COLS * rows; // 한 줄 5주 × 줄 수
+  const dates = scanDates_(sh, owner, extra);
+  const baseMonth = reg.getFullYear() * 12 + reg.getMonth();
 
-  for (let w = 0; w < weeksTotal; w++) {
-    const r = Math.floor(w / WEEK_COLS), c = w % WEEK_COLS;
-    const wStart = new Date(regMid.getTime() + w * 7 * DAY);
-    const wEnd = new Date(wStart.getTime() + 7 * DAY);
-    if (wStart > today) continue; // 미래 주는 비움
-    let cnt = 0;
-    dates.forEach(d => { if (d >= wStart && d < wEnd) cnt++; });
-    sh.getRange(owner + r, WEEK_START + c).setValue(cnt)
-      .setBackground(cnt > 0 ? C_WEEK_OK : C_WEEK_MISS)
-      .setHorizontalAlignment('center').setFontSize(9);
+  // 출석을 (행=달, 칸=그 달 몇 번째 월요일주)로 집계
+  const counts = [];
+  for (let i = 0; i < rows; i++) counts.push([0, 0, 0, 0, 0]);
+  dates.forEach(d => {
+    const mon = mondayOf_(d);
+    const r = mon.getFullYear() * 12 + mon.getMonth() - baseMonth;
+    if (r < 0 || r >= rows) return;
+    const w = Math.floor((mon.getDate() - firstMondayDay_(mon.getFullYear(), mon.getMonth())) / 7);
+    if (w >= 0 && w < WEEK_COLS) counts[r][w]++;
+  });
+
+  for (let r = 0; r < rows; r++) {
+    const mDate = new Date(reg.getFullYear(), reg.getMonth() + r, 1);
+    const yy = mDate.getFullYear(), mm = mDate.getMonth();
+    const fmd = firstMondayDay_(yy, mm);
+    const dim = new Date(yy, mm + 1, 0).getDate();
+    for (let w = 0; w < WEEK_COLS; w++) {
+      const monDay = fmd + w * 7;
+      if (monDay > dim) break;                 // 그 달에 이 주차 없음
+      const weekMon = new Date(yy, mm, monDay);
+      const weekSun = new Date(yy, mm, monDay + 6);
+      if (weekMon > today) continue;           // 아직 안 지난 주
+      if (weekSun < regD) continue;            // 등록 전 주
+      const cnt = counts[r][w];
+      sh.getRange(owner + r, WEEK_START + w).setValue(cnt)
+        .setBackground(cnt > 0 ? C_WEEK_OK : C_WEEK_MISS)
+        .setHorizontalAlignment('center').setFontSize(9);
+    }
   }
 }
 

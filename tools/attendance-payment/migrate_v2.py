@@ -125,12 +125,33 @@ def read_students(path):
             portfolio=ws.cell(r,36).value,consult=ws.cell(r,37).value,dates=dates))
     return out
 
-def week_counts(reg,dates,weeks):
-    out=[]
-    for i in range(weeks):
-        ws=reg+datetime.timedelta(days=7*i); we=ws+datetime.timedelta(days=7)
-        out.append(None if ws>TODAY else sum(1 for d in dates if ws<=d<we))
-    return out
+import calendar as _cal
+def _monday_of(d): return d - datetime.timedelta(days=d.weekday())  # 월=0
+def _first_monday_day(y,m):
+    off=datetime.date(y,m,1).weekday()
+    return 1 if off==0 else 1+(7-off)
+def week_grid(reg, dates, rows):
+    """행=달, 칸=그 달 월요일주(월~일). None=빈칸, 정수=출석수."""
+    base=reg.year*12+reg.month
+    counts=[[0]*5 for _ in range(rows)]
+    for d in dates:
+        mon=_monday_of(d); r=mon.year*12+mon.month-base
+        if 0<=r<rows:
+            w=(mon.day-_first_monday_day(mon.year,mon.month))//7
+            if 0<=w<5: counts[r][w]+=1
+    grid=[]
+    for r in range(rows):
+        y=reg.year+(reg.month-1+r)//12; m=(reg.month-1+r)%12+1
+        fmd=_first_monday_day(y,m); dim=_cal.monthrange(y,m)[1]
+        cells=[None]*5
+        for w in range(5):
+            monday=fmd+w*7
+            if monday>dim: break
+            wmon=datetime.date(y,m,monday); wsun=wmon+datetime.timedelta(days=6)
+            if wmon>TODAY or wsun<reg: continue
+            cells[w]=counts[r][w]
+        grid.append(cells)
+    return grid
 
 # ---------- 쓰기 ----------
 def build(students,out):
@@ -231,13 +252,15 @@ def build(students,out):
             ws.cell(rr,HELPER_COL,CONT)
             for c in range(1,J_NEXT+1): ws.cell(rr,c).fill=fill(C_CONT)
 
-        # ---- 주차 띠 (한 줄=한 달, 5주씩) ----
+        # ---- 주차 띠 (한 줄=한 달, 달력 월~일 주 기준) ----
         if regd and freq:
-            for w,cnt in enumerate(week_counts(regd,dates,WEEKN*rows)):
-                if cnt is None: continue
-                rr=row+w//WEEKN; cc=WEEK0+w%WEEKN
-                cell=ws.cell(rr,cc,cnt); cell.alignment=Alignment(horizontal='center')
-                cell.font=Font(size=9); cell.fill=fill(C_OK if cnt>0 else C_MISS)
+            grid=week_grid(regd,dates,rows)
+            for r in range(rows):
+                for w in range(WEEKN):
+                    v=grid[r][w]
+                    if v is None: continue
+                    cell=ws.cell(row+r,WEEK0+w,v); cell.alignment=Alignment(horizontal='center')
+                    cell.font=Font(size=9); cell.fill=fill(C_OK if v>0 else C_MISS)
 
         # ---- 회차 칸 ----
         if freq:
