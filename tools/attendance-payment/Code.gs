@@ -27,8 +27,11 @@ const COL_REG   = 5;        // E 등록여부
 const COL_PRICE = 6;        // F 결제금액
 const COL_PLAN  = 7;        // G 등록회차
 const COL_SIBLING = 8;      // H 형제할인(체크박스)
-const GRID_START = 9;       // I열부터 회차 칸
-const GRID_COLS  = 31;      // 회차 칸 가로 개수(매일반 대응)
+const COL_REGDATE = 9;      // I 등록일(등록회차 선택 시 자동 기록)
+const WEEK_START  = 10;     // J열부터 주차 띠
+const WEEK_COLS   = 13;     // 주차 칸 개수(분기납 ~13주)
+const GRID_START  = WEEK_START + WEEK_COLS; // W열부터 회차 칸
+const GRID_COLS   = 31;     // 회차 칸 가로 개수(매일반 대응)
 const HELPER_COL   = GRID_START + GRID_COLS;     // 연속행 표시용(숨김)
 const HELPER_PRICE = GRID_START + GRID_COLS + 1; // 형제할인 전 원가 저장(숨김)
 const DISCOUNT = 0.95;      // 형제할인 5%
@@ -37,6 +40,8 @@ const DISCOUNT = 0.95;      // 형제할인 5%
 const C_DUR  = { '60분': '#fce4ec', '90분': '#d9ead3', '120분': '#fff2cc' };
 const C_USED = '#cfcfcf';   // 출석 완료
 const C_CONT = '#f3f3f3';   // 분기납 연속행 표시
+const C_WEEK_OK   = '#b6d7a8'; // 그 주 출석 있음
+const C_WEEK_MISS = '#ea9999'; // 그 주 결석(지난 주)
 
 const FREQ_PERMONTH = { '주1회': 4, '주2회': 8, '주3회': 12 };
 const CONT = 'CONT';
@@ -50,7 +55,7 @@ function onOpen() {
     .addItem('✅ 선택 칸 오늘 출석 체크', 'markAttendanceToday')
     .addItem('↩️ 선택 칸 출석 취소', 'unmarkAttendance')
     .addSeparator()
-    .addItem('🔄 보이는 모든 학생 회차칸 다시 그리기', 'redrawAll')
+    .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
     .addToUi();
 }
 
@@ -96,6 +101,21 @@ function setupSheet() {
     .setNote('체크하면 결제금액이 5% 할인가로 바뀌고, 해제하면 원가로 돌아옵니다.');
   sh.getRange(DATA_START_ROW, COL_SIBLING, n, 1).insertCheckboxes();
   sh.setColumnWidth(COL_SIBLING, 64);
+
+  // I 등록일
+  sh.getRange(1, COL_REGDATE).setValue('등록일').setFontWeight('bold')
+    .setNote('등록회차를 고르면 오늘 날짜가 자동 기록됩니다. 주차 띠의 주 계산 기준입니다.');
+  sh.getRange(DATA_START_ROW, COL_REGDATE, n, 1).setNumberFormat('yyyy-mm-dd');
+  sh.setColumnWidth(COL_REGDATE, 80);
+
+  // J~ 주차 띠 머리글(1주~13주)
+  const wHead = [];
+  for (let i = 1; i <= WEEK_COLS; i++) wHead.push(i + '주');
+  sh.getRange(1, WEEK_START, 1, WEEK_COLS).setValues([wHead])
+    .setBackground('#f9cb9c').setFontColor('#783f04').setFontWeight('bold')
+    .setHorizontalAlignment('center').setFontSize(8);
+  sh.getRange(1, WEEK_START).setNote('주차 띠: 등록일부터 주(7일) 단위로, 그 주 출석 횟수를 표시합니다.\n지난 주인데 한 번도 안 오면 빨강, 오면 초록입니다.');
+  for (let c = WEEK_START; c < WEEK_START + WEEK_COLS; c++) sh.setColumnWidth(c, 28);
 
   // 회차 칸 서식
   sh.getRange(DATA_START_ROW, GRID_START, n, GRID_COLS)
@@ -167,14 +187,20 @@ function handlePlanChange_(sh, row) {
   const val = sh.getRange(row, COL_PLAN).getValue();
   const existingExtra = countContBelow_(sh, row, maxRow);
 
-  // 비우면 → 연속행 제거 + 회차 칸 정리
+  // 비우면 → 연속행 제거 + 회차 칸/주차 띠 정리
   if (!String(val).trim()) {
     if (existingExtra > 0) sh.deleteRows(row + 1, existingExtra);
     clearGrid_(sh, row, 0);
+    sh.getRange(row, WEEK_START, 1, WEEK_COLS).setBackground(null).clearContent();
     return;
   }
   const plan = parsePlan_(val);
   if (!plan) return;
+
+  // 등록일 자동 기록(비어있을 때만)
+  if (!(sh.getRange(row, COL_REGDATE).getValue() instanceof Date)) {
+    sh.getRange(row, COL_REGDATE).setValue(new Date()).setNumberFormat('yyyy-mm-dd');
+  }
 
   const desiredExtra = plan.rows - 1;
 
@@ -185,7 +211,7 @@ function handlePlanChange_(sh, row) {
     for (let i = 0; i < add; i++) {
       const rr = row + existingExtra + 1 + i;
       sh.getRange(rr, HELPER_COL).setValue(CONT);
-      sh.getRange(rr, 1, 1, COL_SIBLING).setBackground(C_CONT).clearContent().clearDataValidations();
+      sh.getRange(rr, 1, 1, GRID_START - 1).setBackground(C_CONT).clearContent().clearDataValidations();
       sh.getRange(rr, GRID_START, 1, GRID_COLS)
         .setNumberFormat('M/d').setHorizontalAlignment('center').setFontSize(9);
     }
@@ -195,6 +221,43 @@ function handlePlanChange_(sh, row) {
 
   drawGrid_(sh, row, plan, desiredExtra);
   autofillPrice_(sh, row, plan);
+  computeWeekStrip_(sh, row, plan, desiredExtra);
+}
+
+// ===== 주차 띠: 등록일 기준 주별 출석 표시 ================================
+function computeWeekStrip_(sh, owner, plan, extra) {
+  const stripRange = sh.getRange(owner, WEEK_START, 1, WEEK_COLS);
+  stripRange.setBackground(null).clearContent();
+  const reg = sh.getRange(owner, COL_REGDATE).getValue();
+  if (!(reg instanceof Date) || !plan) return;
+
+  const weeksTotal = Math.min((plan.daily || plan.cycle === '분기') ? 13 : 5, WEEK_COLS);
+  const dates = scanDates_(sh, owner, extra);
+
+  const regMid = new Date(reg.getFullYear(), reg.getMonth(), reg.getDate());
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const DAY = 86400000;
+
+  for (let i = 0; i < weeksTotal; i++) {
+    const wStart = new Date(regMid.getTime() + i * 7 * DAY);
+    const wEnd = new Date(wStart.getTime() + 7 * DAY);
+    const cell = sh.getRange(owner, WEEK_START + i);
+    if (wStart > today) continue; // 미래 주는 비움
+    let cnt = 0;
+    dates.forEach(d => { if (d >= wStart && d < wEnd) cnt++; });
+    cell.setValue(cnt).setBackground(cnt > 0 ? C_WEEK_OK : C_WEEK_MISS)
+      .setHorizontalAlignment('center').setFontSize(9);
+  }
+}
+
+// 학생 블록(소유행+연속행)의 회차 칸에서 출석 날짜를 모음
+function scanDates_(sh, owner, extra) {
+  const vals = sh.getRange(owner, GRID_START, extra + 1, GRID_COLS).getValues();
+  const out = [];
+  vals.forEach(row => row.forEach(v => {
+    if (v instanceof Date) { const d = new Date(v.getFullYear(), v.getMonth(), v.getDate()); out.push(d); }
+  }));
+  return out;
 }
 
 function countContBelow_(sh, row, maxRow) {
@@ -280,15 +343,35 @@ function onEdit(e) {
     return;
   }
 
-  // 회차 칸 편집 → 출석 처리
+  // 등록일(I) 변경 → 주차 띠 다시 계산
+  if (col === COL_REGDATE && e.range.getNumColumns() === 1) {
+    if (String(sh.getRange(row, HELPER_COL).getValue()) !== CONT) recomputeStripOwner_(sh, row);
+    return;
+  }
+
+  // 회차 칸 편집 → 출석 처리 + 주차 띠 갱신
   const c0 = col, c1 = col + e.range.getNumColumns() - 1;
   if (c1 >= GRID_START && c0 <= GRID_START + GRID_COLS - 1) {
+    const owners = {};
     for (let r = row; r < row + e.range.getNumRows(); r++) {
       for (let c = Math.max(c0, GRID_START); c <= Math.min(c1, GRID_START + GRID_COLS - 1); c++) {
         styleGridCell_(sh, r, c);
       }
+      owners[ownerRow_(sh, r)] = true;
     }
+    Object.keys(owners).forEach(o => recomputeStripOwner_(sh, Number(o)));
   }
+}
+
+// 임의의 학생 소유행에 대해 주차 띠 다시 계산
+function recomputeStripOwner_(sh, ownerRow) {
+  const plan = parsePlan_(sh.getRange(ownerRow, COL_PLAN).getValue());
+  if (!plan) {
+    sh.getRange(ownerRow, WEEK_START, 1, WEEK_COLS).setBackground(null).clearContent();
+    return;
+  }
+  const extra = Math.min(countContBelow_(sh, ownerRow, sh.getMaxRows()), plan.rows - 1);
+  computeWeekStrip_(sh, ownerRow, plan, extra);
 }
 
 function styleGridCell_(sh, r, c) {
@@ -322,6 +405,7 @@ function ownerRow_(sh, row) {
 function markAttendanceToday() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const today = new Date();
+  const owners = {};
   sh.getActiveRangeList().getRanges().forEach(rg => {
     const sr = rg.getRow(), sc = rg.getColumn();
     for (let r = sr; r < sr + rg.getNumRows(); r++) {
@@ -329,14 +413,17 @@ function markAttendanceToday() {
         if (c < GRID_START || c > GRID_START + GRID_COLS - 1 || r < DATA_START_ROW) continue;
         const cell = sh.getRange(r, c);
         if (cell.getValue() === '' || cell.getValue() === null) cell.setValue(today).setBackground(C_USED);
+        owners[ownerRow_(sh, r)] = true;
       }
     }
   });
+  Object.keys(owners).forEach(o => recomputeStripOwner_(sh, Number(o)));
   SpreadsheetApp.getActiveSpreadsheet().toast('오늘 출석 체크 완료', '학원관리', 3);
 }
 
 function unmarkAttendance() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const owners = {};
   sh.getActiveRangeList().getRanges().forEach(rg => {
     const sr = rg.getRow(), sc = rg.getColumn();
     for (let r = sr; r < sr + rg.getNumRows(); r++) {
@@ -344,28 +431,29 @@ function unmarkAttendance() {
         if (c < GRID_START || c > GRID_START + GRID_COLS - 1 || r < DATA_START_ROW) continue;
         sh.getRange(r, c).clearContent();
         styleGridCell_(sh, r, c);
+        owners[ownerRow_(sh, r)] = true;
       }
     }
   });
+  Object.keys(owners).forEach(o => recomputeStripOwner_(sh, Number(o)));
   SpreadsheetApp.getActiveSpreadsheet().toast('출석 취소 완료', '학원관리', 3);
 }
 
-function redrawAll() {
-  _priceCache = null;
+// 오늘 기준으로 모든 학생의 주차 띠를 다시 계산(출석 데이터는 보존)
+function refreshWeekStrips() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const maxRow = sh.getLastRow();
   let r = DATA_START_ROW;
   while (r <= maxRow) {
     if (String(sh.getRange(r, HELPER_COL).getValue()) === CONT) { r++; continue; }
-    const val = sh.getRange(r, COL_PLAN).getValue();
-    const plan = parsePlan_(val);
+    const plan = parsePlan_(sh.getRange(r, COL_PLAN).getValue());
     if (plan) {
-      const extra = countContBelow_(sh, r, sh.getMaxRows());
-      drawGrid_(sh, r, plan, Math.min(extra, plan.rows - 1));
+      const extra = Math.min(countContBelow_(sh, r, sh.getMaxRows()), plan.rows - 1);
+      computeWeekStrip_(sh, r, plan, extra);
       r += plan.rows;
     } else {
       r++;
     }
   }
-  SpreadsheetApp.getActiveSpreadsheet().toast('다시 그리기 완료', '학원관리', 3);
+  SpreadsheetApp.getActiveSpreadsheet().toast('주차 띠 새로고침 완료', '학원관리', 3);
 }
