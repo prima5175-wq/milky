@@ -21,13 +21,14 @@ YEAR = 2026
 TODAY = datetime.date(2026, 5, 30)  # 주차 띠 기준(이관 시점)
 
 # 새 레이아웃
-A_DATE=1; B_NAME=2; C_SCH=3; D_TEL=4; E_REG=5; F_PRICE=6; G_PLAN=7
-H_SIB=8; I_REG=9; WEEK0=10; WEEKN=5; GRID0=10+5  # 15 (주차 띠 한 줄=5주)
+A_NUM=1; B_NAME=2; C_SCH=3; D_TEL=4; E_REG=5; F_PRICE=6; G_PLAN=7
+H_SIB=8; I_REG=9; J_NEXT=10; WEEK0=11; WEEKN=5; GRID0=16  # 주차 띠 K~O(5주), 회차 P~
 GRID_COLS=31
-HELPER_COL=GRID0+GRID_COLS      # 46
-HELPER_ORIG=HELPER_COL+1        # 47
-MEMO_COL=HELPER_COL+2           # 48
-FLAG_COL=HELPER_COL+3           # 49
+HELPER_COL=GRID0+GRID_COLS      # 47
+HELPER_ORIG=HELPER_COL+1        # 48
+MEMO_COL=HELPER_COL+2           # 49
+FLAG_COL=HELPER_COL+3           # 50
+TOPB=Border(top=Side(style='medium', color='000000'))
 CONT='CONT'
 
 C_DUR={'60분':'FCE4EC','90분':'D9EAD3','120분':'FFF2CC'}
@@ -135,7 +136,7 @@ def week_counts(reg,dates,weeks):
 def build(students,out):
     wb=openpyxl.Workbook(); ws=wb.active; ws.title='명단'
     # 헤더
-    head=['테스트날짜','이름','학교/학년','휴대전화','등록여부','결제금액','등록회차','형제할인','등록일']
+    head=['번호','이름','학교/학년','휴대전화','등록여부','결제금액','등록회차','형제할인','등록일','다음등록일']
     for c,h in enumerate(head,1):
         cell=ws.cell(1,c,h); cell.fill=fill(C_HDR); cell.font=Font(color='FFFFFF',bold=True)
         cell.alignment=Alignment(horizontal='center',vertical='center')
@@ -148,7 +149,7 @@ def build(students,out):
     ws.cell(1,HELPER_COL,'_blk'); ws.cell(1,HELPER_ORIG,'_orig')
     ws.cell(1,MEMO_COL,'원본(참고)').font=Font(bold=True); ws.cell(1,FLAG_COL,'검수').font=Font(bold=True)
 
-    flagged=0; row=2
+    flagged=0; row=2; num=0
     for st in students:
         freq,dur,cycle,iss=parse_plan(st['plan'])
         due=parse_end_date(st['period'])
@@ -187,6 +188,7 @@ def build(students,out):
         else: regstat='결제완료_정상등록'
 
         # ---- 한 줄(소유행) 기본정보 ----
+        num+=1; ws.cell(row,A_NUM,num).alignment=Alignment(horizontal='center')
         ws.cell(row,B_NAME,st['name']).font=Font(bold=True)
         sch=' '.join(str(x) for x in [st['school'],int(st['grade']) if isinstance(st['grade'],(int,float)) else st['grade']] if x not in (None,''))
         ws.cell(row,C_SCH,sch)
@@ -197,7 +199,12 @@ def build(students,out):
             pc=ws.cell(row,G_PLAN,gval); pc.fill=fill(C_DUR.get(dur,C_DUR['90분']))
             pc.alignment=Alignment(horizontal='center'); pc.font=Font(bold=True,size=9)
         ws.cell(row,H_SIB,'정상')
-        if regd: ws.cell(row,I_REG,regd).number_format='yyyy-mm-dd'
+        if regd:
+            ws.cell(row,I_REG,regd).number_format='yyyy-mm-dd'
+            ws.cell(row,J_NEXT,add_months(regd,months)).number_format='yyyy-mm-dd'
+        # 학생 첫 줄 굵은 구분선(정보+주차 영역)
+        for c in range(1, GRID0):
+            ws.cell(row,c).border = TOPB
 
         # 원본 보존 + 검수
         memo=[]
@@ -222,7 +229,7 @@ def build(students,out):
         for r in range(1,rows):
             rr=row+r
             ws.cell(rr,HELPER_COL,CONT)
-            for c in range(1,I_REG+1): ws.cell(rr,c).fill=fill(C_CONT)
+            for c in range(1,J_NEXT+1): ws.cell(rr,c).fill=fill(C_CONT)
 
         # ---- 주차 띠 (한 줄=한 달, 5주씩) ----
         if regd and freq:
@@ -236,10 +243,12 @@ def build(students,out):
         if freq:
             durc=C_DUR.get(dur,C_DUR['90분'])
             slots=[]
+            gridtop=Border(top=Side('medium','000000'),left=THIN,right=THIN,bottom=THIN)
             for r in range(rows):
                 n=GRID_COLS if daily else per
                 for k in range(n):
-                    cell=ws.cell(row+r,GRID0+k); cell.fill=fill(durc); cell.border=BORDER
+                    cell=ws.cell(row+r,GRID0+k); cell.fill=fill(durc)
+                    cell.border= gridtop if r==0 else BORDER
                     cell.alignment=Alignment(horizontal='center'); cell.font=Font(size=9)
                     slots.append((row+r,GRID0+k))
             for idx,d in enumerate(sorted(dates)):
@@ -250,7 +259,7 @@ def build(students,out):
         row += rows
 
     # 너비/숨김
-    for col,w in [('B',10),('C',12),('D',13),('E',15),('F',10),('G',14),('H',8),('I',11)]:
+    for col,w in [('A',5),('B',10),('C',12),('D',13),('E',15),('F',10),('G',14),('H',8),('I',11),('J',11)]:
         ws.column_dimensions[col].width=w
     for i in range(WEEKN): ws.column_dimensions[get_column_letter(WEEK0+i)].width=4
     for i in range(GRID_COLS): ws.column_dimensions[get_column_letter(GRID0+i)].width=4.5

@@ -2,8 +2,8 @@
  * 학원 명단 시트 - 등록회차 클릭 시 회차 칸 자동 생성
  * ------------------------------------------------------------
  * 시트 구조(열):
- *   A 테스트날짜 · B 이름 · C 학교/학년 · D 휴대전화 · E 등록여부 · F 결제금액 · G 등록회차
- *   H열~ : 회차(출석) 칸
+ *   A 번호 · B 이름 · C 학교/학년 · D 휴대전화 · E 등록여부 · F 결제금액 · G 등록회차
+ *   H 형제할인 · I 등록일 · J 다음등록일 · K~O 주차 띠(5주) · P열~ 회차(출석) 칸
  *
  * 동작:
  *   G(등록회차) 드롭다운을 고르면  →  그 자리에서 바로 회차 칸이 생성됩니다.
@@ -22,15 +22,17 @@ const HELPER_SHEETS = ['플랜단가', '대시보드', '사용안내'];
 const SHEET_PRICE   = '플랜단가';
 
 const DATA_START_ROW = 2;   // 머리글이 1행, 데이터는 2행부터
+const COL_NUM   = 1;        // A 번호(자동 누적)
 const COL_NAME  = 2;        // B 이름
 const COL_REG   = 5;        // E 등록여부
 const COL_PRICE = 6;        // F 결제금액
 const COL_PLAN  = 7;        // G 등록회차
-const COL_SIBLING = 8;      // H 형제할인(체크박스)
-const COL_REGDATE = 9;      // I 등록일(등록회차 선택 시 자동 기록)
-const WEEK_START  = 10;     // J열부터 주차 띠(한 줄=한 달, 5주씩)
+const COL_SIBLING = 8;      // H 형제할인
+const COL_REGDATE = 9;      // I 등록일(달력)
+const COL_NEXTREG = 10;     // J 다음등록일(달력)
+const WEEK_START  = 11;     // K열부터 주차 띠(한 줄=한 달, 5주씩)
 const WEEK_COLS   = 5;      // 한 달당 주차 칸 수(5주)
-const GRID_START  = WEEK_START + WEEK_COLS; // O열부터 회차 칸
+const GRID_START  = WEEK_START + WEEK_COLS; // 16(P)열부터 회차 칸
 const GRID_COLS   = 31;     // 회차 칸 가로 개수(매일반 대응)
 const HELPER_COL   = GRID_START + GRID_COLS;     // 연속행 표시용(숨김)
 const HELPER_PRICE = GRID_START + GRID_COLS + 1; // 형제할인 전 원가 저장(숨김)
@@ -42,6 +44,9 @@ const C_USED = '#cfcfcf';   // 출석 완료
 const C_CONT = '#f3f3f3';   // 분기납 연속행 표시
 const C_WEEK_OK   = '#b6d7a8'; // 그 주 출석 있음
 const C_WEEK_MISS = '#ea9999'; // 그 주 결석(지난 주)
+const C_NEXT3 = '#ffe599';  // 다음등록일 3일 전 노랑
+const C_NEXT1 = '#f6b26b';  // 1일 전 주황
+const C_NEXT0 = '#e06666';  // 당일/지남 진한 빨강
 
 const FREQ_PERMONTH = { '주1회': 4, '주2회': 8, '주3회': 12 };
 const CONT = 'CONT';
@@ -56,7 +61,15 @@ function onOpen() {
     .addItem('↩️ 선택 칸 출석 취소', 'unmarkAttendance')
     .addSeparator()
     .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
+    .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addToUi();
+}
+
+function tidyNumberBorders() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  renumber_(sh);
+  redrawBorders_(sh);
+  SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
 // 등록회차 드롭다운 항목 만들기
@@ -79,6 +92,11 @@ function setupSheet() {
   }
   const maxRow = sh.getMaxRows();
   const n = maxRow - DATA_START_ROW + 1;
+
+  // 머리글 A~J
+  sh.getRange(1, 1, 1, COL_NEXTREG).setValues([[
+    '번호','이름','학교/학년','휴대전화','등록여부','결제금액','등록회차','형제할인','등록일','다음등록일']])
+    .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
 
   // G 등록회차 드롭다운
   sh.getRange(DATA_START_ROW, COL_PLAN, n, 1).setDataValidation(
@@ -103,13 +121,26 @@ function setupSheet() {
     SpreadsheetApp.newDataValidation().requireValueInList(['정상', '형제할인'], true).build());
   sh.setColumnWidth(COL_SIBLING, 72);
 
-  // I 등록일
-  sh.getRange(1, COL_REGDATE).setValue('등록일').setFontWeight('bold')
-    .setNote('등록회차를 고르면 오늘 날짜가 자동 기록됩니다. 주차 띠의 주 계산 기준입니다.');
-  sh.getRange(DATA_START_ROW, COL_REGDATE, n, 1).setNumberFormat('yyyy-mm-dd');
-  sh.setColumnWidth(COL_REGDATE, 80);
+  // I 등록일 · J 다음등록일 — 달력(날짜 선택기) + 형식
+  const dateDV = SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build();
+  sh.getRange(1, COL_REGDATE).setNote('칸을 더블클릭하면 달력이 떠요. 등록회차를 고르면 오늘 날짜가 자동 기록됩니다.');
+  sh.getRange(1, COL_NEXTREG).setNote('칸을 더블클릭하면 달력이 떠요. 등록회차/등록일을 정하면 자동 계산되고, 직접 고쳐도 됩니다.\n3일 전 노랑·1일 전 주황·당일/지남 빨강.');
+  sh.getRange(DATA_START_ROW, COL_REGDATE, n, 1).setNumberFormat('yyyy-mm-dd').setDataValidation(dateDV);
+  sh.getRange(DATA_START_ROW, COL_NEXTREG, n, 1).setNumberFormat('yyyy-mm-dd').setDataValidation(dateDV);
+  sh.setColumnWidth(COL_REGDATE, 90);
+  sh.setColumnWidth(COL_NEXTREG, 90);
 
-  // J~ 주차 띠 머리글(1주~5주, 한 줄=한 달)
+  // 다음등록일(J) 색 경고: 당일/지남 빨강 → 1일전 주황 → 3일전 노랑 (위에서부터 우선)
+  const nextRange = sh.getRange(DATA_START_ROW, COL_NEXTREG, n, 1);
+  const jCol = columnLetter_(COL_NEXTREG);
+  let rules2 = sh.getConditionalFormatRules().filter(r =>
+    r.getRanges().every(rg => rg.getColumn() !== COL_NEXTREG));
+  rules2.push(cfFormula_(nextRange, `=AND($${jCol}2<>"",$${jCol}2<=TODAY())`, C_NEXT0));
+  rules2.push(cfFormula_(nextRange, `=AND($${jCol}2<>"",$${jCol}2<=TODAY()+1)`, C_NEXT1));
+  rules2.push(cfFormula_(nextRange, `=AND($${jCol}2<>"",$${jCol}2<=TODAY()+3)`, C_NEXT3));
+  sh.setConditionalFormatRules(rules2);
+
+  // K~ 주차 띠 머리글(1주~5주, 한 줄=한 달)
   const wHead = [];
   for (let i = 1; i <= WEEK_COLS; i++) wHead.push(i + '주');
   sh.getRange(1, WEEK_START, 1, WEEK_COLS).setValues([wHead])
@@ -132,12 +163,61 @@ function setupSheet() {
   sh.getRange(1, COL_PLAN).setNote('등록회차를 고르면 회차 칸이 자동 생성됩니다.\n분기납=3줄, 월납=1줄, 매일반=3줄.\n색: 60분 분홍·90분 초록·120분 노랑.');
 
   buildPriceSheet_(ss);
+  renumber_(sh);
+  redrawBorders_(sh);
+  sh.setFrozenRows(1);
   SpreadsheetApp.getUi().alert('설치 완료!\nG열 등록회차를 고르면 회차 칸이 자동 생성됩니다.');
 }
 
 function cfEq_(range, text, color) {
   return SpreadsheetApp.newConditionalFormatRule()
     .whenTextEqualTo(text).setBackground(color).setRanges([range]).build();
+}
+
+function cfFormula_(range, formula, color) {
+  return SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied(formula).setBackground(color).setRanges([range]).build();
+}
+
+function columnLetter_(n) {
+  let s = '';
+  while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26; }
+  return s;
+}
+
+// 학생 번호 자동 매기기(연속행·빈 이름 제외, 위에서부터 1,2,3…)
+function renumber_(sh) {
+  const last = sh.getLastRow();
+  if (last < DATA_START_ROW) return;
+  const n = last - DATA_START_ROW + 1;
+  const helper = sh.getRange(DATA_START_ROW, HELPER_COL, n, 1).getValues();
+  const names = sh.getRange(DATA_START_ROW, COL_NAME, n, 1).getValues();
+  const out = [];
+  let c = 0;
+  for (let i = 0; i < n; i++) {
+    if (String(helper[i][0]) === CONT || String(names[i][0]).trim() === '') out.push(['']);
+    else { c++; out.push([c]); }
+  }
+  sh.getRange(DATA_START_ROW, COL_NUM, n, 1).setValues(out);
+}
+
+// 학생 첫 줄마다 위쪽 굵은 구분선
+function setTopBorder_(sh, row) {
+  sh.getRange(row, 1, 1, GRID_START + GRID_COLS - 1)
+    .setBorder(true, null, null, null, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+}
+
+function redrawBorders_(sh) {
+  const last = sh.getLastRow();
+  if (last < DATA_START_ROW) return;
+  const n = last - DATA_START_ROW + 1;
+  const helper = sh.getRange(DATA_START_ROW, HELPER_COL, n, 1).getValues();
+  const names = sh.getRange(DATA_START_ROW, COL_NAME, n, 1).getValues();
+  for (let i = 0; i < n; i++) {
+    const r = DATA_START_ROW + i;
+    if (String(helper[i][0]) === CONT || String(names[i][0]).trim() === '') continue;
+    setTopBorder_(sh, r);
+  }
 }
 
 function buildPriceSheet_(ss) {
@@ -180,7 +260,17 @@ function parsePlan_(text) {
   const cycle = (daily || t.indexOf('분기') >= 0) ? '분기' : '월';
   const perMonth = daily ? GRID_COLS : FREQ_PERMONTH[freq];
   const rows = (daily || cycle === '분기') ? 3 : 1;
-  return { freq, dur, cycle, daily, perMonth, rows };
+  const months = (daily || cycle === '분기') ? 3 : 1; // 다음등록일 계산용
+  return { freq, dur, cycle, daily, perMonth, rows, months };
+}
+
+// 날짜에 개월 더하기(말일 보정)
+function addMonths_(date, n) {
+  const d = new Date(date.getTime());
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + n);
+  if (d.getDate() < day) d.setDate(0);
+  return d;
 }
 
 // ===== 핵심: 등록회차 변경 처리 ===========================================
@@ -202,6 +292,11 @@ function handlePlanChange_(sh, row) {
   // 등록일 자동 기록(비어있을 때만)
   if (!(sh.getRange(row, COL_REGDATE).getValue() instanceof Date)) {
     sh.getRange(row, COL_REGDATE).setValue(new Date()).setNumberFormat('yyyy-mm-dd');
+  }
+  // 다음등록일 = 등록일 + 개월(월납 1 / 분기·매일반 3)
+  const regForNext = sh.getRange(row, COL_REGDATE).getValue();
+  if (regForNext instanceof Date) {
+    sh.getRange(row, COL_NEXTREG).setValue(addMonths_(regForNext, plan.months)).setNumberFormat('yyyy-mm-dd');
   }
 
   const desiredExtra = plan.rows - 1;
@@ -332,6 +427,15 @@ function onEdit(e) {
   const col = e.range.getColumn();
   if (row < DATA_START_ROW) return;
 
+  // 이름(B) 변경 → 번호 자동 매기기 + 구분선
+  if (col === COL_NAME && e.range.getNumColumns() === 1) {
+    if (String(sh.getRange(row, HELPER_COL).getValue()) !== CONT) {
+      renumber_(sh);
+      if (String(sh.getRange(row, COL_NAME).getValue()).trim() !== '') setTopBorder_(sh, row);
+    }
+    return;
+  }
+
   // 형제할인(H) 체크 → 결제금액 5% 할인/복원
   if (col === COL_SIBLING && e.range.getNumColumns() === 1 && e.range.getNumRows() === 1) {
     applySiblingDiscount_(sh, row);
@@ -345,9 +449,16 @@ function onEdit(e) {
     return;
   }
 
-  // 등록일(I) 변경 → 주차 띠 다시 계산
+  // 등록일(I) 변경 → 다음등록일 다시 계산 + 주차 띠 다시 계산
   if (col === COL_REGDATE && e.range.getNumColumns() === 1) {
-    if (String(sh.getRange(row, HELPER_COL).getValue()) !== CONT) recomputeStripOwner_(sh, row);
+    if (String(sh.getRange(row, HELPER_COL).getValue()) !== CONT) {
+      const reg = sh.getRange(row, COL_REGDATE).getValue();
+      const plan = parsePlan_(sh.getRange(row, COL_PLAN).getValue());
+      if (reg instanceof Date && plan) {
+        sh.getRange(row, COL_NEXTREG).setValue(addMonths_(reg, plan.months)).setNumberFormat('yyyy-mm-dd');
+      }
+      recomputeStripOwner_(sh, row);
+    }
     return;
   }
 
