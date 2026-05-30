@@ -152,6 +152,7 @@ function setupSheet() {
     SpreadsheetApp.newDataValidation().requireValueInList(regList, true).build());
   const regRange = sh.getRange(DATA_START_ROW, COL_REG, n, 1);
   const rules = []; // 기존 조건부서식 전부 제거 후 새로 구성(주차칸 빨강 잔재 방지)
+  rules.push(cfEq_(regRange, '결제완료_정상등록', '#b6d7a8'));
   rules.push(cfEq_(regRange, '결제대기 중', '#ffe599'));
   rules.push(cfEq_(regRange, '등록안함', '#ea9999'));
   sh.setConditionalFormatRules(rules);
