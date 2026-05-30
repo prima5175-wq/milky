@@ -54,29 +54,13 @@ def plan(freq,dur,cyc):
     daily=freq=='매일반'; per=GRIDN if daily else FREQ_PM[freq]
     rows=3 if (daily or cyc=='분기') else 1
     return per,rows,daily
-import calendar as _cal
 def _monday_of(d): return d-datetime.timedelta(days=d.weekday())
-def _first_monday_day(y,m):
-    off=datetime.date(y,m,1).weekday(); return 1 if off==0 else 1+(7-off)
 def week_grid(reg,dates,rows):
-    base=reg.year*12+reg.month; counts=[[0]*5 for _ in range(rows)]
-    for d in dates:
-        mon=_monday_of(d); r=mon.year*12+mon.month-base
-        if 0<=r<rows:
-            w=(mon.day-_first_monday_day(mon.year,mon.month))//7
-            if 0<=w<5: counts[r][w]+=1
-    grid=[]
-    for r in range(rows):
-        y=reg.year+(reg.month-1+r)//12; m=(reg.month-1+r)%12+1
-        fmd=_first_monday_day(y,m); dim=_cal.monthrange(y,m)[1]; cells=[None]*5
-        for w in range(5):
-            monday=fmd+w*7
-            if monday>dim: break
-            wmon=datetime.date(y,m,monday); wsun=wmon+datetime.timedelta(days=6)
-            if wmon>TODAY or wsun<reg: continue
-            cells[w]=counts[r][w]
-        grid.append(cells)
-    return grid
+    firstmon=_monday_of(reg); cells=[]
+    for idx in range(5*rows):
+        wmon=firstmon+datetime.timedelta(days=7*idx); wsun=wmon+datetime.timedelta(days=6)
+        cells.append(None if wmon>TODAY else sum(1 for d in dates if wmon<=d<=wsun))
+    return [cells[r*5:(r+1)*5] for r in range(rows)]
 def next_color(nextd):
     dd=(nextd-TODAY).days
     if dd<=0: return C_N0
