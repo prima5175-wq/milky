@@ -110,7 +110,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v12 (2026-05-30) 방학특강 부 색상(정규시간방특 추가)';
+const CODE_VERSION = 'v13 (2026-05-30) 헤더 메모(빨간삼각형) 제거';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -224,6 +224,7 @@ function setupSheet() {
   // 머리글 안내
   sh.getRange(1, COL_PLAN).setNote('등록회차를 고르면 회차 칸이 자동 생성됩니다.\n분기납=3줄, 월납=1줄, 매일반=3줄.\n색: 60분 분홍·90분 초록·120분 노랑.');
 
+  sh.getRange(1, 1, 1, GRID_START + GRID_COLS - 1).clearNote();
   buildPriceSheet_(ss);
   renumber_(sh);
   redrawBorders_(sh);
