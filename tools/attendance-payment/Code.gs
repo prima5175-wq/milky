@@ -28,9 +28,9 @@ const COL_PRICE = 6;        // F 결제금액
 const COL_PLAN  = 7;        // G 등록회차
 const COL_SIBLING = 8;      // H 형제할인(체크박스)
 const COL_REGDATE = 9;      // I 등록일(등록회차 선택 시 자동 기록)
-const WEEK_START  = 10;     // J열부터 주차 띠
-const WEEK_COLS   = 13;     // 주차 칸 개수(분기납 ~13주)
-const GRID_START  = WEEK_START + WEEK_COLS; // W열부터 회차 칸
+const WEEK_START  = 10;     // J열부터 주차 띠(한 줄=한 달, 5주씩)
+const WEEK_COLS   = 5;      // 한 달당 주차 칸 수(5주)
+const GRID_START  = WEEK_START + WEEK_COLS; // O열부터 회차 칸
 const GRID_COLS   = 31;     // 회차 칸 가로 개수(매일반 대응)
 const HELPER_COL   = GRID_START + GRID_COLS;     // 연속행 표시용(숨김)
 const HELPER_PRICE = GRID_START + GRID_COLS + 1; // 형제할인 전 원가 저장(숨김)
@@ -108,13 +108,13 @@ function setupSheet() {
   sh.getRange(DATA_START_ROW, COL_REGDATE, n, 1).setNumberFormat('yyyy-mm-dd');
   sh.setColumnWidth(COL_REGDATE, 80);
 
-  // J~ 주차 띠 머리글(1주~13주)
+  // J~ 주차 띠 머리글(1주~5주, 한 줄=한 달)
   const wHead = [];
   for (let i = 1; i <= WEEK_COLS; i++) wHead.push(i + '주');
   sh.getRange(1, WEEK_START, 1, WEEK_COLS).setValues([wHead])
     .setBackground('#f9cb9c').setFontColor('#783f04').setFontWeight('bold')
     .setHorizontalAlignment('center').setFontSize(8);
-  sh.getRange(1, WEEK_START).setNote('주차 띠: 등록일부터 주(7일) 단위로, 그 주 출석 횟수를 표시합니다.\n지난 주인데 한 번도 안 오면 빨강, 오면 초록입니다.');
+  sh.getRange(1, WEEK_START).setNote('주차 띠: 한 줄=한 달(5주), 등록일부터 주(7일) 단위로 그 주 출석 횟수를 표시합니다.\n분기납은 3줄(달마다 한 줄)로 회차 칸과 나란히 보입니다.\n지난 주인데 한 번도 안 오면 빨강, 오면 초록입니다.');
   for (let c = WEEK_START; c < WEEK_START + WEEK_COLS; c++) sh.setColumnWidth(c, 28);
 
   // 회차 칸 서식
@@ -211,7 +211,7 @@ function handlePlanChange_(sh, row) {
     for (let i = 0; i < add; i++) {
       const rr = row + existingExtra + 1 + i;
       sh.getRange(rr, HELPER_COL).setValue(CONT);
-      sh.getRange(rr, 1, 1, GRID_START - 1).setBackground(C_CONT).clearContent().clearDataValidations();
+      sh.getRange(rr, 1, 1, WEEK_START - 1).setBackground(C_CONT).clearContent().clearDataValidations();
       sh.getRange(rr, GRID_START, 1, GRID_COLS)
         .setNumberFormat('M/d').setHorizontalAlignment('center').setFontSize(9);
     }
@@ -224,28 +224,28 @@ function handlePlanChange_(sh, row) {
   computeWeekStrip_(sh, row, plan, desiredExtra);
 }
 
-// ===== 주차 띠: 등록일 기준 주별 출석 표시 ================================
+// ===== 주차 띠: 한 줄=한 달(5주), 등록일 기준 주별 출석 표시 ==============
 function computeWeekStrip_(sh, owner, plan, extra) {
-  const stripRange = sh.getRange(owner, WEEK_START, 1, WEEK_COLS);
-  stripRange.setBackground(null).clearContent();
+  const rows = extra + 1;
+  sh.getRange(owner, WEEK_START, rows, WEEK_COLS).setBackground(null).clearContent();
   const reg = sh.getRange(owner, COL_REGDATE).getValue();
   if (!(reg instanceof Date) || !plan) return;
 
-  const weeksTotal = Math.min((plan.daily || plan.cycle === '분기') ? 13 : 5, WEEK_COLS);
   const dates = scanDates_(sh, owner, extra);
-
   const regMid = new Date(reg.getFullYear(), reg.getMonth(), reg.getDate());
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const DAY = 86400000;
+  const weeksTotal = WEEK_COLS * rows; // 한 줄 5주 × 줄 수
 
-  for (let i = 0; i < weeksTotal; i++) {
-    const wStart = new Date(regMid.getTime() + i * 7 * DAY);
+  for (let w = 0; w < weeksTotal; w++) {
+    const r = Math.floor(w / WEEK_COLS), c = w % WEEK_COLS;
+    const wStart = new Date(regMid.getTime() + w * 7 * DAY);
     const wEnd = new Date(wStart.getTime() + 7 * DAY);
-    const cell = sh.getRange(owner, WEEK_START + i);
     if (wStart > today) continue; // 미래 주는 비움
     let cnt = 0;
     dates.forEach(d => { if (d >= wStart && d < wEnd) cnt++; });
-    cell.setValue(cnt).setBackground(cnt > 0 ? C_WEEK_OK : C_WEEK_MISS)
+    sh.getRange(owner + r, WEEK_START + c).setValue(cnt)
+      .setBackground(cnt > 0 ? C_WEEK_OK : C_WEEK_MISS)
       .setHorizontalAlignment('center').setFontSize(9);
   }
 }

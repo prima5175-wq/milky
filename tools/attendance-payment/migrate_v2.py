@@ -22,12 +22,12 @@ TODAY = datetime.date(2026, 5, 30)  # 주차 띠 기준(이관 시점)
 
 # 새 레이아웃
 A_DATE=1; B_NAME=2; C_SCH=3; D_TEL=4; E_REG=5; F_PRICE=6; G_PLAN=7
-H_SIB=8; I_REG=9; WEEK0=10; WEEKN=13; GRID0=10+13  # 23
+H_SIB=8; I_REG=9; WEEK0=10; WEEKN=5; GRID0=10+5  # 15 (주차 띠 한 줄=5주)
 GRID_COLS=31
-HELPER_COL=GRID0+GRID_COLS      # 54
-HELPER_ORIG=HELPER_COL+1        # 55
-MEMO_COL=HELPER_COL+2           # 56
-FLAG_COL=HELPER_COL+3           # 57
+HELPER_COL=GRID0+GRID_COLS      # 46
+HELPER_ORIG=HELPER_COL+1        # 47
+MEMO_COL=HELPER_COL+2           # 48
+FLAG_COL=HELPER_COL+3           # 49
 CONT='CONT'
 
 C_DUR={'60분':'FCE4EC','90분':'D9EAD3','120분':'FFF2CC'}
@@ -224,12 +224,12 @@ def build(students,out):
             ws.cell(rr,HELPER_COL,CONT)
             for c in range(1,I_REG+1): ws.cell(rr,c).fill=fill(C_CONT)
 
-        # ---- 주차 띠 ----
+        # ---- 주차 띠 (한 줄=한 달, 5주씩) ----
         if regd and freq:
-            weeks=min(13 if (daily or cyc=='분기') else 5, WEEKN)
-            for i,cnt in enumerate(week_counts(regd,dates,weeks)):
+            for w,cnt in enumerate(week_counts(regd,dates,WEEKN*rows)):
                 if cnt is None: continue
-                cell=ws.cell(row,WEEK0+i,cnt); cell.alignment=Alignment(horizontal='center')
+                rr=row+w//WEEKN; cc=WEEK0+w%WEEKN
+                cell=ws.cell(rr,cc,cnt); cell.alignment=Alignment(horizontal='center')
                 cell.font=Font(size=9); cell.fill=fill(C_OK if cnt>0 else C_MISS)
 
         # ---- 회차 칸 ----
