@@ -60,9 +60,37 @@ function onOpen() {
     .addItem('✅ 선택 칸 오늘 출석 체크', 'markAttendanceToday')
     .addItem('↩️ 선택 칸 출석 취소', 'unmarkAttendance')
     .addSeparator()
+    .addItem('🗑 선택 학생 삭제 (휴원)', 'deleteStudent')
     .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addToUi();
+}
+
+// 선택한 학생(소유행+연속행)을 통째로 삭제하고 번호 재정렬
+function deleteStudent() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const row = sh.getActiveRange().getRow();
+  if (row < DATA_START_ROW) return;
+  const owner = ownerRow_(sh, row);
+  const name = sh.getRange(owner, COL_NAME).getValue() || '(이름 없음)';
+  const extra = countContBelow_(sh, owner, sh.getMaxRows());
+  const ui = SpreadsheetApp.getUi();
+  const res = ui.alert('학생 삭제(휴원)',
+    "'" + name + "' 학생을 삭제할까요? (" + (extra + 1) + "줄, 되돌릴 수 없음)",
+    ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+  sh.deleteRows(owner, extra + 1);
+  renumber_(sh);
+  SpreadsheetApp.getActiveSpreadsheet().toast(name + ' 삭제 완료', '학원관리', 3);
+}
+
+// 행 삭제/추가 시 번호 자동 재정렬(설치형 트리거)
+function onChangeHandler(e) {
+  if (!e || (e.changeType !== 'REMOVE_ROW' && e.changeType !== 'INSERT_ROW')) return;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getActiveSheet();
+  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0) return;
+  renumber_(sh);
 }
 
 function tidyNumberBorders() {
@@ -174,6 +202,11 @@ function setupSheet() {
   renumber_(sh);
   redrawBorders_(sh);
   sh.setFrozenRows(1);
+  // 행 삭제/추가 시 번호 자동 정리용 트리거(중복 생성 방지)
+  try {
+    if (!ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'onChangeHandler'))
+      ScriptApp.newTrigger('onChangeHandler').forSpreadsheet(ss).onChange().create();
+  } catch (err) {}
   SpreadsheetApp.getUi().alert('설치 완료!\nG열 등록회차를 고르면 회차 칸이 자동 생성됩니다.');
 }
 
