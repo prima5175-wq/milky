@@ -165,6 +165,9 @@ function setupSheet() {
       .setAllowInvalid(true).build());
   sh.setColumnWidth(COL_PAYMETHOD, 84);
 
+  // G 결제금액 — 잘못 남은 드롭다운(예전 결제방식) 제거 + 숫자 형식
+  sh.getRange(DATA_START_ROW, COL_PRICE, n, 1).clearDataValidations().setNumberFormat('#,##0');
+
   // H 할인 드롭다운(정상 / 형제할인 5% / 오픈할인 20%)
   sh.getRange(1, COL_SIBLING).setValue('할인').setFontWeight('bold')
     .setNote("'형제할인'=5% 할인, '오픈할인'=20% 할인, '정상'=원래 금액으로 복원.");
