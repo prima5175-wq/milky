@@ -25,12 +25,13 @@ const DATA_START_ROW = 2;   // 머리글이 1행, 데이터는 2행부터
 const COL_NUM   = 1;        // A 번호(자동 누적)
 const COL_NAME  = 2;        // B 이름
 const COL_REG   = 5;        // E 등록여부
-const COL_PRICE = 6;        // F 결제금액
-const COL_PLAN  = 7;        // G 등록회차
-const COL_SIBLING = 8;      // H 형제할인
-const COL_REGDATE = 9;      // I 등록일(달력)
-const COL_NEXTREG = 10;     // J 다음등록일(달력)
-const WEEK_START  = 11;     // K열부터 주차 띠(한 줄=한 달, 5주씩)
+const COL_PAYMETHOD = 6;    // F 결제방식
+const COL_PRICE = 7;        // G 결제금액
+const COL_PLAN  = 8;        // H 등록회차
+const COL_SIBLING = 9;      // I 할인
+const COL_REGDATE = 10;     // J 등록일(달력)
+const COL_NEXTREG = 11;     // K 다음등록일(달력)
+const WEEK_START  = 12;     // L열부터 주차 띠(한 줄=한 달, 5주씩)
 const WEEK_COLS   = 5;      // 한 달당 주차 칸 수(5주)
 const GRID_START  = WEEK_START + WEEK_COLS; // 16(P)열부터 회차 칸
 const GRID_COLS   = 31;     // 회차 칸 가로 개수(매일반 대응)
@@ -129,9 +130,9 @@ function setupSheet() {
   const maxRow = sh.getMaxRows();
   const n = maxRow - DATA_START_ROW + 1;
 
-  // 머리글 A~J
+  // 머리글 A~K
   sh.getRange(1, 1, 1, COL_NEXTREG).setValues([[
-    '번호','이름','학교/학년','휴대전화','등록여부','결제금액','등록회차','할인','등록일','다음등록일']])
+    '번호','이름','학교/학년','휴대전화','등록여부','결제방식','결제금액','등록회차','할인','등록일','다음등록일']])
     .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
 
   // G 등록회차 드롭다운
@@ -149,6 +150,14 @@ function setupSheet() {
   rules.push(cfEq_(regRange, '결제대기 중', '#ffe599'));
   rules.push(cfEq_(regRange, '등록안함', '#ea9999'));
   sh.setConditionalFormatRules(rules);
+
+  // F 결제방식 드롭다운 (직접 입력·여러 개 입력 허용)
+  sh.getRange(1, COL_PAYMETHOD).setNote('여러 개면 "카드, 현금"처럼 직접 입력 가능. "기타: 무통장입금" 식으로 내용도 적을 수 있어요.\n(진짜 다중선택 칩: 데이터 ▸ 데이터 확인 ▸ 다중 선택 허용 켜기)');
+  sh.getRange(DATA_START_ROW, COL_PAYMETHOD, n, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation()
+      .requireValueInList(['결제선생', '카드', '현금', '서울페이', '기타'], true)
+      .setAllowInvalid(true).build());
+  sh.setColumnWidth(COL_PAYMETHOD, 84);
 
   // H 할인 드롭다운(정상 / 형제할인 5% / 오픈할인 20%)
   sh.getRange(1, COL_SIBLING).setValue('할인').setFontWeight('bold')

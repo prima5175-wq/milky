@@ -47,8 +47,9 @@ STUDENTS=[
 ]
 
 WEEKN=5; GRIDN=12
-INFO=[('번호',42),('이름',82),('등록여부',120),('금액',78),('등록회차',116),
+INFO=[('번호',42),('이름',82),('등록여부',120),('결제방식',96),('금액',78),('등록회차',116),
       ('할인',70),('등록일',80),('다음\n등록일',80)]
+METHODS=['카드','서울페이','결제선생, 현금','기타: 무통장']
 WCELL=28; GCELL=26; RH=30; GAP=10
 
 def plan(freq,dur,cyc):
@@ -105,7 +106,7 @@ for idx,st in enumerate(STUDENTS):
     price=round(amt*DISC_RATE[disc]) if disc in DISC_RATE else amt
     blockw=info_w+WEEKN*WCELL+GAP+GRIDN*GCELL
     d.line([x0*S,y*S,(x0+blockw)*S,y*S],fill='#000000',width=3)
-    vals=[str(idx+1),name,reg,f'{price:,}',f'{freq} {dur}'+('' if daily else f' {cyc}'),
+    vals=[str(idx+1),name,reg,METHODS[idx],f'{price:,}',f'{freq} {dur}'+('' if daily else f' {cyc}'),
           disc if disc else '정상',regd.strftime('%y-%m-%d'),nextd.strftime('%y-%m-%d')]
     x=x0
     for (nm,w),v in zip(INFO,vals):
