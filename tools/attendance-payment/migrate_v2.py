@@ -196,7 +196,7 @@ def build(students,out):
         if gval:
             pc=ws.cell(row,G_PLAN,gval); pc.fill=fill(C_DUR.get(dur,C_DUR['90분']))
             pc.alignment=Alignment(horizontal='center'); pc.font=Font(bold=True,size=9)
-        ws.cell(row,H_SIB,False)
+        ws.cell(row,H_SIB,'정상')
         if regd: ws.cell(row,I_REG,regd).number_format='yyyy-mm-dd'
 
         # 원본 보존 + 검수

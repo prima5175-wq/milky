@@ -96,11 +96,12 @@ function setupSheet() {
   rules.push(cfEq_(regRange, '등록안함', '#ea9999'));
   sh.setConditionalFormatRules(rules);
 
-  // H 형제할인 체크박스
+  // H 형제할인 드롭다운(정상 / 형제할인)
   sh.getRange(1, COL_SIBLING).setValue('형제할인').setFontWeight('bold')
-    .setNote('체크하면 결제금액이 5% 할인가로 바뀌고, 해제하면 원가로 돌아옵니다.');
-  sh.getRange(DATA_START_ROW, COL_SIBLING, n, 1).insertCheckboxes();
-  sh.setColumnWidth(COL_SIBLING, 64);
+    .setNote("'형제할인'을 고르면 결제금액이 5% 할인가로 바뀌고, '정상'을 고르면 원래 금액으로 돌아옵니다.");
+  sh.getRange(DATA_START_ROW, COL_SIBLING, n, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(['정상', '형제할인'], true).build());
+  sh.setColumnWidth(COL_SIBLING, 72);
 
   // I 등록일
   sh.getRange(1, COL_REGDATE).setValue('등록일').setFontWeight('bold')
@@ -144,11 +145,12 @@ function buildPriceSheet_(ss) {
   const sh = ss.insertSheet(SHEET_PRICE);
   sh.getRange(1, 1, 1, 4).setValues([['횟수', '시간', '납부', '금액(편집하세요)']])
     .setBackground('#434343').setFontColor('#fff').setFontWeight('bold');
+  // 책나무 교육비표 (월납, 분기납) — 유치부=60분 / 초등부=90분 / 중등=120분
   const base = [
-    ['주1회','60분',120000,342000],['주1회','90분',160000,480000],['주1회','120분',210000,630000],
-    ['주2회','60분',180000,513000],['주2회','90분',220000,660000],['주2회','120분',270000,810000],
-    ['주3회','60분',240000,684000],['주3회','90분',300000,855000],['주3회','120분',360000,999000],
-    ['매일반','60분',300000,855000],['매일반','90분',350000,990000],['매일반','120분',420000,1190000],
+    ['주1회','60분',140000,390000],['주1회','90분',180000,480000],['주1회','120분',220000,630000],
+    ['주2회','60분',200000,570000],['주2회','90분',240000,660000],['주2회','120분',300000,810000],
+    ['주3회','60분',300000,750000],['주3회','90분',340000,840000],['주3회','120분',400000,990000],
+    ['매일반','60분','',870000],['매일반','90분','',990000],['매일반','120분','',1110000],
   ];
   const rows = [];
   base.forEach(b => { rows.push([b[0],b[1],'월',b[2]]); rows.push([b[0],b[1],'분기',b[3]]); });
@@ -283,9 +285,9 @@ function drawGrid_(sh, row, plan, extra) {
   }
 }
 
-// 형제할인: 체크 시 결제금액을 5% 할인가로, 해제 시 원가로 복원
+// 형제할인: '형제할인' 선택 시 결제금액을 5% 할인가로, '정상' 선택 시 원가로 복원
 function applySiblingDiscount_(sh, row) {
-  const checked = sh.getRange(row, COL_SIBLING).getValue() === true;
+  const checked = String(sh.getRange(row, COL_SIBLING).getValue()).trim() === '형제할인';
   const fCell = sh.getRange(row, COL_PRICE);
   const hCell = sh.getRange(row, HELPER_PRICE);
   if (checked) {
