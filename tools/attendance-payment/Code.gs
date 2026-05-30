@@ -36,7 +36,8 @@ const GRID_START  = WEEK_START + WEEK_COLS; // 16(P)열부터 회차 칸
 const GRID_COLS   = 31;     // 회차 칸 가로 개수(매일반 대응)
 const HELPER_COL   = GRID_START + GRID_COLS;     // 연속행 표시용(숨김)
 const HELPER_PRICE = GRID_START + GRID_COLS + 1; // 형제할인 전 원가 저장(숨김)
-const DISCOUNT = 0.95;      // 형제할인 5%
+const DISC_SIB  = 0.95;     // 형제할인 5%
+const DISC_OPEN = 0.80;     // 오픈할인 20%
 
 // 색상
 const C_DUR  = { '60분': '#fce4ec', '90분': '#d9ead3', '120분': '#fff2cc' };
@@ -123,7 +124,7 @@ function setupSheet() {
 
   // 머리글 A~J
   sh.getRange(1, 1, 1, COL_NEXTREG).setValues([[
-    '번호','이름','학교/학년','휴대전화','등록여부','결제금액','등록회차','형제할인','등록일','다음등록일']])
+    '번호','이름','학교/학년','휴대전화','등록여부','결제금액','등록회차','할인','등록일','다음등록일']])
     .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
 
   // G 등록회차 드롭다운
@@ -142,12 +143,12 @@ function setupSheet() {
   rules.push(cfEq_(regRange, '등록안함', '#ea9999'));
   sh.setConditionalFormatRules(rules);
 
-  // H 형제할인 드롭다운(정상 / 형제할인)
-  sh.getRange(1, COL_SIBLING).setValue('형제할인').setFontWeight('bold')
-    .setNote("'형제할인'을 고르면 결제금액이 5% 할인가로 바뀌고, '정상'을 고르면 원래 금액으로 돌아옵니다.");
+  // H 할인 드롭다운(정상 / 형제할인 5% / 오픈할인 20%)
+  sh.getRange(1, COL_SIBLING).setValue('할인').setFontWeight('bold')
+    .setNote("'형제할인'=5% 할인, '오픈할인'=20% 할인, '정상'=원래 금액으로 복원.");
   sh.getRange(DATA_START_ROW, COL_SIBLING, n, 1).setDataValidation(
-    SpreadsheetApp.newDataValidation().requireValueInList(['정상', '형제할인'], true).build());
-  sh.setColumnWidth(COL_SIBLING, 72);
+    SpreadsheetApp.newDataValidation().requireValueInList(['정상', '형제할인', '오픈할인'], true).build());
+  sh.setColumnWidth(COL_SIBLING, 78);
 
   // I 등록일 · J 다음등록일 — 달력(날짜 선택기) + 형식
   const dateDV = SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build();
@@ -442,19 +443,20 @@ function drawGrid_(sh, row, plan, extra) {
   }
 }
 
-// 형제할인: '형제할인' 선택 시 결제금액을 5% 할인가로, '정상' 선택 시 원가로 복원
+// 할인: '형제할인'=5%, '오픈할인'=20%, '정상'=원가 복원
 function applySiblingDiscount_(sh, row) {
-  const checked = String(sh.getRange(row, COL_SIBLING).getValue()).trim() === '형제할인';
+  const v = String(sh.getRange(row, COL_SIBLING).getValue()).trim();
+  const rate = v === '형제할인' ? DISC_SIB : v === '오픈할인' ? DISC_OPEN : null;
   const fCell = sh.getRange(row, COL_PRICE);
   const hCell = sh.getRange(row, HELPER_PRICE);
-  if (checked) {
-    const base = fCell.getValue();
+  const stored = hCell.getValue();
+  if (rate !== null) {
+    const base = (typeof stored === 'number' && stored) ? stored : fCell.getValue();
     if (typeof base !== 'number' || !base) return; // 금액이 없으면 무시
-    hCell.setValue(base);                          // 원가 보관
-    fCell.setValue(Math.round(base * DISCOUNT)).setNumberFormat('#,##0');
+    hCell.setValue(base);                          // 원가 보관(중복 할인 방지)
+    fCell.setValue(Math.round(base * rate)).setNumberFormat('#,##0');
   } else {
-    const orig = hCell.getValue();
-    if (typeof orig === 'number' && orig) fCell.setValue(orig).setNumberFormat('#,##0');
+    if (typeof stored === 'number' && stored) fCell.setValue(stored).setNumberFormat('#,##0');
     hCell.clearContent();
   }
 }

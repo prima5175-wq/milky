@@ -139,7 +139,7 @@ def week_grid(reg, dates, rows):
 def build(students,out):
     wb=openpyxl.Workbook(); ws=wb.active; ws.title='명단'
     # 헤더
-    head=['번호','이름','학교/학년','휴대전화','등록여부','결제금액','등록회차','형제할인','등록일','다음등록일']
+    head=['번호','이름','학교/학년','휴대전화','등록여부','결제금액','등록회차','할인','등록일','다음등록일']
     for c,h in enumerate(head,1):
         cell=ws.cell(1,c,h); cell.fill=fill(C_HDR); cell.font=Font(color='FFFFFF',bold=True)
         cell.alignment=Alignment(horizontal='center',vertical='center')
