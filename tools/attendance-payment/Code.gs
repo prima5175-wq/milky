@@ -662,7 +662,7 @@ const T_GRID = 10, T_N = 20, T_NOTE = T_GRID + T_N; // 특이사항 = 30
 const T_TOTAL = 20;
 const T_ROWS_INIT = 80;
 const T_WEEK = ['#fce4ec', '#fff2cc', '#ccf2e3', '#cfe2f3']; // 연분홍·연노랑·민트·연하늘
-const T_GRAY = '#cfcfcf';                                    // 보강
+const T_GRAY = '#b7b7b7';                                    // 보강(팔레트 윗줄 5번째 회색)
 const T_PARTS = ['1부', '2부', '3부'];
 const T_MEMBERS = ['현재재원생', '비재원생', '예전재원생(현재휴원)', '대치점 재원생'];
 
@@ -736,11 +736,21 @@ function T_styleCell_(sh, r, c) {
   if (v === '' || v === null) {
     cell.setBackground(T_weekColor_(c));               // 비우면 주차색 복원
   } else if (v instanceof Date) {
-    if (cell.getBackground().toLowerCase() !== T_GRAY) // 보강(회색)이면 그대로, 아니면 정규=주차색
+    if (!T_isGray_(cell.getBackground()))             // 보강(회색)이면 그대로, 아니면 정규=주차색
       cell.setBackground(T_weekColor_(c));
   } else {
     cell.setValue(new Date()).setBackground(T_weekColor_(c)); // 날짜 아닌 입력 → 오늘 출석(정규)
   }
+}
+
+// 회색 계열인지 판별(흰색·연한 주차색 제외). 어떤 회색을 칠해도 보강으로 인식.
+function T_isGray_(hex) {
+  if (!hex) return false;
+  const h = String(hex).replace('#', '');
+  if (h.length < 6) return false;
+  const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  return (mx - mn) <= 14 && mx >= 0x66 && mx <= 0xe1; // R≈G≈B(무채색) + 흰색/검정 제외
 }
 
 function T_recalcMakeup_(sh, row) {
@@ -748,7 +758,7 @@ function T_recalcMakeup_(sh, row) {
   const vals = sh.getRange(row, T_GRID, 1, T_N).getValues()[0];
   let m = 0;
   for (let i = 0; i < T_N; i++)
-    if (String(bg[i]).toLowerCase() === T_GRAY && vals[i] !== '' && vals[i] !== null) m++;
+    if (T_isGray_(bg[i]) && vals[i] !== '' && vals[i] !== null) m++;
   sh.getRange(row, TC_MAKEUP).setValue(m || '');
 }
 
