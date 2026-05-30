@@ -110,7 +110,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v7 (2026-05-30) 결제방식+주차숫자고정+방학특강';
+const CODE_VERSION = 'v8 (2026-05-30) 새로고침 보강+건수표시';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -645,20 +645,29 @@ function unmarkAttendance() {
 // 오늘 기준으로 모든 학생의 주차 띠를 다시 계산(출석 데이터는 보존)
 function refreshWeekStrips() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0 || sh.getName() === T_SHEET) {
+    SpreadsheetApp.getUi().alert('명단 시트에서 실행하세요.');
+    return;
+  }
   const maxRow = sh.getLastRow();
-  let r = DATA_START_ROW;
+  let r = DATA_START_ROW, done = 0, err = 0;
   while (r <= maxRow) {
     if (String(sh.getRange(r, HELPER_COL).getValue()) === CONT) { r++; continue; }
     const plan = parsePlan_(sh.getRange(r, COL_PLAN).getValue());
     if (plan) {
-      const extra = Math.min(countContBelow_(sh, r, sh.getMaxRows()), plan.rows - 1);
-      computeWeekStrip_(sh, r, plan, extra);
-      r += plan.rows;
+      try {
+        const extra = Math.min(countContBelow_(sh, r, sh.getMaxRows()), plan.rows - 1);
+        computeWeekStrip_(sh, r, plan, extra);
+        done++;
+        r += plan.rows;
+      } catch (e) { err++; r += plan.rows; }
     } else {
       r++;
     }
   }
-  SpreadsheetApp.getActiveSpreadsheet().toast('주차 띠 새로고침 완료', '학원관리', 3);
+  SpreadsheetApp.getUi().alert('주차 띠 새로고침 완료\n\n처리한 학생: ' + done + '명' +
+    (err ? ('\n오류 ' + err + '건') : '') +
+    (done === 0 ? '\n\n※ 0명이면: 이 탭이 명단 탭이 맞는지, H열(등록회차)에 값이 있는지 확인하세요.' : ''));
 }
 
 // ====================================================================
