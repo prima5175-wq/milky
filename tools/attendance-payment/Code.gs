@@ -26,9 +26,12 @@ const COL_NAME  = 2;        // B 이름
 const COL_REG   = 5;        // E 등록여부
 const COL_PRICE = 6;        // F 결제금액
 const COL_PLAN  = 7;        // G 등록회차
-const GRID_START = 8;       // H열부터 회차 칸
+const COL_SIBLING = 8;      // H 형제할인(체크박스)
+const GRID_START = 9;       // I열부터 회차 칸
 const GRID_COLS  = 31;      // 회차 칸 가로 개수(매일반 대응)
-const HELPER_COL = GRID_START + GRID_COLS; // 연속행 표시용(숨김)
+const HELPER_COL   = GRID_START + GRID_COLS;     // 연속행 표시용(숨김)
+const HELPER_PRICE = GRID_START + GRID_COLS + 1; // 형제할인 전 원가 저장(숨김)
+const DISCOUNT = 0.95;      // 형제할인 5%
 
 // 색상
 const C_DUR  = { '60분': '#fce4ec', '90분': '#d9ead3', '120분': '#fff2cc' };
@@ -88,6 +91,12 @@ function setupSheet() {
   rules.push(cfEq_(regRange, '등록안함', '#ea9999'));
   sh.setConditionalFormatRules(rules);
 
+  // H 형제할인 체크박스
+  sh.getRange(1, COL_SIBLING).setValue('형제할인').setFontWeight('bold')
+    .setNote('체크하면 결제금액이 5% 할인가로 바뀌고, 해제하면 원가로 돌아옵니다.');
+  sh.getRange(DATA_START_ROW, COL_SIBLING, n, 1).insertCheckboxes();
+  sh.setColumnWidth(COL_SIBLING, 64);
+
   // 회차 칸 서식
   sh.getRange(DATA_START_ROW, GRID_START, n, GRID_COLS)
     .setNumberFormat('M/d').setHorizontalAlignment('center').setFontSize(9);
@@ -95,7 +104,8 @@ function setupSheet() {
 
   // 도우미 열 숨김
   sh.getRange(1, HELPER_COL).setValue('_blk');
-  sh.hideColumns(HELPER_COL);
+  sh.getRange(1, HELPER_PRICE).setValue('_orig');
+  sh.hideColumns(HELPER_COL, 2);
 
   // 머리글 안내
   sh.getRange(1, COL_PLAN).setNote('등록회차를 고르면 회차 칸이 자동 생성됩니다.\n분기납=3줄, 월납=1줄, 매일반=3줄.\n색: 60분 분홍·90분 초록·120분 노랑.');
@@ -175,7 +185,7 @@ function handlePlanChange_(sh, row) {
     for (let i = 0; i < add; i++) {
       const rr = row + existingExtra + 1 + i;
       sh.getRange(rr, HELPER_COL).setValue(CONT);
-      sh.getRange(rr, 1, 1, COL_PLAN).setBackground(C_CONT).clearContent();
+      sh.getRange(rr, 1, 1, COL_SIBLING).setBackground(C_CONT).clearContent().clearDataValidations();
       sh.getRange(rr, GRID_START, 1, GRID_COLS)
         .setNumberFormat('M/d').setHorizontalAlignment('center').setFontSize(9);
     }
@@ -210,6 +220,23 @@ function drawGrid_(sh, row, plan, extra) {
   }
 }
 
+// 형제할인: 체크 시 결제금액을 5% 할인가로, 해제 시 원가로 복원
+function applySiblingDiscount_(sh, row) {
+  const checked = sh.getRange(row, COL_SIBLING).getValue() === true;
+  const fCell = sh.getRange(row, COL_PRICE);
+  const hCell = sh.getRange(row, HELPER_PRICE);
+  if (checked) {
+    const base = fCell.getValue();
+    if (typeof base !== 'number' || !base) return; // 금액이 없으면 무시
+    hCell.setValue(base);                          // 원가 보관
+    fCell.setValue(Math.round(base * DISCOUNT)).setNumberFormat('#,##0');
+  } else {
+    const orig = hCell.getValue();
+    if (typeof orig === 'number' && orig) fCell.setValue(orig).setNumberFormat('#,##0');
+    hCell.clearContent();
+  }
+}
+
 function autofillPrice_(sh, row, plan) {
   const cur = sh.getRange(row, COL_PRICE).getValue();
   if (cur !== '' && cur !== null) return; // 이미 금액이 있으면 건드리지 않음
@@ -239,6 +266,12 @@ function onEdit(e) {
   const row = e.range.getRow();
   const col = e.range.getColumn();
   if (row < DATA_START_ROW) return;
+
+  // 형제할인(H) 체크 → 결제금액 5% 할인/복원
+  if (col === COL_SIBLING && e.range.getNumColumns() === 1 && e.range.getNumRows() === 1) {
+    applySiblingDiscount_(sh, row);
+    return;
+  }
 
   // 등록회차(G) 변경 → 회차 칸 생성 (학생 첫 줄에서만)
   if (col === COL_PLAN && e.range.getNumColumns() === 1) {
