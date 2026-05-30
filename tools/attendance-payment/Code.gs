@@ -110,7 +110,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v10 (2026-05-30) 조건부서식 완전초기화';
+const CODE_VERSION = 'v11 (2026-05-30) 주차칸 날짜검증 제거(오류삼각형)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -205,8 +205,11 @@ function setupSheet() {
     .setHorizontalAlignment('center').setFontSize(8);
   sh.getRange(1, WEEK_START).setNote('주차 띠: 한 줄=한 달(5주), 등록일부터 주(7일) 단위로 그 주 출석 횟수를 표시합니다.\n분기납은 3줄(달마다 한 줄)로 회차 칸과 나란히 보입니다.\n지난 주인데 한 번도 안 오면 빨강, 오면 초록입니다.');
   for (let c = WEEK_START; c < WEEK_START + WEEK_COLS; c++) sh.setColumnWidth(c, 28);
-  // 주차 칸은 '숫자' 형식으로 강제(가져오기 시 1899-xx 날짜로 잘못 보이는 것 방지)
-  sh.getRange(DATA_START_ROW, WEEK_START, n, WEEK_COLS).setNumberFormat('0').setHorizontalAlignment('center');
+  // 주차 칸: 잘못 적용된 데이터 검증(날짜 전용) 제거 + 숫자 형식 강제(빨간 오류삼각형 방지)
+  sh.getRange(DATA_START_ROW, WEEK_START, n, WEEK_COLS)
+    .clearDataValidations().setNumberFormat('0').setHorizontalAlignment('center');
+  // 회차 칸도 날짜 검증 제거(날짜 입력 시 오류삼각형 방지)
+  sh.getRange(DATA_START_ROW, GRID_START, n, GRID_COLS).clearDataValidations();
 
   // 회차 칸 서식
   sh.getRange(DATA_START_ROW, GRID_START, n, GRID_COLS)
