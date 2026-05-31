@@ -112,7 +112,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v19 (2026-05-30) 날짜 정오고정+한꺼번에출석 되돌리기';
+const CODE_VERSION = 'v20 (2026-05-30) 날짜를 글자로 저장-시간대 밀림 완전차단';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -667,6 +667,10 @@ function bulkAttendance() {
   if (rD.getSelectedButton() !== ui.Button.OK) return;
   const date = parseUserDate_(rD.getResponseText(), today);
   if (!date) { ui.alert('날짜를 이해하지 못했어요. (예: 2026-05-30 또는 5/30)'); return; }
+  // 시간대 무관 날짜 글자(노이즈 0시/시간대 변환 없이 입력한 그날 그대로 저장)
+  const dateStr = date.getFullYear() + '-' +
+    ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2);
+  const tz = ss.getSpreadsheetTimeZone();
 
   // 3) 명단 이름 → 행 매핑(정규화 키)
   const last = sh.getLastRow();
@@ -700,12 +704,13 @@ function bulkAttendance() {
       for (let rr = 0; rr < rows && !already; rr++)
         for (let cc = 0; cc < GRID_COLS; cc++) {
           const v = block[rr][cc];
-          if (v instanceof Date && sameDay_(v, date)) { already = true; break; }
+          if (v instanceof Date && Utilities.formatDate(v, tz, 'yyyy-MM-dd') === dateStr) { already = true; break; }
         }
       if (already) { dupCnt++; done[owner] = true; return; }
       const target = firstEmptyGridCell_(sh, owner, rows);
       if (!target) { full.push(sh.getRange(owner, COL_NAME).getValue()); return; }
-      sh.getRange(target.r, target.c).setValue(date).setNumberFormat('M/d').setBackground(C_USED);
+      // 날짜를 "글자"로 저장 → 시간대 변환 없음(하루 밀림 원천 차단)
+      sh.getRange(target.r, target.c).setValue(dateStr).setNumberFormat('M/d').setBackground(C_USED);
       written.push([target.r, target.c]);
       done[owner] = true; okCnt++;
     });
@@ -713,9 +718,9 @@ function bulkAttendance() {
   Object.keys(done).forEach(o => recomputeStripOwner_(sh, Number(o)));
   // 마지막 한꺼번에 출석 기록 저장(되돌리기용)
   PropertiesService.getDocumentProperties().setProperty('LAST_BULK',
-    JSON.stringify({ sheet: sh.getName(), date: Utilities.formatDate(date, Session.getScriptTimeZone(), 'yyyy-MM-dd'), cells: written }));
+    JSON.stringify({ sheet: sh.getName(), date: dateStr, cells: written }));
 
-  let msg = '✅ ' + Utilities.formatDate(date, Session.getScriptTimeZone(), 'M월 d일') + ' 출석 처리: ' + okCnt + '명';
+  let msg = '✅ ' + (date.getMonth() + 1) + '월 ' + date.getDate() + '일 출석 처리: ' + okCnt + '명';
   if (dupCnt) msg += '\n(이미 그 날짜 있음: ' + dupCnt + '명 건너뜀)';
   if (ambiguous.length) msg += '\n⚠️ 동명이인(모두 처리): ' + ambiguous.join(', ');
   if (full.length) msg += '\n⚠️ 칸이 꽉 참: ' + full.join(', ');
@@ -757,8 +762,9 @@ function undoLastBulk() {
     const r = rc[0], c = rc[1];
     const cell = sh.getRange(r, c);
     const v = cell.getValue();
+    const tz = ss.getSpreadsheetTimeZone();
     // 안전장치: 그 칸이 정말 그 날짜이면만 지움
-    if (v instanceof Date && Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd') === info.date) {
+    if (v instanceof Date && Utilities.formatDate(v, tz, 'yyyy-MM-dd') === info.date) {
       cell.clearContent();
       styleGridCell_(sh, r, c);
       owners[ownerRow_(sh, r)] = true;
