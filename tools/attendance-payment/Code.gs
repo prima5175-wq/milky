@@ -61,6 +61,7 @@ function onOpen() {
     .addSeparator()
     .addItem('✅ 선택 칸 오늘 출석 체크', 'markAttendanceToday')
     .addItem('📋 한꺼번에 출석 (이름 붙여넣기)', 'bulkAttendance')
+    .addItem('⏪ 방금 한꺼번에 출석 되돌리기', 'undoLastBulk')
     .addItem('↩️ 선택 칸 출석 취소', 'unmarkAttendance')
     .addSeparator()
     .addItem('🗑 선택 학생 삭제 (휴원)', 'deleteStudent')
@@ -111,7 +112,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v18 (2026-05-30) 한꺼번에 출석 공백 구분 지원';
+const CODE_VERSION = 'v19 (2026-05-30) 날짜 정오고정+한꺼번에출석 되돌리기';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -685,6 +686,7 @@ function bulkAttendance() {
   let okCnt = 0, dupCnt = 0;
   const full = [], notFound = [], ambiguous = [];
   const done = {};
+  const written = [];   // 이번에 실제로 찍은 칸 [r,c] — 되돌리기용
   rawNames.forEach(input => {
     const key = normName_(input);
     let rowsForName = normToRows[key];
@@ -704,10 +706,14 @@ function bulkAttendance() {
       const target = firstEmptyGridCell_(sh, owner, rows);
       if (!target) { full.push(sh.getRange(owner, COL_NAME).getValue()); return; }
       sh.getRange(target.r, target.c).setValue(date).setNumberFormat('M/d').setBackground(C_USED);
+      written.push([target.r, target.c]);
       done[owner] = true; okCnt++;
     });
   });
   Object.keys(done).forEach(o => recomputeStripOwner_(sh, Number(o)));
+  // 마지막 한꺼번에 출석 기록 저장(되돌리기용)
+  PropertiesService.getDocumentProperties().setProperty('LAST_BULK',
+    JSON.stringify({ sheet: sh.getName(), date: Utilities.formatDate(date, Session.getScriptTimeZone(), 'yyyy-MM-dd'), cells: written }));
 
   let msg = '✅ ' + Utilities.formatDate(date, Session.getScriptTimeZone(), 'M월 d일') + ' 출석 처리: ' + okCnt + '명';
   if (dupCnt) msg += '\n(이미 그 날짜 있음: ' + dupCnt + '명 건너뜀)';
@@ -725,6 +731,43 @@ function bulkAttendance() {
     if (sugg.length) msg += '\n\n혹시 이거였나요?\n' + sugg.join('\n');
   }
   ui.alert('한꺼번에 출석 완료', msg, ui.ButtonSet.OK);
+}
+
+// ↩️ 방금 한 "한꺼번에 출석" 전체 취소(그 때 찍은 칸만 정확히 지움)
+function undoLastBulk() {
+  const ui = SpreadsheetApp.getUi();
+  const raw = PropertiesService.getDocumentProperties().getProperty('LAST_BULK');
+  if (!raw) { ui.alert('되돌릴 "한꺼번에 출석" 기록이 없어요.'); return; }
+  let info;
+  try { info = JSON.parse(raw); } catch (e) { ui.alert('기록을 읽지 못했어요.'); return; }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName(info.sheet);
+  if (!sh) { ui.alert('해당 시트(' + info.sheet + ')를 찾지 못했어요.'); return; }
+  const cells = info.cells || [];
+  if (!cells.length) { ui.alert('취소할 칸이 없어요.'); return; }
+
+  const res = ui.alert('한꺼번에 출석 되돌리기',
+    '직전에 처리한 ' + info.date + ' 출석 ' + cells.length + '칸을 지울까요?\n(그때 새로 찍은 칸만 지웁니다. 기존 출석은 안전합니다.)',
+    ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+
+  const owners = {};
+  let cleared = 0;
+  cells.forEach(rc => {
+    const r = rc[0], c = rc[1];
+    const cell = sh.getRange(r, c);
+    const v = cell.getValue();
+    // 안전장치: 그 칸이 정말 그 날짜이면만 지움
+    if (v instanceof Date && Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd') === info.date) {
+      cell.clearContent();
+      styleGridCell_(sh, r, c);
+      owners[ownerRow_(sh, r)] = true;
+      cleared++;
+    }
+  });
+  Object.keys(owners).forEach(o => recomputeStripOwner_(sh, Number(o)));
+  PropertiesService.getDocumentProperties().deleteProperty('LAST_BULK');
+  ui.alert('되돌리기 완료', '✅ ' + cleared + '칸을 지웠어요. (기존 출석은 그대로)', ui.ButtonSet.OK);
 }
 
 // 학생 블록에서 첫 번째 빈 회차칸 찾기(색칠 칸 우선)
@@ -754,11 +797,12 @@ function sameDay_(a, b) {
 // "2026-05-30", "5/30", "5.30" 등 → Date
 function parseUserDate_(text, today) {
   const t = String(text || '').trim();
-  if (!t) return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  // 정오(12시)로 만들어 시간대 차이로 하루 밀리는 것 방지
+  if (!t) return new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0, 0);
   let m = t.match(/^(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})$/);
-  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0);
   m = t.match(/^(\d{1,2})[-.\/](\d{1,2})$/);
-  if (m) return new Date(today.getFullYear(), +m[1] - 1, +m[2]);
+  if (m) return new Date(today.getFullYear(), +m[1] - 1, +m[2], 12, 0, 0);
   return null;
 }
 
