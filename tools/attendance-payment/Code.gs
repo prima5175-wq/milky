@@ -111,7 +111,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v17 (2026-05-30) 한꺼번에 출석=이름 붙여넣기+스마트매칭';
+const CODE_VERSION = 'v18 (2026-05-30) 한꺼번에 출석 공백 구분 지원';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -653,7 +653,7 @@ function bulkAttendance() {
     '출석한 학생 이름을 붙여넣으세요.\n(줄바꿈·쉼표·탭·공백 어떤 걸로 구분해도 돼요. 괄호/숫자/공백은 자동 무시)',
     ui.ButtonSet.OK_CANCEL);
   if (rN.getSelectedButton() !== ui.Button.OK) return;
-  const rawNames = String(rN.getResponseText()).split(/[\n,\t]+/)
+  const rawNames = String(rN.getResponseText()).split(/[\n,\t ]+/)
     .map(s => s.trim()).filter(s => s.length);
   if (!rawNames.length) { ui.alert('이름이 비어 있어요.'); return; }
 
