@@ -60,7 +60,7 @@ function onOpen() {
     .addItem('① 설치 / 드롭다운 적용', 'setupSheet')
     .addSeparator()
     .addItem('✅ 선택 칸 오늘 출석 체크', 'markAttendanceToday')
-    .addItem('📋 한꺼번에 출석 (이름 붙여넣기)', 'bulkAttendance')
+    .addItem('📋 한꺼번에 출석 (이름 드래그 후)', 'bulkAttendance')
     .addItem('↩️ 선택 칸 출석 취소', 'unmarkAttendance')
     .addSeparator()
     .addItem('🗑 선택 학생 삭제 (휴원)', 'deleteStudent')
@@ -111,7 +111,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v15 (2026-05-30) 한꺼번에 출석(이름 붙여넣기)';
+const CODE_VERSION = 'v16 (2026-05-30) 한꺼번에 출석=드래그 선택 방식';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -629,7 +629,7 @@ function markAttendanceToday() {
   SpreadsheetApp.getActiveSpreadsheet().toast('오늘 출석 체크 완료', '학원관리', 3);
 }
 
-// 📋 한꺼번에 출석: 날짜 + 이름목록 붙여넣기 → 각 학생 빈 회차칸에 그 날짜 기입
+// 📋 한꺼번에 출석: 이름들을 드래그 선택 → 날짜 입력 → 그 학생들 빈 회차칸에 기입
 function bulkAttendance() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getActiveSheet();
@@ -638,45 +638,40 @@ function bulkAttendance() {
   }
   const ui = SpreadsheetApp.getUi();
 
-  // 1) 날짜 입력
+  // 1) 드래그로 선택한 칸들에서 이름이 있는 행 모으기
+  const selRows = {};
+  let picked = 0;
+  sh.getActiveRangeList().getRanges().forEach(rg => {
+    for (let r = rg.getRow(); r < rg.getRow() + rg.getNumRows(); r++) {
+      if (r < DATA_START_ROW) continue;
+      if (String(sh.getRange(r, HELPER_COL).getValue()) === CONT) continue; // 연속행 무시
+      const nm = String(sh.getRange(r, COL_NAME).getValue()).trim();
+      if (nm) { selRows[ownerRow_(sh, r)] = nm; picked++; }
+    }
+  });
+  const owners = Object.keys(selRows).map(Number);
+  if (!owners.length) {
+    ui.alert('먼저 출석한 학생들의 이름(또는 그 줄)을 드래그로 선택한 뒤 실행하세요.\n예: B열에서 여러 학생 이름을 드래그.');
+    return;
+  }
+
+  // 2) 날짜 입력
   const today = new Date();
   const dStr = Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-  const r1 = ui.prompt('한꺼번에 출석 — ① 날짜',
+  const r1 = ui.prompt('한꺼번에 출석 (' + owners.length + '명 선택됨)',
     '출석 날짜를 입력하세요 (예: ' + dStr + ' 또는 5/30).\n비워두면 오늘로 처리됩니다.',
     ui.ButtonSet.OK_CANCEL);
   if (r1.getSelectedButton() !== ui.Button.OK) return;
   const date = parseUserDate_(r1.getResponseText(), today);
   if (!date) { ui.alert('날짜를 이해하지 못했어요. (예: 2026-05-30 또는 5/30)'); return; }
 
-  // 2) 이름 목록 입력
-  const r2 = ui.prompt('한꺼번에 출석 — ② 이름 (' + Utilities.formatDate(date, Session.getScriptTimeZone(), 'M/d') + ')',
-    '출석한 학생 이름을 붙여넣으세요.\n줄바꿈·쉼표·공백으로 여러 명 구분돼요.',
-    ui.ButtonSet.OK_CANCEL);
-  if (r2.getSelectedButton() !== ui.Button.OK) return;
-  const names = String(r2.getResponseText()).split(/[\n,]+/)
-    .map(s => s.trim()).filter(s => s.length);
-  if (!names.length) { ui.alert('이름이 비어 있어요.'); return; }
-
-  // 3) 이름 → 소유행 인덱스 (정확히 일치, 첫 출석칸~빈칸 찾기)
-  const last = sh.getLastRow();
-  const nameCol = sh.getRange(DATA_START_ROW, COL_NAME, last - DATA_START_ROW + 1, 1).getValues();
-  const helper = sh.getRange(DATA_START_ROW, HELPER_COL, last - DATA_START_ROW + 1, 1).getValues();
-  const nameToRow = {};
-  for (let i = 0; i < nameCol.length; i++) {
-    if (String(helper[i][0]) === CONT) continue;
-    const nm = String(nameCol[i][0]).trim();
-    if (nm && !(nm in nameToRow)) nameToRow[nm] = DATA_START_ROW + i; // 첫 등장 우선
-  }
-
+  // 3) 각 학생 처리
   let okCnt = 0, dupCnt = 0;
-  const notFound = [], full = [];
-  const owners = {};
-  names.forEach(nm => {
-    const owner = nameToRow[nm];
-    if (!owner) { notFound.push(nm); return; }
+  const full = [];
+  const done = {};
+  owners.forEach(owner => {
     const plan = parsePlan_(sh.getRange(owner, COL_PLAN).getValue());
     const rows = plan ? plan.rows : 1;
-    // 이미 그 날짜가 있으면 중복 스킵
     const block = sh.getRange(owner, GRID_START, rows, GRID_COLS).getValues();
     let already = false;
     for (let rr = 0; rr < rows && !already; rr++)
@@ -684,19 +679,17 @@ function bulkAttendance() {
         const v = block[rr][cc];
         if (v instanceof Date && sameDay_(v, date)) { already = true; break; }
       }
-    if (already) { dupCnt++; owners[owner] = true; return; }
-    // 첫 번째 빈 칸 찾기(색칠된 회차칸 우선, 없으면 그냥 첫 빈칸)
+    if (already) { dupCnt++; done[owner] = true; return; }
     const target = firstEmptyGridCell_(sh, owner, rows);
-    if (!target) { full.push(nm); return; }
+    if (!target) { full.push(selRows[owner]); return; }
     sh.getRange(target.r, target.c).setValue(date).setNumberFormat('M/d').setBackground(C_USED);
-    owners[owner] = true; okCnt++;
+    done[owner] = true; okCnt++;
   });
-  Object.keys(owners).forEach(o => recomputeStripOwner_(sh, Number(o)));
+  Object.keys(done).forEach(o => recomputeStripOwner_(sh, Number(o)));
 
-  let msg = '✅ 출석 처리: ' + okCnt + '명';
+  let msg = '✅ ' + Utilities.formatDate(date, Session.getScriptTimeZone(), 'M월 d일') + ' 출석 처리: ' + okCnt + '명';
   if (dupCnt) msg += '\n(이미 그 날짜 있음: ' + dupCnt + '명 건너뜀)';
   if (full.length) msg += '\n⚠️ 칸이 꽉 참: ' + full.join(', ');
-  if (notFound.length) msg += '\n❓ 못 찾은 이름: ' + notFound.join(', ');
   ui.alert('한꺼번에 출석 완료', msg, ui.ButtonSet.OK);
 }
 
