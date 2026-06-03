@@ -199,7 +199,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v34 (2026-06-03) 한달치 생성+지난달 보관+집계 병합';
+const CODE_VERSION = 'v35 (2026-06-03) 한달치 생성 시 이슈체크 드롭다운 자동적용';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -1213,13 +1213,18 @@ function makeMonthLogs() {
     const sh = tpl.copyTo(ss).setName(nm);
     sh.getRange(LOG_HEADER_ROW, LOG_NAME_COL).setValue(year + '.' + pad2_(month) + '.' + pad2_(d));
     const issueCol = findColByHeader_(sh, ISSUE_HEADER, LOG_HEADER_ROW);
+    const rows = names.length || 50; // 이름 없으면 기본 50줄에 드롭다운
     if (names.length) {
       sh.getRange(LOG_HEADER_ROW + 1, LOG_NAME_COL, names.length, 1).setValues(names.map(function (n) { return [n]; }));
-      if (issueCol) sh.getRange(LOG_HEADER_ROW + 1, issueCol, names.length, 1).clearContent();
+    }
+    if (issueCol) {
+      // 이슈체크 칸: 값 비우고 12개 드롭다운 적용(항상 보장)
+      sh.getRange(LOG_HEADER_ROW + 1, issueCol, rows, 1).clearContent().setDataValidation(
+        SpreadsheetApp.newDataValidation().requireValueInList(ISSUE_OPTIONS, true).setAllowInvalid(true).build());
     }
     made++;
   }
-  ui.alert('완료', made + '개 수업일지 탭을 만들었어요.' + (skip ? ('\n(이미 있어 건너뜀: ' + skip + '개)') : ''), ui.ButtonSet.OK);
+  ui.alert('완료', made + "개 수업일지 탭을 만들었어요. (각 탭 '" + ISSUE_HEADER + "' 칸에 드롭다운 적용)" + (skip ? ('\n이미 있어 건너뜀: ' + skip + '개') : ''), ui.ButtonSet.OK);
 }
 
 // 📦 지난 달 수업일지 탭을 보관 파일(새 구글시트)로 이동
