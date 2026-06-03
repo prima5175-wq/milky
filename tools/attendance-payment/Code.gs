@@ -84,6 +84,8 @@ function onOpen() {
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addItem('🔗 수업일지 연동 설치 (이슈체크→결제기록)', 'setupIssueLink')
     .addItem('🔁 이슈 전체 다시 집계 (모든 수업일지)', 'aggregateIssues')
+    .addItem('📅 한 달치 수업일지 만들기', 'makeMonthLogs')
+    .addItem('📦 지난 달 수업일지 보관(이동)', 'archiveMonthLogs')
     .addItem('🧪 연동 데모 만들기 (빈 새 시트에서)', 'makeDemo')
     .addItem('🔎 코드 버전 확인', 'showVersion')
     .addSeparator()
@@ -197,7 +199,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v33 (2026-06-03) 신규3일차 제거+옵션 추가 안내';
+const CODE_VERSION = 'v34 (2026-06-03) 한달치 생성+지난달 보관+집계 병합';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -1107,28 +1109,166 @@ function aggregateIssues() {
     }
   });
 
-  // 2) 수강생대장 학생별로 날짜순 정리해 기록(중복 제거)
+  // 2) 수강생대장 학생별로 (기존 기록 + 새로 모은 것) 합쳐 날짜순 정리(중복 제거)
+  //    ※ 지난 달 탭을 보관(이동)해도 기존 기록이 지워지지 않도록 '합치기' 방식
   const last = pay.getLastRow();
   const payNames = pay.getRange(DATA_START_ROW, COL_NAME, last - DATA_START_ROW + 1, 1).getValues();
   const helper = pay.getRange(DATA_START_ROW, HELPER_COL, last - DATA_START_ROW + 1, 1).getValues();
+  const existing = pay.getRange(DATA_START_ROW, logCol, last - DATA_START_ROW + 1, 1).getValues();
+  const yr = new Date().getFullYear();
   let cntStu = 0, cntIssue = 0;
   for (let i = 0; i < payNames.length; i++) {
     if (String(helper[i][0]) === CONT) continue;
     const nm = String(payNames[i][0]).trim();
     if (!nm) continue;
-    const arr = map[normName_(nm)];
-    if (!arr || !arr.length) continue;
-    arr.sort(function (a, b) { return a.d - b.d; });
-    const seen = {}, parts = [];
-    arr.forEach(function (x) {
-      const e = (x.d.getMonth() + 1) + '/' + x.d.getDate() + ' ' + x.t;
-      if (!seen[e]) { seen[e] = 1; parts.push(e); }
-    });
-    pay.getRange(DATA_START_ROW + i, logCol).setValue(parts.join(', ')).setNumberFormat('@');
-    cntStu++; cntIssue += parts.length;
+    const seen = {}, items = []; // {key,d,text}
+    function add(text, d) {
+      text = String(text).trim();
+      if (!text || seen[text]) return;
+      seen[text] = 1;
+      const dd = d || parseAnyDate_(text, yr) || new Date(9999, 0, 1);
+      items.push({ d: dd, text: text });
+    }
+    // 기존 셀 내용 먼저 보존
+    String(existing[i][0] || '').split(/\s*,\s*/).forEach(function (t) { add(t); });
+    // 수업일지에서 모은 것 추가
+    const arr = map[normName_(nm)] || [];
+    arr.forEach(function (x) { add((x.d.getMonth() + 1) + '/' + x.d.getDate() + ' ' + x.t, x.d); });
+    if (!items.length) continue;
+    items.sort(function (a, b) { return a.d - b.d; });
+    pay.getRange(DATA_START_ROW + i, logCol).setValue(items.map(function (x) { return x.text; }).join(', ')).setNumberFormat('@');
+    cntStu++; cntIssue += items.length;
   }
   ui.alert('이슈 전체 집계 완료',
-    logs.length + '개 수업일지에서 ' + cntStu + '명 / 이슈 ' + cntIssue + '건을 모아 정리했어요.',
+    logs.length + '개 수업일지에서 모아 정리했어요. (기존 기록 유지 + 합치기)\n학생 ' + cntStu + '명 / 이슈 ' + cntIssue + '건',
+    ui.ButtonSet.OK);
+}
+
+// ====================================================================
+// 📅 한 달치 수업일지 미리 만들기 / 지난 달 보관(이동)
+// ====================================================================
+function pad2_(n) { return ('0' + n).slice(-2); }
+
+// 템플릿이 될 수업일지 시트: '수업일지템플릿' 우선 → 없으면 아무 수업일지류
+function findLogTemplate_(ss) {
+  return ss.getSheetByName('수업일지템플릿')
+      || ss.getSheets().filter(function (s) { return isLogSheet_(s); })[0]
+      || null;
+}
+
+// 수강생대장 현재 학생 이름들(연속행·빈칸 제외)
+function activeStudentNames_(pay) {
+  const last = pay.getLastRow();
+  if (last < DATA_START_ROW) return [];
+  const names = pay.getRange(DATA_START_ROW, COL_NAME, last - DATA_START_ROW + 1, 1).getValues();
+  const helper = pay.getRange(DATA_START_ROW, HELPER_COL, last - DATA_START_ROW + 1, 1).getValues();
+  const out = [];
+  for (let i = 0; i < names.length; i++) {
+    if (String(helper[i][0]) === CONT) continue;
+    const nm = String(names[i][0]).trim();
+    if (nm) out.push(nm);
+  }
+  return out;
+}
+
+// 📅 한 달치 수업일지 탭(M/1 ~ M/말일) 자동 생성
+function makeMonthLogs() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const today = new Date();
+
+  const r = ui.prompt('한 달치 수업일지 만들기',
+    '몇 월을 만들까요?  예: 7  또는  2026-07\n(빈칸이면 다음 달)',
+    ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  let year, month;
+  const t = String(r.getResponseText()).trim();
+  if (!t) { const d = new Date(today.getFullYear(), today.getMonth() + 1, 1); year = d.getFullYear(); month = d.getMonth() + 1; }
+  else {
+    let m = t.match(/^(\d{4})[.\-/](\d{1,2})$/);
+    if (m) { year = +m[1]; month = +m[2]; }
+    else if (/^\d{1,2}$/.test(t)) { year = today.getFullYear(); month = +t; }
+    else { ui.alert('월을 이해하지 못했어요. (예: 7 또는 2026-07)'); return; }
+  }
+  if (month < 1 || month > 12) { ui.alert('1~12월로 입력하세요.'); return; }
+
+  const tpl = findLogTemplate_(ss);
+  if (!tpl) {
+    ui.alert("템플릿이 될 수업일지가 없어요.\n비어 있는 수업일지 한 장을 '수업일지템플릿' 이름으로 두거나,\n'이슈체크' 칸이 있는 수업일지 한 장을 먼저 만들어 주세요.");
+    return;
+  }
+  const pay = findPaySheet_(ss);
+  const names = pay ? activeStudentNames_(pay) : [];
+
+  const lastDay = new Date(year, month, 0).getDate();
+  const res = ui.alert('확인',
+    year + '년 ' + month + '월 1일 ~ ' + month + '월 ' + lastDay + "일,\n총 " + lastDay + "개 수업일지 탭('" + month + "/1' ~ '" + month + "/" + lastDay + "')을 만듭니다.\n템플릿: '" + tpl.getName() + "'\n진행할까요?",
+    ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+
+  let made = 0, skip = 0;
+  for (let d = 1; d <= lastDay; d++) {
+    const nm = month + '/' + d;
+    if (ss.getSheetByName(nm)) { skip++; continue; }
+    const sh = tpl.copyTo(ss).setName(nm);
+    sh.getRange(LOG_HEADER_ROW, LOG_NAME_COL).setValue(year + '.' + pad2_(month) + '.' + pad2_(d));
+    const issueCol = findColByHeader_(sh, ISSUE_HEADER, LOG_HEADER_ROW);
+    if (names.length) {
+      sh.getRange(LOG_HEADER_ROW + 1, LOG_NAME_COL, names.length, 1).setValues(names.map(function (n) { return [n]; }));
+      if (issueCol) sh.getRange(LOG_HEADER_ROW + 1, issueCol, names.length, 1).clearContent();
+    }
+    made++;
+  }
+  ui.alert('완료', made + '개 수업일지 탭을 만들었어요.' + (skip ? ('\n(이미 있어 건너뜀: ' + skip + '개)') : ''), ui.ButtonSet.OK);
+}
+
+// 📦 지난 달 수업일지 탭을 보관 파일(새 구글시트)로 이동
+function archiveMonthLogs() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const today = new Date();
+
+  const r = ui.prompt('지난 달 수업일지 보관',
+    '어느 달을 보관할까요?  예: 6  또는  2026-06\n(빈칸이면 지난 달)',
+    ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  let year, month;
+  const t = String(r.getResponseText()).trim();
+  if (!t) { const d = new Date(today.getFullYear(), today.getMonth() - 1, 1); year = d.getFullYear(); month = d.getMonth() + 1; }
+  else {
+    let m = t.match(/^(\d{4})[.\-/](\d{1,2})$/);
+    if (m) { year = +m[1]; month = +m[2]; }
+    else if (/^\d{1,2}$/.test(t)) { year = today.getFullYear(); month = +t; }
+    else { ui.alert('월을 이해하지 못했어요. (예: 6 또는 2026-06)'); return; }
+  }
+
+  // 그 달의 수업일지 탭 모으기(탭 이름 M/D 의 M이 일치 + 수업일지류)
+  const targets = ss.getSheets().filter(function (s) {
+    const dt = parseAnyDate_(s.getName(), year);
+    return dt && (dt.getMonth() + 1) === month && isLogSheet_(s);
+  });
+  if (!targets.length) { ui.alert(month + '월 수업일지 탭을 찾지 못했어요.'); return; }
+
+  const res = ui.alert('확인',
+    month + "월 수업일지 " + targets.length + "개 탭을 새 보관 파일로 옮기고, 이 파일에서는 삭제합니다.\n" +
+    '※ 옮기기 전에 메뉴 [🔁 이슈 전체 다시 집계]를 먼저 눌러 기록을 수강생대장에 확정해두면 안전해요.\n진행할까요?',
+    ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+
+  const archiveName = '수업일지 보관 ' + year + '-' + pad2_(month);
+  const archive = SpreadsheetApp.create(archiveName);
+  targets.forEach(function (s) {
+    const copied = s.copyTo(archive);
+    copied.setName(s.getName());
+  });
+  // 보관본 기본시트(Sheet1/시트1) 정리
+  const def = archive.getSheets()[0];
+  if (archive.getSheets().length > targets.length && /sheet1|시트1/i.test(def.getName())) archive.deleteSheet(def);
+  // 원본 삭제
+  targets.forEach(function (s) { ss.deleteSheet(s); });
+
+  ui.alert('보관 완료',
+    month + '월 ' + targets.length + "개 탭을 '" + archiveName + "' 파일로 옮겼어요.\n\n보관 파일 주소:\n" + archive.getUrl(),
     ui.ButtonSet.OK);
 }
 
