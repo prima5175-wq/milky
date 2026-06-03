@@ -144,11 +144,11 @@ function fixPayColumns() {
     const plan = parsePlan_(sh.getRange(row, COL_PLAN).getValue());
     const full = plan ? priceLookup_(plan.freq, plan.dur, plan.cycle) : undefined;
 
-    // 4) 기준 금액(원가) 결정: 밀린 금액 > 기존 G > 플랜단가 정가
+    // 4) 기준 금액(원가) 결정: 플랜단가 정가 우선(표와 일치) → 없으면 밀린 금액 → 없으면 기존 G
     let base = null;
-    if (gEmpty && hPrice) { base = hPrice; moved++; }
+    if (typeof full === 'number' && full) { base = full; filled++; }
+    else if (gEmpty && hPrice) { base = hPrice; moved++; }
     else if (!gEmpty && typeof g === 'number') { base = g; }
-    else if (gEmpty && typeof full === 'number' && full) { base = full; filled++; }
 
     if (base !== null) {
       // 5) 할인 반영
@@ -170,7 +170,7 @@ function fixPayColumns() {
     .setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
 
   ui.alert('복구 완료',
-    '✅ 결제일→결제금액 이동: ' + moved + '명\n✅ 플랜단가에서 자동 채움: ' + filled + '명\n✅ 할인 반영: ' + discounted + '명\n\n결제일 칸은 비워졌고 더블클릭하면 달력이 떠요.',
+    '✅ 결제금액을 플랜단가 기준으로 설정: ' + filled + '명\n   (그 중 할인 반영: ' + discounted + '명)\n✅ 플랜이 없어 옛 금액으로 되돌림: ' + moved + '명\n\n이제 결제금액이 플랜단가 표와 일치합니다.\n결제일 칸은 비워졌고 더블클릭하면 달력이 떠요.',
     ui.ButtonSet.OK);
 }
 
@@ -181,7 +181,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v24 (2026-05-30) 결제금액 복구(이동+플랜단가채움+할인반영)';
+const CODE_VERSION = 'v25 (2026-05-30) 결제금액 복구를 플랜단가 정가 기준으로';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
