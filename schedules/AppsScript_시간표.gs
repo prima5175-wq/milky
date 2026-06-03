@@ -27,7 +27,8 @@ var CONFIG = {
 
   방학: {
     '대치': { start: new Date(2026, 6, 24), end: new Date(2026, 7, 20) }, // 7/24~8/20
-    '도곡': { start: new Date(2026, 6, 23), end: new Date(2026, 7, 20) }  // 7/23~8/20
+    '도곡': { start: new Date(2026, 6, 23), end: new Date(2026, 7, 20) }, // 7/23~8/20
+    '구룡초': { start: new Date(2026, 6, 24), end: new Date(2026, 7, 20) } // 7/24~8/20 (대치와 동일, 필요시 수정)
   },
 
   // 방학 운영 시간(30분 그리드용): 09:00~12:00, 12:00~12:30 휴식, 12:30~19:30
@@ -47,6 +48,7 @@ var CONFIG = {
   색: {
     '대치': { head: '#1F4E79', light: '#D6E4F0' },
     '도곡': { head: '#375623', light: '#E2EFD9' },
+    '구룡초': { head: '#996600', light: '#F5ECD9' },
     급여:  { head: '#7030A0' },
     closed: '#D9D9D9', vac: '#FCE4D6',
     sat: '#DDEBF7', sun: '#FCE4EC', today: '#FFF2CC', val: '#E2EFDA', input: '#FFF8E1'
@@ -55,9 +57,9 @@ var CONFIG = {
 
 var SHEETS = {
   대시보드: '대시보드', 급여: '강사_급여', 입력: '입력',
-  정규: { '대치': '정규시간표_대치', '도곡': '정규시간표_도곡' },
-  방학: { '대치': '방학시간표_대치', '도곡': '방학시간표_도곡' },
-  데일리: { '대치': '데일리현황_대치', '도곡': '데일리현황_도곡' }
+  정규: { '대치': '정규시간표_대치', '도곡': '정규시간표_도곡', '구룡초': '정규시간표_구룡초' },
+  방학: { '대치': '방학시간표_대치', '도곡': '방학시간표_도곡', '구룡초': '방학시간표_구룡초' },
+  데일리: { '대치': '데일리현황_대치', '도곡': '데일리현황_도곡', '구룡초': '데일리현황_구룡초' }
 };
 
 var WK = ['일','월','화','수','목','금','토'];
@@ -82,12 +84,15 @@ function buildAll() {
   step('입력',      function () { buildInput(ss); });
   step('정규시간표_대치', function () { buildGrid(ss, '대치', '정규', true); });
   step('정규시간표_도곡', function () { buildGrid(ss, '도곡', '정규', false); });
+  step('정규시간표_구룡초', function () { buildGrid(ss, '구룡초', '정규', true); });
   step('방학시간표_대치', function () { buildVacationDates(ss, '대치'); });
   step('방학시간표_도곡', function () { buildVacationDates(ss, '도곡'); });
+  step('방학시간표_구룡초', function () { buildVacationDates(ss, '구룡초'); });
   var d대치 = step('데일리현황_대치', function () { return buildDaily(ss, '대치', false); });
   var d도곡 = step('데일리현황_도곡', function () { return buildDaily(ss, '도곡', true); });
+  var d구룡초 = step('데일리현황_구룡초', function () { return buildDaily(ss, '구룡초', false); });
 
-  step('급여 연동', function () { if (d대치 && d도곡) linkSalary(ss, d대치.dataStart, d대치.dataEnd); });
+  step('급여 연동', function () { if (d대치 && d도곡 && d구룡초) linkSalary(ss, d대치.dataStart, d대치.dataEnd); });
   step('대시보드', function () { if (d대치) buildDashboard(ss, d대치.totalRow); });
   step('정리/정렬', function () { cleanupSheets(ss); reorderSheets(ss); });
 
@@ -137,7 +142,7 @@ function buildSalary(ss) {
   sh.getRange(3, 1, n, headers.length).setValues(rows);
 
   sh.getRange(3, 4, n, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['시급제','월급제'], true).build());
-  sh.getRange(3, 3, n, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['대치점','도곡점','공통'], true).setAllowInvalid(true).build());
+  sh.getRange(3, 3, n, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['대치점','도곡점','구룡초점','공통'], true).setAllowInvalid(true).build());
   sh.getRange(3, 5, n, 2).setNumberFormat('#,##0"원"');
   sh.getRange(3, 7, n, 3).setNumberFormat('0.0');
   sh.getRange(3, 10, n, 1).setNumberFormat('#,##0"원"');
@@ -177,7 +182,7 @@ function buildInput(ss) {
 
   sh.getRange(3, 1, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation()
     .requireValueInRange(ss.getSheetByName(SHEETS.급여).getRange('B3:B12'), true).setAllowInvalid(true).build());
-  sh.getRange(3, 2, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['대치점','도곡점'], true).build());
+  sh.getRange(3, 2, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['대치점','도곡점','구룡초점'], true).build());
   sh.getRange(3, 3, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['정규','방학'], true).build());
 
   sh.getRange(3, 1, L - 2, 6).setBackground(CONFIG.색.input);
@@ -389,11 +394,11 @@ function buildDaily(ss, branch, noSunday) {
 /* ===================== 급여 연동 =========================== */
 function linkSalary(ss, ds, de) {
   var sh = ss.getSheetByName(SHEETS.급여), n = CONFIG.강사.length;
-  var D1 = "'" + SHEETS.데일리['대치'] + "'", D2 = "'" + SHEETS.데일리['도곡'] + "'";
+  var D1 = "'" + SHEETS.데일리['대치'] + "'", D2 = "'" + SHEETS.데일리['도곡'] + "'", D3 = "'" + SHEETS.데일리['구룡초'] + "'";
   for (var k = 0; k < n; k++) {
     var r = 3 + k, col = colLetter(3 + k);
-    var reg = sumByGubun(D1, col, ds, de, '정규') + '+' + sumByGubun(D2, col, ds, de, '정규');
-    var vac = sumByGubun(D1, col, ds, de, '방학') + '+' + sumByGubun(D2, col, ds, de, '방학');
+    var reg = sumByGubun(D1, col, ds, de, '정규') + '+' + sumByGubun(D2, col, ds, de, '정규') + '+' + sumByGubun(D3, col, ds, de, '정규');
+    var vac = sumByGubun(D1, col, ds, de, '방학') + '+' + sumByGubun(D2, col, ds, de, '방학') + '+' + sumByGubun(D3, col, ds, de, '방학');
     sh.getRange(r, 7).setFormula('=' + reg);
     sh.getRange(r, 8).setFormula('=' + vac);
     sh.getRange(r, 9).setFormula('=G' + r + '+H' + r);
@@ -408,7 +413,7 @@ function sumByGubun(sheet, col, ds, de, gubun) {
 function buildDashboard(ss, dailyTotalRow) {
   var sh = freshSheet(ss, SHEETS.대시보드);
   var n = CONFIG.강사.length, tcol = colLetter(3 + n);
-  var SG = "'" + SHEETS.급여 + "'!", D1 = "'" + SHEETS.데일리['대치'] + "'!", D2 = "'" + SHEETS.데일리['도곡'] + "'!";
+  var SG = "'" + SHEETS.급여 + "'!", D1 = "'" + SHEETS.데일리['대치'] + "'!", D2 = "'" + SHEETS.데일리['도곡'] + "'!", D3 = "'" + SHEETS.데일리['구룡초'] + "'!";
   var WON = '#,##0"원"', HH = '0.0"h"', NM = '0"명"', PCT = '0.0%';
   titleRow(sh, '경영 대시보드 · 강사 운영 / 인건비 / 손익  (' + CONFIG.YEAR + ')', 5, '#C55A11');
   function section(p, t) { sh.getRange(p, 1, 1, 5).merge().setValue(t).setBackground('#7F7F7F').setFontColor('#FFFFFF').setFontWeight('bold').setVerticalAlignment('middle'); sh.setRowHeight(p, 24); }
@@ -438,15 +443,16 @@ function buildDashboard(ss, dailyTotalRow) {
   section(14, '■ 지점별 총 근무시간');
   kv(15, '대치점', '=' + D1 + tcol + dailyTotalRow, HH);
   kv(16, '도곡점', '=' + D2 + tcol + dailyTotalRow, HH);
-  section(17, '■ 매출 · 손익  (월 매출을 노란칸에 입력)');
-  kv(18, '월 매출 (입력)', null, WON, true);
-  kv(19, '총 인건비', '=SUM(' + SG + 'J3:J12)', WON);
-  kv(20, '인건비 비율', '=IFERROR(C19/C18,0)', PCT);
-  kv(21, '인건비 차감 이익', '=C18-C19', WON, false, true);
+  kv(17, '구룡초점', '=' + D3 + tcol + dailyTotalRow, HH);
+  section(18, '■ 매출 · 손익  (월 매출을 노란칸에 입력)');
+  kv(19, '월 매출 (입력)', null, WON, true);
+  kv(20, '총 인건비', '=SUM(' + SG + 'J3:J12)', WON);
+  kv(21, '인건비 비율', '=IFERROR(C20/C19,0)', PCT);
+  kv(22, '인건비 차감 이익', '=C19-C20', WON, false, true);
 
   var rules = [];
-  rules.push(SpreadsheetApp.newConditionalFormatRule().whenNumberGreaterThan(0.4).setBackground('#F8CBAD').setFontColor('#C00000').setRanges([sh.getRange('C20:D20')]).build());
-  rules.push(SpreadsheetApp.newConditionalFormatRule().whenNumberLessThanOrEqualTo(0.3).setBackground('#C6E0B4').setFontColor('#375623').setRanges([sh.getRange('C20:D20')]).build());
+  rules.push(SpreadsheetApp.newConditionalFormatRule().whenNumberGreaterThan(0.4).setBackground('#F8CBAD').setFontColor('#C00000').setRanges([sh.getRange('C21:D21')]).build());
+  rules.push(SpreadsheetApp.newConditionalFormatRule().whenNumberLessThanOrEqualTo(0.3).setBackground('#C6E0B4').setFontColor('#375623').setRanges([sh.getRange('C21:D21')]).build());
   sh.setConditionalFormatRules(rules);
   sh.getRange('E2').setValue('← 이름·시급/월급은 [강사_급여], 일정은 [입력] 탭에서 관리하면 자동 반영').setFontColor('#808080').setFontSize(10);
   sh.setColumnWidth(1, 150); sh.setColumnWidth(2, 70); sh.setColumnWidth(3, 110); sh.setColumnWidth(4, 50); sh.setColumnWidth(5, 250);
@@ -456,13 +462,17 @@ function buildDashboard(ss, dailyTotalRow) {
 /* ----------------------- 정리/정렬 ------------------------- */
 function cleanupSheets(ss) {
   var keep = {};
-  [SHEETS.대시보드, SHEETS.급여, SHEETS.입력, SHEETS.정규['대치'], SHEETS.정규['도곡'],
-   SHEETS.방학['대치'], SHEETS.방학['도곡'], SHEETS.데일리['대치'], SHEETS.데일리['도곡']]
+  [SHEETS.대시보드, SHEETS.급여, SHEETS.입력,
+   SHEETS.정규['대치'], SHEETS.정규['도곡'], SHEETS.정규['구룡초'],
+   SHEETS.방학['대치'], SHEETS.방학['도곡'], SHEETS.방학['구룡초'],
+   SHEETS.데일리['대치'], SHEETS.데일리['도곡'], SHEETS.데일리['구룡초']]
    .forEach(function (n) { keep[n] = true; });
   ss.getSheets().forEach(function (sh) { if (!keep[sh.getName()]) { try { ss.deleteSheet(sh); } catch (e) {} } });
 }
 function reorderSheets(ss) {
-  [SHEETS.대시보드, SHEETS.급여, SHEETS.입력, SHEETS.정규['대치'], SHEETS.정규['도곡'],
-   SHEETS.방학['대치'], SHEETS.방학['도곡'], SHEETS.데일리['대치'], SHEETS.데일리['도곡']]
+  [SHEETS.대시보드, SHEETS.급여, SHEETS.입력,
+   SHEETS.정규['대치'], SHEETS.정규['도곡'], SHEETS.정규['구룡초'],
+   SHEETS.방학['대치'], SHEETS.방학['도곡'], SHEETS.방학['구룡초'],
+   SHEETS.데일리['대치'], SHEETS.데일리['도곡'], SHEETS.데일리['구룡초']]
    .forEach(function (name, idx) { var sh = ss.getSheetByName(name); if (sh) { ss.setActiveSheet(sh); ss.moveActiveSheet(idx + 1); } });
 }
