@@ -82,8 +82,8 @@ function buildAll() {
   step('입력',      function () { buildInput(ss); });
   step('정규시간표_대치', function () { buildGrid(ss, '대치', '정규', true); });
   step('정규시간표_도곡', function () { buildGrid(ss, '도곡', '정규', false); });
-  step('방학시간표_대치', function () { buildGrid(ss, '대치', '방학', true); });
-  step('방학시간표_도곡', function () { buildGrid(ss, '도곡', '방학', false); });
+  step('방학시간표_대치', function () { buildVacationDates(ss, '대치'); });
+  step('방학시간표_도곡', function () { buildVacationDates(ss, '도곡'); });
   var d대치 = step('데일리현황_대치', function () { return buildDaily(ss, '대치', false); });
   var d도곡 = step('데일리현황_도곡', function () { return buildDaily(ss, '도곡', true); });
 
@@ -251,6 +251,69 @@ function buildGrid(ss, branch, gubun, sundayOpen) {
   sh.setColumnWidth(1, 100);
   for (var c = 2; c <= cols; c++) sh.setColumnWidth(c, 100);
   sh.setFrozenRows(2); sh.setFrozenColumns(1);
+}
+
+/* ===================== 방학 시간표 (날짜별 · 30분) ========= */
+function buildVacationDates(ss, branch) {
+  var sh = freshSheet(ss, SHEETS.방학[branch]);
+  var C = CONFIG.색[branch], BF = branch + '점', L = CONFIG.LASTIN, v = CONFIG.방학[branch];
+  var noSunday = (branch === '도곡');
+  var brk = CONFIG.방학운영.휴식;                       // [12, 12.5] 점심
+
+  var startT = 9, endT = 19, steps = Math.round((endT - startT) / 0.5);
+  var slots = []; for (var s = 0; s <= steps; s++) slots.push(startT + s * 0.5);
+  var ncols = 2 + slots.length;                         // 날짜,요일 + 시간슬롯
+
+  titleRow(sh, '방학 시간표(날짜별) · ' + branch + '점   (' + fmtMD(v.start) + '~' + fmtMD(v.end) +
+    ')  30분 단위 · 입력시트 자동 · 한 칸 여러 강사', ncols, C.head);
+  var hdr = ['날짜', '요일'].concat(slots.map(function (t) { return fmtHM(t); }));
+  sh.getRange(2, 1, 1, ncols).setValues([hdr]);
+  styleHead(sh.getRange(2, 1, 1, ncols), C.head);
+  sh.getRange(2, 3, 1, slots.length).setFontSize(8);
+
+  var dates = dateList(v.start, v.end), dataStart = 3;
+  var aCol = [], bCol = [], grid = [];
+  for (var i = 0; i < dates.length; i++) {
+    var dt = dates[i], w = WK[dt.getDay()];
+    aCol.push([dt]); bCol.push([w]);
+    var closed = noSunday && w === '일';
+    var row = [];
+    for (var j = 0; j < slots.length; j++) {
+      var t = slots[j], isBreak = (t >= brk[0] && t < brk[1]);
+      if (closed || isBreak) { row.push(''); }
+      else {
+        row.push('=IFERROR(TEXTJOIN(", ",TRUE,FILTER(' + IN + '$A$3:$A$' + L + ',(' +
+          IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="방학")*(ISNUMBER(SEARCH("' +
+          w + '",' + IN + '$G$3:$G$' + L + ')))*(' + IN + '$E$3:$E$' + L + '<=' + t + ')*(' +
+          IN + '$F$3:$F$' + L + '>' + t + '))),"")');
+      }
+    }
+    grid.push(row);
+  }
+  sh.getRange(dataStart, 1, dates.length, 1).setValues(aCol).setNumberFormat('m"/"d').setHorizontalAlignment('center');
+  sh.getRange(dataStart, 2, dates.length, 1).setValues(bCol).setHorizontalAlignment('center');
+  sh.getRange(dataStart, 3, dates.length, slots.length).setFormulas(grid)
+    .setHorizontalAlignment('center').setVerticalAlignment('middle').setWrap(true).setFontSize(8);
+
+  // 점심 열 음영
+  for (var j2 = 0; j2 < slots.length; j2++)
+    if (slots[j2] >= brk[0] && slots[j2] < brk[1]) sh.getRange(dataStart, 3 + j2, dates.length, 1).setBackground(CONFIG.색.closed);
+  // 휴무행 / 주말 색
+  for (var i2 = 0; i2 < dates.length; i2++) {
+    var w2 = bCol[i2][0], r = dataStart + i2;
+    if (noSunday && w2 === '일') sh.getRange(r, 3, 1, slots.length).setBackground(CONFIG.색.closed);
+    if (w2 === '토') sh.getRange(r, 2).setBackground(CONFIG.색.sat).setFontColor('#1F4E79');
+    if (w2 === '일') sh.getRange(r, 2).setBackground(CONFIG.색.sun).setFontColor('#C00000');
+    sh.setRowHeight(r, 30);
+  }
+  sh.getRange(2, 1, dates.length + 1, ncols).setBorder(true, true, true, true, true, true, '#BFBFBF', SpreadsheetApp.BorderStyle.SOLID);
+  sh.setColumnWidth(1, 52); sh.setColumnWidth(2, 38);
+  for (var c = 3; c <= ncols; c++) sh.setColumnWidth(c, 54);
+  sh.setFrozenRows(2); sh.setFrozenColumns(2);
+
+  var rules = [SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$A' + dataStart + '=TODAY()')
+    .setBackground(CONFIG.색.today).setRanges([sh.getRange(dataStart, 1, dates.length, ncols)]).build()];
+  sh.setConditionalFormatRules(rules);
 }
 
 /* ===================== 데일리 현황 ========================= */
