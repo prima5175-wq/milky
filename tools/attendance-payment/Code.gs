@@ -67,6 +67,7 @@ function onOpen() {
     .addSeparator()
     .addItem('🗑 선택 학생 삭제 (휴원)', 'deleteStudent')
     .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
+    .addItem('🛠 결제금액·결제일 칸 정리', 'fixPayColumns')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addItem('🔎 코드 버전 확인', 'showVersion')
     .addSeparator()
@@ -106,6 +107,51 @@ function onChangeHandler(e) {
   renumber_(sh);
 }
 
+// 🛠 결제금액이 결제일(H) 칸으로 밀려들어간 경우 → 금액을 결제금액(G)으로 되돌리고 결제일 비움
+function fixPayColumns() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0 || sh.getName() === T_SHEET) {
+    ui.alert('명단 시트에서 실행하세요.'); return;
+  }
+  const last = sh.getLastRow();
+  const n = last - DATA_START_ROW + 1;
+  if (n < 1) { ui.alert('데이터가 없어요.'); return; }
+
+  const gRange = sh.getRange(DATA_START_ROW, COL_PRICE, n, 1);     // 결제금액
+  const hRange = sh.getRange(DATA_START_ROW, COL_PAYDATE, n, 1);   // 결제일
+  const gVals = gRange.getValues();
+  const hVals = hRange.getValues();
+  const EPOCH = new Date(1899, 11, 30).getTime();
+
+  const out = [];
+  let moved = 0;
+  for (let i = 0; i < n; i++) {
+    const g = gVals[i][0];
+    let h = hVals[i][0];
+    // 날짜서식 때문에 금액이 Date로 읽히면 → 원래 숫자(일련번호)로 환산
+    if (h instanceof Date) h = Math.round((h.getTime() - EPOCH) / 86400000);
+    const gEmpty = (g === '' || g === null);
+    if (gEmpty && typeof h === 'number' && h > 1000) { out.push([h]); moved++; }
+    else out.push([g]);
+  }
+  if (!moved) {
+    ui.alert('옮길 금액이 없어요. (이미 정상이거나, 결제일 칸이 비어 있음)');
+    return;
+  }
+  const res = ui.alert('결제금액·결제일 칸 정리',
+    '결제일(H) 칸에 들어간 금액 ' + moved + '개를 결제금액(G) 칸으로 옮기고,\n결제일 칸은 달력용으로 비울게요. 진행할까요?',
+    ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+
+  gRange.setValues(out).setNumberFormat('#,##0');
+  // 결제일 비우고 달력(날짜선택기) + 날짜서식
+  hRange.clearContent().setNumberFormat('yyyy-mm-dd')
+    .setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
+  ui.alert('완료', '✅ 금액 ' + moved + '개를 결제금액 칸으로 옮겼어요.\n결제일 칸은 비워졌고 더블클릭하면 달력이 떠요.', ui.ButtonSet.OK);
+}
+
 function tidyNumberBorders() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   renumber_(sh);
@@ -113,7 +159,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v22 (2026-05-30) 결제일 칸 추가-전체 열 재정렬';
+const CODE_VERSION = 'v23 (2026-05-30) 결제금액→결제일 밀림 정리 버튼';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
