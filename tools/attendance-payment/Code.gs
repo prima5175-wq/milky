@@ -181,7 +181,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v25 (2026-05-30) 결제금액 복구를 플랜단가 정가 기준으로';
+const CODE_VERSION = 'v26 (2026-05-30) 등록여부 옵션 추가(미납중·재발송1·2차)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -218,15 +218,18 @@ function setupSheet() {
     SpreadsheetApp.newDataValidation().requireValueInList(planOptions_(), true).build());
 
   // E 등록여부 드롭다운 + 색상(조건부 서식)
-  const regList = ['결제완료_정상등록', '결제대기 중', '등록안함'];
+  const regList = ['결제완료_정상등록', '결제대기 중', '미납중', '재발송1차', '재발송2차', '등록안함'];
   sh.getRange(DATA_START_ROW, COL_REG, n, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(regList, true).build());
   // 색(조건부서식)은 열 전체(E2:E)에 적용 → 학생을 더 추가해도 자동으로 색 입혀짐
   const regRange = sh.getRange(columnLetter_(COL_REG) + DATA_START_ROW + ':' + columnLetter_(COL_REG));
   const rules = []; // 기존 조건부서식 전부 제거 후 새로 구성(주차칸 빨강 잔재 방지)
-  rules.push(cfEq_(regRange, '결제완료_정상등록', '#b6d7a8'));
-  rules.push(cfEq_(regRange, '결제대기 중', '#ffe599'));
-  rules.push(cfEq_(regRange, '등록안함', '#ea9999'));
+  rules.push(cfEq_(regRange, '결제완료_정상등록', '#b6d7a8'));   // 초록
+  rules.push(cfEq_(regRange, '결제대기 중', '#ffe599'));         // 노랑
+  rules.push(cfEq_(regRange, '미납중', '#f4cccc'));             // 연한 빨강
+  rules.push(cfEq_(regRange, '재발송1차', '#ea9999'));          // 빨강
+  rules.push(cfEq_(regRange, '재발송2차', '#e06666'));          // 진한 빨강
+  rules.push(cfEq_(regRange, '등록안함', '#cc0000'));           // 가장 진한 빨강
   sh.setConditionalFormatRules(rules);
 
   // F 결제방식 드롭다운 (직접 입력·여러 개 입력 허용)
