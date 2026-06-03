@@ -2,8 +2,8 @@
  * 학원 명단 시트 - 등록회차 클릭 시 회차 칸 자동 생성
  * ------------------------------------------------------------
  * 시트 구조(열):
- *   A 번호 · B 이름 · C 학교/학년 · D 휴대전화 · E 등록여부 · F 결제금액 · G 등록회차
- *   H 형제할인 · I 등록일 · J 다음등록일 · K~O 주차 띠(5주) · P열~ 회차(출석) 칸
+ *   A 번호 · B 이름 · C 학교/학년 · D 휴대전화 · E 등록여부 · F 결제방식 · G 결제금액
+ *   H 결제일 · I 등록회차 · J 할인 · K 등록일 · L 다음등록일 · M~Q 주차 띠(5주) · R열~ 회차(출석) 칸
  *
  * 동작:
  *   G(등록회차) 드롭다운을 고르면  →  그 자리에서 바로 회차 칸이 생성됩니다.
@@ -27,13 +27,14 @@ const COL_NAME  = 2;        // B 이름
 const COL_REG   = 5;        // E 등록여부
 const COL_PAYMETHOD = 6;    // F 결제방식
 const COL_PRICE = 7;        // G 결제금액
-const COL_PLAN  = 8;        // H 등록회차
-const COL_SIBLING = 9;      // I 할인
-const COL_REGDATE = 10;     // J 등록일(달력)
-const COL_NEXTREG = 11;     // K 다음등록일(달력)
-const WEEK_START  = 12;     // L열부터 주차 띠(한 줄=한 달, 5주씩)
+const COL_PAYDATE = 8;      // H 결제일(달력) ← 결제금액 오른쪽에 신규
+const COL_PLAN  = 9;        // I 등록회차
+const COL_SIBLING = 10;     // J 할인
+const COL_REGDATE = 11;     // K 등록일(달력)
+const COL_NEXTREG = 12;     // L 다음등록일(달력)
+const WEEK_START  = 13;     // M열부터 주차 띠(한 줄=한 달, 5주씩)
 const WEEK_COLS   = 5;      // 한 달당 주차 칸 수(5주)
-const GRID_START  = WEEK_START + WEEK_COLS; // 16(P)열부터 회차 칸
+const GRID_START  = WEEK_START + WEEK_COLS; // 18(R)열부터 회차 칸
 const GRID_COLS   = 31;     // 회차 칸 가로 개수(매일반 대응)
 const HELPER_COL   = GRID_START + GRID_COLS;     // 연속행 표시용(숨김)
 const HELPER_PRICE = GRID_START + GRID_COLS + 1; // 형제할인 전 원가 저장(숨김)
@@ -112,7 +113,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v21 (2026-05-30) 등록여부 색을 열전체 적용(추가행 자동)';
+const CODE_VERSION = 'v22 (2026-05-30) 결제일 칸 추가-전체 열 재정렬';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -139,9 +140,9 @@ function setupSheet() {
   const maxRow = sh.getMaxRows();
   const n = maxRow - DATA_START_ROW + 1;
 
-  // 머리글 A~K
+  // 머리글 A~L (결제금액 오른쪽에 '결제일' 포함)
   sh.getRange(1, 1, 1, COL_NEXTREG).setValues([[
-    '번호','이름','학교/학년','휴대전화','등록여부','결제방식','결제금액','등록회차','할인','등록일','다음등록일']])
+    '번호','이름','학교/학년','휴대전화','등록여부','결제방식','결제금액','결제일','등록회차','할인','등록일','다음등록일']])
     .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
 
   // G 등록회차 드롭다운
@@ -178,12 +179,15 @@ function setupSheet() {
     SpreadsheetApp.newDataValidation().requireValueInList(['정상', '형제할인', '오픈할인'], true).build());
   sh.setColumnWidth(COL_SIBLING, 78);
 
-  // I 등록일 · J 다음등록일 — 달력(날짜 선택기) + 형식
+  // H 결제일 · K 등록일 · L 다음등록일 — 달력(날짜 선택기) + 형식
   const dateDV = SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build();
+  sh.getRange(1, COL_PAYDATE).setNote('결제한 날짜. 칸을 더블클릭하면 달력이 떠요.');
   sh.getRange(1, COL_REGDATE).setNote('칸을 더블클릭하면 달력이 떠요. 등록회차를 고르면 오늘 날짜가 자동 기록됩니다.');
   sh.getRange(1, COL_NEXTREG).setNote('칸을 더블클릭하면 달력이 떠요. 등록회차/등록일을 정하면 자동 계산되고, 직접 고쳐도 됩니다.\n3일 전 노랑·1일 전 주황·당일/지남 빨강.');
+  sh.getRange(DATA_START_ROW, COL_PAYDATE, n, 1).setNumberFormat('yyyy-mm-dd').setDataValidation(dateDV);
   sh.getRange(DATA_START_ROW, COL_REGDATE, n, 1).setNumberFormat('yyyy-mm-dd').setDataValidation(dateDV);
   sh.getRange(DATA_START_ROW, COL_NEXTREG, n, 1).setNumberFormat('yyyy-mm-dd').setDataValidation(dateDV);
+  sh.setColumnWidth(COL_PAYDATE, 90);
   sh.setColumnWidth(COL_REGDATE, 90);
   sh.setColumnWidth(COL_NEXTREG, 90);
 
