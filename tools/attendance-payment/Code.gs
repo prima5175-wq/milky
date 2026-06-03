@@ -193,7 +193,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v29 (2026-06-03) 연동 데모 만들기 추가';
+const CODE_VERSION = 'v30 (2026-06-03) 수업일지 구조인식(매일 새 탭 대응)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -609,8 +609,9 @@ function priceLookup_(freq, dur, cycle) {
 function onEdit(e) {
   const sh = e.range.getSheet();
   if (sh.getName() === T_SHEET) { T_onEdit_(e); return; }
-  if (sh.getName() === LOG_SHEET) { handleIssueEdit_(e); return; }
   if (HELPER_SHEETS.indexOf(sh.getName()) >= 0) return;
+  // 수업일지류(이름이 매일 달라져도 '이슈체크' 머리글 구조로 자동 인식)
+  if (isLogSheet_(sh)) { handleIssueEdit_(e); return; }
   const row = e.range.getRow();
   const col = e.range.getColumn();
   if (row < DATA_START_ROW) return;
@@ -968,12 +969,19 @@ function findColByHeader_(sh, headerText, headerRow) {
   return 0;
 }
 
-// 결제(명단) 시트 찾기: 이름(B1='이름') 머리글이 있는 시트
+// 수업일지류 시트인지 판별: 머리글 줄(보통 3행)에 '이슈체크' 칸이 있으면 일지로 봄
+//   → 매일 새 탭(날짜 이름 등)이 생겨도 이름과 무관하게 인식
+function isLogSheet_(sh) {
+  return findColByHeader_(sh, ISSUE_HEADER, LOG_HEADER_ROW) > 0;
+}
+
+// 결제(명단=수강생대장) 시트 찾기: 이름(B1='이름') 머리글이 있는 시트
 function findPaySheet_(ss) {
   const sheets = ss.getSheets();
   for (let i = 0; i < sheets.length; i++) {
     const s = sheets[i], nm = s.getName();
-    if (HELPER_SHEETS.indexOf(nm) >= 0 || nm === T_SHEET || nm === LOG_SHEET) continue;
+    if (HELPER_SHEETS.indexOf(nm) >= 0 || nm === T_SHEET) continue;
+    if (isLogSheet_(s)) continue; // 수업일지류 제외
     if (String(s.getRange(1, COL_NAME).getValue()).trim() === '이름') return s;
   }
   return null;
@@ -1044,32 +1052,32 @@ function recordIssueToPay_(name, issue, date) {
   cell.setValue(cur ? (cur + ', ' + entry) : entry).setNumberFormat('@');
 }
 
-// 🔗 연동 설치: 수업일지 이슈체크 드롭다운 + 결제 시트 기록 칸 준비
+// 🔗 연동 설치: 수강생대장 이슈기록 칸 준비 + (가능하면) 현재 수업일지에 이슈 드롭다운
 function setupIssueLink() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const log = ss.getSheetByName(LOG_SHEET);
-  if (!log) {
-    ui.alert("'" + LOG_SHEET + "' 탭이 없어요.\n수업일지를 이 파일에 '" + LOG_SHEET + "' 라는 이름의 탭으로 만든(복사한) 뒤 다시 실행하세요.");
-    return;
-  }
-  const issueCol = findColByHeader_(log, ISSUE_HEADER, LOG_HEADER_ROW);
-  if (!issueCol) {
-    ui.alert("수업일지 " + LOG_HEADER_ROW + "행에서 '" + ISSUE_HEADER + "' 머리글을 찾지 못했어요.\n수업일지 머리글 줄(보통 3행)에 '" + ISSUE_HEADER + "' 칸이 있는지 확인해주세요.");
-    return;
-  }
-  // 이슈체크 드롭다운(직접입력·복수 허용)
-  const lastR = Math.max(log.getLastRow(), LOG_HEADER_ROW + 1);
-  log.getRange(LOG_HEADER_ROW + 1, issueCol, lastR - LOG_HEADER_ROW, 1).setDataValidation(
-    SpreadsheetApp.newDataValidation().requireValueInList(ISSUE_OPTIONS, true).setAllowInvalid(true).build());
 
+  // 1) 수강생대장 이슈기록 칸 보장(가장 중요)
   const pay = findPaySheet_(ss);
   if (!pay) { ui.alert("수강생대장(결제) 시트를 찾지 못했어요. ('이름' 머리글이 있는 시트가 필요해요)"); return; }
   ensurePayIssueCol_(pay);
 
+  // 2) 이슈체크 드롭다운: 활성 시트가 수업일지면 거기에, 아니면 '수업일지' 탭이 있으면 거기에
+  let log = isLogSheet_(ss.getActiveSheet()) ? ss.getActiveSheet()
+          : (ss.getSheetByName(LOG_SHEET) || null);
+  let dropMsg = "';' 수업일지의 이슈체크 칸은 자동 인식됩니다(이름 무관).";
+  if (log && isLogSheet_(log)) {
+    const issueCol = findColByHeader_(log, ISSUE_HEADER, LOG_HEADER_ROW);
+    const lastR = Math.max(log.getLastRow(), LOG_HEADER_ROW + 1);
+    log.getRange(LOG_HEADER_ROW + 1, issueCol, lastR - LOG_HEADER_ROW, 1).setDataValidation(
+      SpreadsheetApp.newDataValidation().requireValueInList(ISSUE_OPTIONS, true).setAllowInvalid(true).build());
+    dropMsg = "'" + log.getName() + "' 시트의 이슈체크 칸에 12개 드롭다운을 넣었어요.";
+  }
+
   ui.alert('수업일지 연동 설치 완료',
-    "수업일지('" + LOG_SHEET + "')의 '" + ISSUE_HEADER + "' 칸에서 항목(예: 카톡상담)을 고르면,\n" +
-    "수강생대장 이름 옆 '" + PAY_LOG_HEADER + "' 칸에 수업일지 날짜와 함께 자동 기록됩니다.\n예) 6/1 카톡상담",
+    "이제 어떤 수업일지 시트든(매일 새로 생기는 날짜 탭 포함) '" + ISSUE_HEADER + "' 칸에서\n" +
+    "항목(예: 카톡상담)을 고르면, 수강생대장 이름 옆 '" + PAY_LOG_HEADER + "' 칸에\n" +
+    "그 시트의 날짜와 함께 자동 기록됩니다. 예) 6/1 카톡상담\n\n" + dropMsg,
     ui.ButtonSet.OK);
 }
 
