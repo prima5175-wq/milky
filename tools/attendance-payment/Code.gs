@@ -80,6 +80,7 @@ function onOpen() {
     .addItem('🛠 결제금액·결제일 칸 정리', 'fixPayColumns')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addItem('🔗 수업일지 연동 설치 (이슈체크→결제기록)', 'setupIssueLink')
+    .addItem('🔁 이슈 전체 다시 집계 (모든 수업일지)', 'aggregateIssues')
     .addItem('🧪 연동 데모 만들기 (빈 새 시트에서)', 'makeDemo')
     .addItem('🔎 코드 버전 확인', 'showVersion')
     .addSeparator()
@@ -193,7 +194,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v30 (2026-06-03) 수업일지 구조인식(매일 새 탭 대응)';
+const CODE_VERSION = 'v31 (2026-06-03) 이슈 여러개 누적+전체 집계 버튼';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -1020,7 +1021,11 @@ function handleIssueEdit_(e) {
   const name = String(sh.getRange(e.range.getRow(), LOG_NAME_COL).getValue()).trim();
   if (!name) return;
 
-  recordIssueToPay_(name, issue, logSessionDate_(sh));
+  const date = logSessionDate_(sh);
+  // 한 칸에 여러 이슈(콤마)면 각각 따로 누적
+  issue.split(/\s*,\s*/).forEach(function (one) {
+    if (one) recordIssueToPay_(name, one, date);
+  });
 }
 
 // 결제 시트의 학생 칸에 "M/d 이슈" 누적 기록
@@ -1050,6 +1055,62 @@ function recordIssueToPay_(name, issue, date) {
   // 같은 날 같은 이슈가 이미 있으면 중복 기록 안 함
   if (cur.split(/\s*,\s*/).indexOf(entry) >= 0) return;
   cell.setValue(cur ? (cur + ', ' + entry) : entry).setNumberFormat('@');
+}
+
+// 🔁 모든 수업일지(6/1·6/2·… 매일 탭)를 훑어 학생별 이슈를 수강생대장에 한 번에 집계
+function aggregateIssues() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const pay = findPaySheet_(ss);
+  if (!pay) { ui.alert("수강생대장(결제) 시트를 찾지 못했어요. ('이름' 머리글 필요)"); return; }
+  const logCol = ensurePayIssueCol_(pay);
+
+  // 1) 모든 수업일지류 시트에서 (학생→[{날짜,이슈}]) 수집
+  const logs = ss.getSheets().filter(function (s) { return isLogSheet_(s); });
+  if (!logs.length) { ui.alert('수업일지 시트(이슈체크 칸이 있는 시트)를 찾지 못했어요.'); return; }
+  const map = {}; // normName → [{d:Date, t:이슈}]
+  logs.forEach(function (log) {
+    const date = logSessionDate_(log);
+    const issueCol = findColByHeader_(log, ISSUE_HEADER, LOG_HEADER_ROW);
+    const last = log.getLastRow();
+    if (last <= LOG_HEADER_ROW) return;
+    const cnt = last - LOG_HEADER_ROW;
+    const names = log.getRange(LOG_HEADER_ROW + 1, LOG_NAME_COL, cnt, 1).getValues();
+    const issues = log.getRange(LOG_HEADER_ROW + 1, issueCol, cnt, 1).getValues();
+    for (let i = 0; i < cnt; i++) {
+      const nm = String(names[i][0]).trim();
+      const iss = String(issues[i][0]).trim();
+      if (!nm || !iss) continue;
+      const key = normName_(nm);
+      iss.split(/\s*,\s*/).forEach(function (one) {
+        if (one) (map[key] = map[key] || []).push({ d: date, t: one });
+      });
+    }
+  });
+
+  // 2) 수강생대장 학생별로 날짜순 정리해 기록(중복 제거)
+  const last = pay.getLastRow();
+  const payNames = pay.getRange(DATA_START_ROW, COL_NAME, last - DATA_START_ROW + 1, 1).getValues();
+  const helper = pay.getRange(DATA_START_ROW, HELPER_COL, last - DATA_START_ROW + 1, 1).getValues();
+  let cntStu = 0, cntIssue = 0;
+  for (let i = 0; i < payNames.length; i++) {
+    if (String(helper[i][0]) === CONT) continue;
+    const nm = String(payNames[i][0]).trim();
+    if (!nm) continue;
+    const arr = map[normName_(nm)];
+    if (!arr || !arr.length) continue;
+    arr.sort(function (a, b) { return a.d - b.d; });
+    const seen = {}, parts = [];
+    arr.forEach(function (x) {
+      const e = (x.d.getMonth() + 1) + '/' + x.d.getDate() + ' ' + x.t;
+      if (!seen[e]) { seen[e] = 1; parts.push(e); }
+    });
+    pay.getRange(DATA_START_ROW + i, logCol).setValue(parts.join(', ')).setNumberFormat('@');
+    cntStu++; cntIssue += parts.length;
+  }
+  ui.alert('이슈 전체 집계 완료',
+    logs.length + '개 수업일지에서 ' + cntStu + '명 / 이슈 ' + cntIssue + '건을 모아 정리했어요.',
+    ui.ButtonSet.OK);
 }
 
 // 🔗 연동 설치: 수강생대장 이슈기록 칸 준비 + (가능하면) 현재 수업일지에 이슈 드롭다운
@@ -1113,32 +1174,46 @@ function makeDemo() {
     handlePlanChange_(pay, row); // 회차칸·금액 자동
   });
 
-  // 2) 수업일지(데모)
-  let log = ss.getSheetByName(LOG_SHEET);
-  if (log) ss.deleteSheet(log);
-  log = ss.insertSheet(LOG_SHEET);
-  log.getRange(LOG_HEADER_ROW, 1).setValue('번호');
-  log.getRange(LOG_HEADER_ROW, 2).setValue(ISSUE_HEADER);            // B3 = 이슈체크
-  log.getRange(LOG_HEADER_ROW, LOG_NAME_COL).setValue('2026.06.01'); // C3 = 날짜+이름열 머리글
-  log.getRange(LOG_HEADER_ROW, 4).setValue('특이사항');
-  log.getRange(LOG_HEADER_ROW, 1, 1, 4).setFontWeight('bold').setBackground('#fff2cc')
-    .setHorizontalAlignment('center');
-  students.forEach(function (s, i) {
-    const row = LOG_HEADER_ROW + 1 + i;
-    log.getRange(row, 1).setValue(i + 1);
-    log.getRange(row, LOG_NAME_COL).setValue(s[0]);
+  // 2) 매일 생기는 수업일지 흉내: 6/1, 6/2 두 개 탭 + 샘플 이슈 미리 입력
+  //    유준=이틀 다 이슈(여러 개 누적 시연), 김라희=하루
+  const days = [
+    { tab: '6월1일', date: '2026.06.01', issues: { '유준': '카톡상담', '박민하': '대면상담', '김라희': '신규' } },
+    { tab: '6월2일', date: '2026.06.02', issues: { '유준': '회비납부', '이승욱': '시간표변경' } },
+  ];
+  days.forEach(function (day) {
+    let log = ss.getSheetByName(day.tab);
+    if (log) ss.deleteSheet(log);
+    log = ss.insertSheet(day.tab);
+    log.getRange(LOG_HEADER_ROW, 1).setValue('번호');
+    log.getRange(LOG_HEADER_ROW, 2).setValue(ISSUE_HEADER);             // B3 = 이슈체크
+    log.getRange(LOG_HEADER_ROW, LOG_NAME_COL).setValue(day.date);      // C3 = 날짜+이름열 머리글
+    log.getRange(LOG_HEADER_ROW, 4).setValue('특이사항');
+    log.getRange(LOG_HEADER_ROW, 1, 1, 4).setFontWeight('bold').setBackground('#fff2cc')
+      .setHorizontalAlignment('center');
+    students.forEach(function (s, i) {
+      const row = LOG_HEADER_ROW + 1 + i;
+      log.getRange(row, 1).setValue(i + 1);
+      log.getRange(row, LOG_NAME_COL).setValue(s[0]);
+      if (day.issues[s[0]]) log.getRange(row, 2).setValue(day.issues[s[0]]);
+    });
+    // 이슈체크 드롭다운
+    log.getRange(LOG_HEADER_ROW + 1, 2, students.length, 1).setDataValidation(
+      SpreadsheetApp.newDataValidation().requireValueInList(ISSUE_OPTIONS, true).setAllowInvalid(true).build());
+    log.setColumnWidth(2, 110);
+    log.setColumnWidth(LOG_NAME_COL, 90);
+    log.setFrozenRows(LOG_HEADER_ROW);
   });
-  log.setColumnWidth(2, 110);
-  log.setColumnWidth(LOG_NAME_COL, 90);
-  log.setFrozenRows(LOG_HEADER_ROW);
 
-  // 3) 연동 설치(이슈 드롭다운 + 기록칸)
+  // 3) 연동 설치 + 미리 넣은 이슈를 한 번에 집계(누적 시연)
   setupIssueLink();
+  aggregateIssues();
 
-  ss.setActiveSheet(log);
+  ss.setActiveSheet(pay);
   ui.alert('데모 준비 완료 🎉',
-    "1) '" + LOG_SHEET + "' 탭에서 학생 줄의 '" + ISSUE_HEADER + "' 칸을 눌러 '카톡상담' 등을 골라보세요.\n" +
-    "2) '수강생대장' 탭 이름 옆 '" + PAY_LOG_HEADER + "' 칸에 '6/1 카톡상담'이 자동으로 적힙니다.",
+    "'수강생대장' 이름 옆 '" + PAY_LOG_HEADER + "' 칸을 보세요.\n" +
+    "유준 → '6/1 카톡상담, 6/2 회비납부' 처럼 여러 날 이슈가 모두 모여 있어요.\n\n" +
+    "직접 테스트: '6월1일'/'6월2일' 탭에서 학생의 '" + ISSUE_HEADER + "'를 바꾸면\n" +
+    "수강생대장에 바로 누적됩니다. (안 보이면 '🔁 이슈 전체 다시 집계' 클릭)",
     ui.ButtonSet.OK);
 }
 
