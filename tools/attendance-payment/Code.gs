@@ -199,7 +199,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v35 (2026-06-03) 한달치 생성 시 이슈체크 드롭다운 자동적용';
+const CODE_VERSION = 'v36 (2026-06-03) 한달치 생성 시 학생데이터 리셋(수식 보존)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -1197,8 +1197,6 @@ function makeMonthLogs() {
     ui.alert("템플릿이 될 수업일지가 없어요.\n비어 있는 수업일지 한 장을 '수업일지템플릿' 이름으로 두거나,\n'이슈체크' 칸이 있는 수업일지 한 장을 먼저 만들어 주세요.");
     return;
   }
-  const pay = findPaySheet_(ss);
-  const names = pay ? activeStudentNames_(pay) : [];
 
   const lastDay = new Date(year, month, 0).getDate();
   const res = ui.alert('확인',
@@ -1212,14 +1210,21 @@ function makeMonthLogs() {
     if (ss.getSheetByName(nm)) { skip++; continue; }
     const sh = tpl.copyTo(ss).setName(nm);
     sh.getRange(LOG_HEADER_ROW, LOG_NAME_COL).setValue(year + '.' + pad2_(month) + '.' + pad2_(d));
-    const issueCol = findColByHeader_(sh, ISSUE_HEADER, LOG_HEADER_ROW);
-    const rows = names.length || 50; // 이름 없으면 기본 50줄에 드롭다운
-    if (names.length) {
-      sh.getRange(LOG_HEADER_ROW + 1, LOG_NAME_COL, names.length, 1).setValues(names.map(function (n) { return [n]; }));
+
+    // 학생 데이터(이름·시간·담당강사·이슈·체크 등) 전부 리셋 — 단, 진행률 등 수식은 보존
+    const lastRow = sh.getLastRow();
+    const lastCol = sh.getLastColumn();
+    if (lastRow > LOG_HEADER_ROW && lastCol >= 1) {
+      const rng = sh.getRange(LOG_HEADER_ROW + 1, 1, lastRow - LOG_HEADER_ROW, lastCol);
+      const formulas = rng.getFormulas();   // 수식 위치 기억
+      rng.clearContent();                    // 입력값 모두 비움(이름·시간·담당강사·체크 등)
+      rng.setFormulas(formulas);             // 수식 칸만 되살림(진행률 등)
     }
+    // 이슈체크 칸 드롭다운 보장
+    const issueCol = findColByHeader_(sh, ISSUE_HEADER, LOG_HEADER_ROW);
     if (issueCol) {
-      // 이슈체크 칸: 값 비우고 12개 드롭다운 적용(항상 보장)
-      sh.getRange(LOG_HEADER_ROW + 1, issueCol, rows, 1).clearContent().setDataValidation(
+      const rows = Math.max(lastRow - LOG_HEADER_ROW, 50);
+      sh.getRange(LOG_HEADER_ROW + 1, issueCol, rows, 1).setDataValidation(
         SpreadsheetApp.newDataValidation().requireValueInList(ISSUE_OPTIONS, true).setAllowInvalid(true).build());
     }
     made++;
