@@ -80,6 +80,7 @@ function onOpen() {
     .addItem('🛠 결제금액·결제일 칸 정리', 'fixPayColumns')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addItem('🔗 수업일지 연동 설치 (이슈체크→결제기록)', 'setupIssueLink')
+    .addItem('🧪 연동 데모 만들기 (빈 새 시트에서)', 'makeDemo')
     .addItem('🔎 코드 버전 확인', 'showVersion')
     .addSeparator()
     .addSubMenu(ui.createMenu('🌴 방학특강')
@@ -192,7 +193,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v28 (2026-06-03) 이슈기록칸(이름옆)+수업일지 자동연동';
+const CODE_VERSION = 'v29 (2026-06-03) 연동 데모 만들기 추가';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -1069,6 +1070,67 @@ function setupIssueLink() {
   ui.alert('수업일지 연동 설치 완료',
     "수업일지('" + LOG_SHEET + "')의 '" + ISSUE_HEADER + "' 칸에서 항목(예: 카톡상담)을 고르면,\n" +
     "수강생대장 이름 옆 '" + PAY_LOG_HEADER + "' 칸에 수업일지 날짜와 함께 자동 기록됩니다.\n예) 6/1 카톡상담",
+    ui.ButtonSet.OK);
+}
+
+// 🧪 데모: 빈 새 시트에 샘플 수강생대장+수업일지 만들고 연동까지 시연(기존 시트 영향 없음)
+function makeDemo() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const res = ui.alert('연동 데모 만들기',
+    "이 스프레드시트에 샘플 '수강생대장'·'" + LOG_SHEET + "' 탭을 만들어 연동을 시연합니다.\n" +
+    '※ 반드시 빈 새 구글시트에서 실행하세요. (실제 파일에서 하지 마세요)\n\n진행할까요?',
+    ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+
+  const students = [
+    ['유준', '주2회 90분 월'],
+    ['박민하', '주1회 60분 월'],
+    ['이승욱', '주2회 120분 월'],
+    ['김라희', '주3회 90분 월'],
+    ['고은', '주1회 90분 월'],
+  ];
+
+  // 1) 수강생대장(데모) — 깨끗이 다시 생성
+  let pay = ss.getSheetByName('수강생대장');
+  if (pay) ss.deleteSheet(pay);
+  pay = ss.insertSheet('수강생대장');
+  ss.setActiveSheet(pay);
+  setupSheet(); // 머리글·이슈기록칸·드롭다운·플랜단가·서식 생성
+  students.forEach(function (s, i) {
+    const row = DATA_START_ROW + i;
+    pay.getRange(row, COL_NAME).setValue(s[0]);
+    pay.getRange(row, COL_REG).setValue('결제완료_정상등록');
+    pay.getRange(row, COL_PLAN).setValue(s[1]);
+    handlePlanChange_(pay, row); // 회차칸·금액 자동
+  });
+
+  // 2) 수업일지(데모)
+  let log = ss.getSheetByName(LOG_SHEET);
+  if (log) ss.deleteSheet(log);
+  log = ss.insertSheet(LOG_SHEET);
+  log.getRange(LOG_HEADER_ROW, 1).setValue('번호');
+  log.getRange(LOG_HEADER_ROW, 2).setValue(ISSUE_HEADER);            // B3 = 이슈체크
+  log.getRange(LOG_HEADER_ROW, LOG_NAME_COL).setValue('2026.06.01'); // C3 = 날짜+이름열 머리글
+  log.getRange(LOG_HEADER_ROW, 4).setValue('특이사항');
+  log.getRange(LOG_HEADER_ROW, 1, 1, 4).setFontWeight('bold').setBackground('#fff2cc')
+    .setHorizontalAlignment('center');
+  students.forEach(function (s, i) {
+    const row = LOG_HEADER_ROW + 1 + i;
+    log.getRange(row, 1).setValue(i + 1);
+    log.getRange(row, LOG_NAME_COL).setValue(s[0]);
+  });
+  log.setColumnWidth(2, 110);
+  log.setColumnWidth(LOG_NAME_COL, 90);
+  log.setFrozenRows(LOG_HEADER_ROW);
+
+  // 3) 연동 설치(이슈 드롭다운 + 기록칸)
+  setupIssueLink();
+
+  ss.setActiveSheet(log);
+  ui.alert('데모 준비 완료 🎉',
+    "1) '" + LOG_SHEET + "' 탭에서 학생 줄의 '" + ISSUE_HEADER + "' 칸을 눌러 '카톡상담' 등을 골라보세요.\n" +
+    "2) '수강생대장' 탭 이름 옆 '" + PAY_LOG_HEADER + "' 칸에 '6/1 카톡상담'이 자동으로 적힙니다.",
     ui.ButtonSet.OK);
 }
 
