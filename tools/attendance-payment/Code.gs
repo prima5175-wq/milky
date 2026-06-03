@@ -54,6 +54,15 @@ const C_NEXT0 = '#e06666';  // 당일/지남 진한 빨강
 const FREQ_PERMONTH = { '주1회': 4, '주2회': 8, '주3회': 12 };
 const CONT = 'CONT';
 
+// ===== 수업일지 ↔ 결제 시트 연동 ===========================================
+const LOG_SHEET    = '수업일지';     // 같은 파일 안의 수업일지 탭 이름
+const LOG_HEADER_ROW = 3;            // 수업일지 머리글 줄(이슈체크·이름 등)
+const LOG_NAME_COL = 3;              // 수업일지에서 학생 이름이 있는 열(C)
+const ISSUE_HEADER = '이슈체크';      // 수업일지에서 상담/피드백 종류를 고르는 칸 머리글
+const ISSUE_OPTIONS = ['대면상담','카톡상담','포트폴리오배부','비문학배부','회비납부',
+  '신규','신규2일차','신규3일차','시간표변경','레벨업','긴글쓰기','독서왕'];
+const PAY_LOG_HEADER = '상담·피드백 기록'; // 결제 시트에 기록되는 칸 머리글(머리글로 찾음→위치 자유)
+
 // ===== 메뉴 ================================================================
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
@@ -69,6 +78,7 @@ function onOpen() {
     .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
     .addItem('🛠 결제금액·결제일 칸 정리', 'fixPayColumns')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
+    .addItem('🔗 수업일지 연동 설치 (이슈체크→결제기록)', 'setupIssueLink')
     .addItem('🔎 코드 버전 확인', 'showVersion')
     .addSeparator()
     .addSubMenu(ui.createMenu('🌴 방학특강')
@@ -181,7 +191,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v26 (2026-05-30) 등록여부 옵션 추가(미납중·재발송1·2차)';
+const CODE_VERSION = 'v27 (2026-06-03) 수업일지 이슈체크→수강생대장 자동기록';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -594,6 +604,7 @@ function priceLookup_(freq, dur, cycle) {
 function onEdit(e) {
   const sh = e.range.getSheet();
   if (sh.getName() === T_SHEET) { T_onEdit_(e); return; }
+  if (sh.getName() === LOG_SHEET) { handleIssueEdit_(e); return; }
   if (HELPER_SHEETS.indexOf(sh.getName()) >= 0) return;
   const row = e.range.getRow();
   const col = e.range.getColumn();
@@ -935,6 +946,119 @@ function refreshWeekStrips() {
 }
 
 // ====================================================================
+// ====================================================================
+// 📒 수업일지 ↔ 결제 시트 연동
+//   수업일지의 '이슈체크' 칸에서 항목을 고르면(예: 카톡상담)
+//   → 결제(명단) 시트의 그 학생 '상담·피드백 기록' 칸에 "6/1 카톡상담"처럼 누적 기록
+// ====================================================================
+
+// 머리글 줄에서 머리글 텍스트로 열 번호 찾기(없으면 0) — 위치 고정 안 함
+function findColByHeader_(sh, headerText, headerRow) {
+  const lastCol = sh.getLastColumn();
+  if (lastCol < 1) return 0;
+  const vals = sh.getRange(headerRow, 1, 1, lastCol).getValues()[0];
+  for (let i = 0; i < vals.length; i++) {
+    if (String(vals[i]).replace(/\s/g, '') === headerText.replace(/\s/g, '')) return i + 1;
+  }
+  return 0;
+}
+
+// 결제(명단) 시트 찾기: 이름(B1='이름') 머리글이 있는 시트
+function findPaySheet_(ss) {
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const s = sheets[i], nm = s.getName();
+    if (HELPER_SHEETS.indexOf(nm) >= 0 || nm === T_SHEET || nm === LOG_SHEET) continue;
+    if (String(s.getRange(1, COL_NAME).getValue()).trim() === '이름') return s;
+  }
+  return null;
+}
+
+// 결제 시트의 '상담·피드백 기록' 열 번호(없으면 맨 오른쪽에 새로 만듦)
+function ensurePayLogCol_(pay) {
+  let c = findColByHeader_(pay, PAY_LOG_HEADER, 1);
+  if (!c) {
+    c = pay.getLastColumn() + 1;
+    pay.getRange(1, c).setValue(PAY_LOG_HEADER)
+      .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
+    pay.setColumnWidth(c, 160);
+  }
+  return c;
+}
+
+// 수업일지의 '이슈체크' 칸 편집 → 결제 시트에 기록
+function handleIssueEdit_(e) {
+  const sh = e.range.getSheet();
+  if (e.range.getNumColumns() !== 1 || e.range.getNumRows() !== 1) return;
+  const issueCol = findColByHeader_(sh, ISSUE_HEADER, LOG_HEADER_ROW);
+  if (!issueCol) return;
+  if (e.range.getColumn() !== issueCol || e.range.getRow() <= LOG_HEADER_ROW) return;
+
+  const issue = String(e.range.getValue()).trim();
+  if (!issue) return; // 비우면 기록 안 함(기존 기록 유지)
+  const name = String(sh.getRange(e.range.getRow(), LOG_NAME_COL).getValue()).trim();
+  if (!name) return;
+
+  recordIssueToPay_(name, issue, new Date());
+}
+
+// 결제 시트의 학생 칸에 "M/d 이슈" 누적 기록
+function recordIssueToPay_(name, issue, date) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const pay = findPaySheet_(ss);
+  if (!pay) return;
+  const logCol = ensurePayLogCol_(pay);
+
+  const last = pay.getLastRow();
+  if (last < DATA_START_ROW) return;
+  const key = normName_(name);
+  const names = pay.getRange(DATA_START_ROW, COL_NAME, last - DATA_START_ROW + 1, 1).getValues();
+  const helper = pay.getRange(DATA_START_ROW, HELPER_COL, last - DATA_START_ROW + 1, 1).getValues();
+  let targetRow = 0;
+  for (let i = 0; i < names.length; i++) {
+    if (String(helper[i][0]) === CONT) continue;
+    if (normName_(names[i][0]) === key) { targetRow = DATA_START_ROW + i; break; }
+  }
+  if (!targetRow) return; // 결제 시트에 그 학생이 없으면 무시
+
+  const dstr = (date.getMonth() + 1) + '/' + date.getDate();
+  const entry = dstr + ' ' + issue;
+  const cell = pay.getRange(targetRow, logCol);
+  const cur = String(cell.getValue() || '').trim();
+  // 같은 날 같은 이슈가 이미 있으면 중복 기록 안 함
+  if (cur.split(/\s*,\s*/).indexOf(entry) >= 0) return;
+  cell.setValue(cur ? (cur + ', ' + entry) : entry).setNumberFormat('@');
+}
+
+// 🔗 연동 설치: 수업일지 이슈체크 드롭다운 + 결제 시트 기록 칸 준비
+function setupIssueLink() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const log = ss.getSheetByName(LOG_SHEET);
+  if (!log) {
+    ui.alert("'" + LOG_SHEET + "' 탭이 없어요.\n수업일지를 이 파일에 '" + LOG_SHEET + "' 라는 이름의 탭으로 만든(복사한) 뒤 다시 실행하세요.");
+    return;
+  }
+  const issueCol = findColByHeader_(log, ISSUE_HEADER, LOG_HEADER_ROW);
+  if (!issueCol) {
+    ui.alert("수업일지 " + LOG_HEADER_ROW + "행에서 '" + ISSUE_HEADER + "' 머리글을 찾지 못했어요.\n수업일지 머리글 줄(보통 3행)에 '" + ISSUE_HEADER + "' 칸이 있는지 확인해주세요.");
+    return;
+  }
+  // 이슈체크 드롭다운(직접입력·복수 허용)
+  const lastR = Math.max(log.getLastRow(), LOG_HEADER_ROW + 1);
+  log.getRange(LOG_HEADER_ROW + 1, issueCol, lastR - LOG_HEADER_ROW, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(ISSUE_OPTIONS, true).setAllowInvalid(true).build());
+
+  const pay = findPaySheet_(ss);
+  if (!pay) { ui.alert("결제(명단) 시트를 찾지 못했어요. ('이름' 머리글이 있는 시트가 필요해요)"); return; }
+  ensurePayLogCol_(pay);
+
+  ui.alert('수업일지 연동 설치 완료',
+    "수업일지('" + LOG_SHEET + "')의 '" + ISSUE_HEADER + "' 칸에서 항목(예: 카톡상담)을 고르면,\n" +
+    "결제 시트의 그 학생 '" + PAY_LOG_HEADER + "' 칸에 오늘 날짜와 함께 자동 기록됩니다.\n예) 6/1 카톡상담",
+    ui.ButtonSet.OK);
+}
+
 // 🌴 방학특강 시트 (별도 탭) — 부/재원생여부 드롭다운, 20칸(4주 색), 보강 카운트
 // ====================================================================
 const T_SHEET = '방학특강';
