@@ -112,7 +112,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v20 (2026-05-30) 날짜를 글자로 저장-시간대 밀림 완전차단';
+const CODE_VERSION = 'v21 (2026-05-30) 등록여부 색을 열전체 적용(추가행 자동)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -152,7 +152,8 @@ function setupSheet() {
   const regList = ['결제완료_정상등록', '결제대기 중', '등록안함'];
   sh.getRange(DATA_START_ROW, COL_REG, n, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(regList, true).build());
-  const regRange = sh.getRange(DATA_START_ROW, COL_REG, n, 1);
+  // 색(조건부서식)은 열 전체(E2:E)에 적용 → 학생을 더 추가해도 자동으로 색 입혀짐
+  const regRange = sh.getRange(columnLetter_(COL_REG) + DATA_START_ROW + ':' + columnLetter_(COL_REG));
   const rules = []; // 기존 조건부서식 전부 제거 후 새로 구성(주차칸 빨강 잔재 방지)
   rules.push(cfEq_(regRange, '결제완료_정상등록', '#b6d7a8'));
   rules.push(cfEq_(regRange, '결제대기 중', '#ffe599'));
