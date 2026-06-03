@@ -107,7 +107,7 @@ function onChangeHandler(e) {
   renumber_(sh);
 }
 
-// 🛠 결제금액이 결제일(H) 칸으로 밀려들어간 경우 → 금액을 결제금액(G)으로 되돌리고 결제일 비움
+// 🛠 결제금액 복구: ①결제일(H)로 밀린 금액을 결제금액(G)으로 되돌리고 ②비면 플랜단가에서 자동 채움 ③할인 반영 ④결제일 비움
 function fixPayColumns() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getActiveSheet();
@@ -119,37 +119,59 @@ function fixPayColumns() {
   const n = last - DATA_START_ROW + 1;
   if (n < 1) { ui.alert('데이터가 없어요.'); return; }
 
-  const gRange = sh.getRange(DATA_START_ROW, COL_PRICE, n, 1);     // 결제금액
-  const hRange = sh.getRange(DATA_START_ROW, COL_PAYDATE, n, 1);   // 결제일
-  const gVals = gRange.getValues();
-  const hVals = hRange.getValues();
-  const EPOCH = new Date(1899, 11, 30).getTime();
-
-  const out = [];
-  let moved = 0;
-  for (let i = 0; i < n; i++) {
-    const g = gVals[i][0];
-    let h = hVals[i][0];
-    // 날짜서식 때문에 금액이 Date로 읽히면 → 원래 숫자(일련번호)로 환산
-    if (h instanceof Date) h = Math.round((h.getTime() - EPOCH) / 86400000);
-    const gEmpty = (g === '' || g === null);
-    if (gEmpty && typeof h === 'number' && h > 1000) { out.push([h]); moved++; }
-    else out.push([g]);
-  }
-  if (!moved) {
-    ui.alert('옮길 금액이 없어요. (이미 정상이거나, 결제일 칸이 비어 있음)');
-    return;
-  }
-  const res = ui.alert('결제금액·결제일 칸 정리',
-    '결제일(H) 칸에 들어간 금액 ' + moved + '개를 결제금액(G) 칸으로 옮기고,\n결제일 칸은 달력용으로 비울게요. 진행할까요?',
+  const res = ui.alert('결제금액 복구',
+    '① 결제일 칸으로 밀려 들어간 금액을 결제금액 칸으로 되돌리고\n② 비어 있는 금액은 플랜단가에서 자동으로 채우고\n③ 할인(형제/오픈) 옵션도 다시 반영하고\n④ 결제일 칸은 달력용으로 비웁니다.\n\n진행할까요?',
     ui.ButtonSet.OK_CANCEL);
   if (res !== ui.Button.OK) return;
 
-  gRange.setValues(out).setNumberFormat('#,##0');
-  // 결제일 비우고 달력(날짜선택기) + 날짜서식
-  hRange.clearContent().setNumberFormat('yyyy-mm-dd')
+  const EPOCH = new Date(1899, 11, 30).getTime();
+  let moved = 0, filled = 0, discounted = 0;
+
+  for (let i = 0; i < n; i++) {
+    const row = DATA_START_ROW + i;
+    if (String(sh.getRange(row, HELPER_COL).getValue()) === CONT) continue; // 연속행 건너뜀
+
+    // 1) 결제일(H)에 숫자(금액)가 박혀 있으면 회수
+    let h = sh.getRange(row, COL_PAYDATE).getValue();
+    if (h instanceof Date) h = Math.round((h.getTime() - EPOCH) / 86400000);
+    const hPrice = (typeof h === 'number' && h > 1000) ? h : null;
+
+    // 2) 현재 결제금액(G)
+    let g = sh.getRange(row, COL_PRICE).getValue();
+    const gEmpty = (g === '' || g === null);
+
+    // 3) 플랜 기준 정가 조회
+    const plan = parsePlan_(sh.getRange(row, COL_PLAN).getValue());
+    const full = plan ? priceLookup_(plan.freq, plan.dur, plan.cycle) : undefined;
+
+    // 4) 기준 금액(원가) 결정: 밀린 금액 > 기존 G > 플랜단가 정가
+    let base = null;
+    if (gEmpty && hPrice) { base = hPrice; moved++; }
+    else if (!gEmpty && typeof g === 'number') { base = g; }
+    else if (gEmpty && typeof full === 'number' && full) { base = full; filled++; }
+
+    if (base !== null) {
+      // 5) 할인 반영
+      const disc = String(sh.getRange(row, COL_SIBLING).getValue()).trim();
+      const rate = disc === '형제할인' ? DISC_SIB : disc === '오픈할인' ? DISC_OPEN : null;
+      if (rate !== null) {
+        sh.getRange(row, HELPER_PRICE).setValue(base);                 // 원가 보관
+        sh.getRange(row, COL_PRICE).setValue(Math.round(base * rate)).setNumberFormat('#,##0');
+        discounted++;
+      } else {
+        sh.getRange(row, COL_PRICE).setValue(base).setNumberFormat('#,##0');
+        sh.getRange(row, HELPER_PRICE).clearContent();
+      }
+    }
+  }
+
+  // 6) 결제일 칸 전체 비우고 달력(날짜선택기) + 날짜서식
+  sh.getRange(DATA_START_ROW, COL_PAYDATE, n, 1).clearContent().setNumberFormat('yyyy-mm-dd')
     .setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
-  ui.alert('완료', '✅ 금액 ' + moved + '개를 결제금액 칸으로 옮겼어요.\n결제일 칸은 비워졌고 더블클릭하면 달력이 떠요.', ui.ButtonSet.OK);
+
+  ui.alert('복구 완료',
+    '✅ 결제일→결제금액 이동: ' + moved + '명\n✅ 플랜단가에서 자동 채움: ' + filled + '명\n✅ 할인 반영: ' + discounted + '명\n\n결제일 칸은 비워졌고 더블클릭하면 달력이 떠요.',
+    ui.ButtonSet.OK);
 }
 
 function tidyNumberBorders() {
@@ -159,7 +181,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v23 (2026-05-30) 결제금액→결제일 밀림 정리 버튼';
+const CODE_VERSION = 'v24 (2026-05-30) 결제금액 복구(이동+플랜단가채움+할인반영)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
