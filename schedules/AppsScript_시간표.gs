@@ -320,10 +320,12 @@ function buildVacation(ss, branch) {
     CONFIG.교시.forEach(function (p) {
       if (closed) { row.push(''); }
       else {
+        // 교시 중간 시각에 실제 근무 중인 강사만 그 교시에 표시 (부분 걸침 오표시 방지)
+        var mid = (p.s + p.e) / 2;
         row.push('=IFERROR(TEXTJOIN(", ",TRUE,FILTER(' + IN + '$A$3:$A$' + L + ',(' +
           IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="방학")*(ISNUMBER(SEARCH("' +
-          w + '",' + IN + '$G$3:$G$' + L + ')))*(' + IN + '$E$3:$E$' + L + '<' + p.e + ')*(' +
-          IN + '$F$3:$F$' + L + '>' + p.s + '))),"")');
+          w + '",' + IN + '$G$3:$G$' + L + ')))*(' + IN + '$E$3:$E$' + L + '<=' + mid + ')*(' +
+          IN + '$F$3:$F$' + L + '>' + mid + '))),"")');
       }
     });
     grid.push(row);
