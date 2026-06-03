@@ -194,7 +194,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v31 (2026-06-03) 이슈 여러개 누적+전체 집계 버튼';
+const CODE_VERSION = 'v32 (2026-06-03) 수업일지 날짜는 탭이름 우선(6/2 정확)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -1001,11 +1001,27 @@ function ensurePayIssueCol_(pay) {
   return c;
 }
 
-// 수업일지 상단 날짜(이름열 머리글 C3 = 2026.06.01) → Date. 못 읽으면 오늘.
+// 문자열에서 날짜 뽑기: "6/2", "6.2", "6월2일", "2026.06.02" 등 → Date(정오). 없으면 null.
+function parseAnyDate_(s, year) {
+  s = String(s || '').trim();
+  let m = s.match(/(\d{4})[.\-/]\s*(\d{1,2})[.\-/]\s*(\d{1,2})/);   // yyyy.mm.dd
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0);
+  m = s.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일?/);                   // m월 d일
+  if (m) return new Date(year, +m[1] - 1, +m[2], 12, 0, 0);
+  m = s.match(/(\d{1,2})[.\-/]\s*(\d{1,2})/);                       // m/d, m.d
+  if (m) return new Date(year, +m[1] - 1, +m[2], 12, 0, 0);
+  return null;
+}
+
+// 수업일지 날짜: ① 탭 이름(6/1·6월2일·2026.06.02 등) 우선 → ② C3 → ③ 오늘
+//   탭이 복사돼 C3가 옛 날짜로 남아도, 탭 이름이 정확하므로 먼저 사용
 function logSessionDate_(log) {
+  const today = new Date();
+  const byName = parseAnyDate_(log.getName(), today.getFullYear());
+  if (byName) return byName;
   const v = log.getRange(LOG_HEADER_ROW, LOG_NAME_COL).getValue();
   if (v instanceof Date) return v;
-  return parseUserDate_(String(v), new Date()) || new Date();
+  return parseAnyDate_(v, today.getFullYear()) || today;
 }
 
 // 수업일지의 '이슈체크' 칸 편집 → 결제 시트에 기록
