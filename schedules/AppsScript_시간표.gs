@@ -64,6 +64,8 @@ var SHEETS = {
 
 var WK = ['일','월','화','수','목','금','토'];
 var IN = "'" + SHEETS.입력 + "'!";
+// 입력 시트 요일 체크박스 열: 월=D … 일=J,  시작=K, 종료=L
+var DAYCOL = { '월':'D','화':'E','수':'F','목':'G','금':'H','토':'I','일':'J' };
 
 /* ----------------------------- 메뉴 ----------------------------- */
 function onOpen() {
@@ -111,6 +113,20 @@ function pad(n) { return (n < 10 ? '0' : '') + n; }
 function fmtHM(t) { var h = Math.floor(t + 1e-9); var m = (Math.round((t - h) * 60) === 30) ? '30' : '00'; return pad(h) + ':' + m; }
 function fmtMD(d) { return (d.getMonth() + 1) + '/' + d.getDate(); }
 function dateList(start, end) { var out = [], d = new Date(start); while (d <= end) { out.push(new Date(d)); d.setDate(d.getDate() + 1); } return out; }
+// "월~금" 또는 "월화금" → [월,화,수,목,금,토,일] 불리언
+function expandDays(text) {
+  var order = '월화수목금토일', res = [false, false, false, false, false, false, false];
+  if (text === true || text === false) return res;
+  text = String(text || '').trim(); if (!text) return res;
+  if (text.indexOf('~') >= 0) {
+    var p = text.split('~'), a = order.indexOf(p[0].trim().charAt(0)),
+        bs = p[1].trim(), b = order.indexOf(bs.charAt(bs.length - 1));
+    if (a >= 0 && b >= 0 && a <= b) for (var i = a; i <= b; i++) res[i] = true;
+  } else {
+    for (var j = 0; j < text.length; j++) { var idx = order.indexOf(text.charAt(j)); if (idx >= 0) res[idx] = true; }
+  }
+  return res;
+}
 function titleRow(sh, text, cols, color) {
   sh.getRange(1, 1, 1, cols).merge().setValue(text).setBackground(color || '#404040').setFontColor('#FFFFFF')
     .setFontWeight('bold').setFontSize(12).setHorizontalAlignment('center').setVerticalAlignment('middle');
@@ -156,41 +172,67 @@ function buildSalary(ss) {
 
 /* ===================== 입력 시트 (일정 보존) =============== */
 function buildInput(ss) {
-  var L = CONFIG.LASTIN, prev = null, old = ss.getSheetByName(SHEETS.입력);
-  if (old) { try { prev = old.getRange(3, 1, L - 2, 6).getValues(); } catch (e) {} }
-  var hasPrev = false;
-  if (prev) for (var p = 0; p < prev.length; p++) if (String(prev[p][0]).trim() !== '') { hasPrev = true; break; }
+  var L = CONFIG.LASTIN, old = ss.getSheetByName(SHEETS.입력), prevRows = [];
+  if (old) {
+    try {
+      var isNew = (old.getRange(2, 4).getValue() === '월');   // 새 체크박스 포맷 여부
+      if (isNew) {
+        var ov = old.getRange(3, 1, L - 2, 13).getValues();
+        for (var i = 0; i < ov.length; i++) { var a = ov[i];
+          if (String(a[0]).trim() === '') continue;
+          prevRows.push({ name:a[0], 지점:a[1], 구분:a[2], days:[a[3],a[4],a[5],a[6],a[7],a[8],a[9]], 시작:a[10], 종료:a[11], 비고:a[12] });
+        }
+      } else {                                                  // 옛 텍스트 요일 포맷 → 변환 보존
+        var ov2 = old.getRange(3, 1, L - 2, 6).getValues();
+        for (var j = 0; j < ov2.length; j++) { var b = ov2[j];
+          if (String(b[0]).trim() === '') continue;
+          prevRows.push({ name:b[0], 지점:b[1], 구분:b[2], days:expandDays(b[3]), 시작:b[4], 종료:b[5], 비고:'' });
+        }
+      }
+    } catch (e) {}
+  }
 
   var sh = freshSheet(ss, SHEETS.입력);
-  var headers = ['강사명','지점','구분','요일','시작(24h)','종료(24h)','요일(자동)','비고'];
-  titleRow(sh, '강사 일정 입력  —  여기에 적으면 모든 시간표가 자동으로 채워집니다', headers.length, '#C55A11');
-  sh.getRange(2, 1, 1, headers.length).setValues([headers]);
-  styleHead(sh.getRange(2, 1, 1, headers.length), '#C55A11');
-  sh.getRange(2, 9).setValue('① 시간=24시간 숫자(오후1시=13, 3시반=15.5, 7시반=19.5)  ② 요일="월~금" 또는 "월화금"  ③ 요일별 시간 다르면 줄 나눠 입력')
+  var headers = ['강사명','지점','구분','월','화','수','목','금','토','일','시작','종료','비고'];
+  var ncols = headers.length;
+  titleRow(sh, '강사 일정 입력  —  요일은 체크박스로 클릭, 시간만 적으면 모든 시간표 자동 완성', ncols, '#C55A11');
+  sh.getRange(2, 1, 1, ncols).setValues([headers]);
+  styleHead(sh.getRange(2, 1, 1, ncols), '#C55A11');
+  sh.getRange(2, 9).setBackground(CONFIG.색.sat).setFontColor('#1F4E79');   // 토
+  sh.getRange(2, 10).setBackground(CONFIG.색.sun).setFontColor('#C00000');  // 일
+  sh.getRange(2, ncols + 1).setValue('시간=24시간 숫자 (오후1시=13, 3시반=15.5, 7시반=19.5) · 요일은 체크 · 요일별 시간 다르면 줄 나눠 입력')
     .setFontColor('#808080').setFontSize(10);
 
-  if (hasPrev) sh.getRange(3, 1, prev.length, 6).setValues(prev);
-  else sh.getRange(3, 1, CONFIG.샘플.length, 6).setValues(CONFIG.샘플);
+  // 요일 체크박스 (전체 입력행 D:J)
+  sh.getRange(3, 4, L - 2, 7).insertCheckboxes();
 
-  var gForm = [];
-  for (var r = 3; r <= L; r++) {
-    gForm.push(['=IF($D' + r + '="","",IF(ISNUMBER(SEARCH("~",$D' + r + ')),' +
-      'MID("월화수목금토일",FIND(LEFT($D' + r + ',1),"월화수목금토일"),' +
-      'FIND(RIGHT($D' + r + ',1),"월화수목금토일")-FIND(LEFT($D' + r + ',1),"월화수목금토일")+1),$D' + r + '))']);
+  var src = prevRows.length ? prevRows :
+    CONFIG.샘플.map(function (s) { return { name:s[0], 지점:s[1], 구분:s[2], days:expandDays(s[3]), 시작:s[4], 종료:s[5], 비고:'' }; });
+  if (src.length) {
+    var abc = [], dys = [], kl = [], mm = [];
+    for (var k = 0; k < src.length; k++) { var s = src[k];
+      abc.push([s.name, s.지점, s.구분]);
+      dys.push(s.days.map(function (x) { return x === true; }));
+      kl.push([s.시작, s.종료]);
+      mm.push([s.비고 || '']);
+    }
+    sh.getRange(3, 1, src.length, 3).setValues(abc);
+    sh.getRange(3, 4, src.length, 7).setValues(dys);
+    sh.getRange(3, 11, src.length, 2).setValues(kl);
+    sh.getRange(3, 13, src.length, 1).setValues(mm);
   }
-  sh.getRange(3, 7, gForm.length, 1).setFormulas(gForm);
 
   sh.getRange(3, 1, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation()
     .requireValueInRange(ss.getSheetByName(SHEETS.급여).getRange('B3:B12'), true).setAllowInvalid(true).build());
   sh.getRange(3, 2, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['대치점','도곡점','구룡초점'], true).build());
   sh.getRange(3, 3, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['정규','방학'], true).build());
 
-  sh.getRange(3, 1, L - 2, 6).setBackground(CONFIG.색.input);
-  sh.getRange(3, 5, L - 2, 2).setNumberFormat('0.0##');
-  sh.getRange(2, 1, L - 1, headers.length).setBorder(true, true, true, true, true, true, '#D9D9D9', SpreadsheetApp.BorderStyle.SOLID);
-  sh.getRange(3, 1, L - 2, headers.length).setHorizontalAlignment('center');
-  [80,70,60,90,80,80,110,200].forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
-  sh.setFrozenRows(2);
+  sh.getRange(3, 1, L - 2, 3).setBackground(CONFIG.색.input);
+  sh.getRange(3, 11, L - 2, 2).setBackground(CONFIG.색.input).setNumberFormat('0.0##');
+  sh.getRange(2, 1, L - 1, ncols).setBorder(true, true, true, true, true, true, '#D9D9D9', SpreadsheetApp.BorderStyle.SOLID);
+  sh.getRange(3, 1, L - 2, ncols).setHorizontalAlignment('center');
+  [80,70,55,32,32,32,32,32,32,32,70,70,160].forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
+  sh.setFrozenRows(2); sh.setFrozenColumns(3);
 }
 
 /* ===================== 시간표 그리드 (30분 · 정규/방학 공용) === */
@@ -235,10 +277,11 @@ function buildGrid(ss, branch, gubun, sundayOpen) {
     for (var d = 0; d < 7; d++) {
       if (!oper(d, t)) { row.push(''); }
       else {
+        var dc = DAYCOL[days[d]];
         row.push('=IFERROR(TEXTJOIN(", ",TRUE,FILTER(' + IN + '$A$3:$A$' + L + ',(' +
-          IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="' + gubun + '")*(ISNUMBER(SEARCH("' +
-          days[d] + '",' + IN + '$G$3:$G$' + L + ')))*(' + IN + '$E$3:$E$' + L + '<=' + t + ')*(' +
-          IN + '$F$3:$F$' + L + '>' + t + '))),"")');
+          IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="' + gubun + '")*(' +
+          IN + '$' + dc + '$3:$' + dc + '$' + L + '=TRUE)*(' + IN + '$K$3:$K$' + L + '<=' + t + ')*(' +
+          IN + '$L$3:$L$' + L + '>' + t + '))),"")');
       }
     }
     grid.push(row);
@@ -287,10 +330,11 @@ function buildVacationDates(ss, branch) {
       var t = slots[j], isBreak = (t >= brk[0] && t < brk[1]);
       if (closed || isBreak) { row.push(''); }
       else {
+        var dcv = DAYCOL[w];
         row.push('=IFERROR(TEXTJOIN(", ",TRUE,FILTER(' + IN + '$A$3:$A$' + L + ',(' +
-          IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="방학")*(ISNUMBER(SEARCH("' +
-          w + '",' + IN + '$G$3:$G$' + L + ')))*(' + IN + '$E$3:$E$' + L + '<=' + t + ')*(' +
-          IN + '$F$3:$F$' + L + '>' + t + '))),"")');
+          IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="방학")*(' +
+          IN + '$' + dcv + '$3:$' + dcv + '$' + L + '=TRUE)*(' + IN + '$K$3:$K$' + L + '<=' + t + ')*(' +
+          IN + '$L$3:$L$' + L + '>' + t + '))),"")');
       }
     }
     grid.push(row);
@@ -345,10 +389,10 @@ function buildDaily(ss, branch, noSunday) {
     for (var c = 0; c < n; c++) {
       if (closed) { row.push(''); }
       else {
-        var hcell = colLetter(3 + c) + '$2';
+        var hcell = colLetter(3 + c) + '$2', dcd = DAYCOL[w];
         row.push('=IFERROR(SUMPRODUCT((' + IN + '$A$3:$A$' + L + '=' + hcell + ')*(' +
-          IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="' + gubun + '")*(ISNUMBER(SEARCH("' +
-          w + '",' + IN + '$G$3:$G$' + L + ')))*(' + IN + '$F$3:$F$' + L + '-' + IN + '$E$3:$E$' + L + ')),0)');
+          IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="' + gubun + '")*(' +
+          IN + '$' + dcd + '$3:$' + dcd + '$' + L + '=TRUE)*(' + IN + '$L$3:$L$' + L + '-' + IN + '$K$3:$K$' + L + ')),0)');
       }
     }
     instr.push(row);
