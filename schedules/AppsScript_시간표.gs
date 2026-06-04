@@ -19,8 +19,9 @@
 
 var CONFIG = {
   YEAR: 2026,
-  강사: ['이도연','정호암','강사3','강사4','강사5','강사6','강사7','강사8','강사9','강사10'],
-  LASTIN: 122,                          // 입력 데이터 행 3~122
+  강사수: 20,                            // ★ 강사 정원: 이 숫자만 바꾸면 인원 증감 (예: 25)
+  강사: ['이도연','정호암'],             // 실제 이름(앞에서부터). 나머지는 강사3~ 자동 생성 + 강사_급여 탭에서 입력
+  LASTIN: 162,                          // 입력 데이터 행 3~162 (일정 줄 수 한도)
 
   DAILY_START: new Date(2026, 6, 1),    // 데일리현황 달력 2026-07-01
   DAILY_END:   new Date(2026, 7, 31),   //                ~ 2026-08-31
@@ -54,6 +55,10 @@ var CONFIG = {
     sat: '#DDEBF7', sun: '#FCE4EC', today: '#FFF2CC', val: '#E2EFDA', input: '#FFF8E1'
   }
 };
+
+// 강사 정원(강사수)만큼 이름 슬롯 확장(나머지는 빈칸 → 강사_급여 탭에서 직접 입력)
+CONFIG.강사수 = CONFIG.강사수 || CONFIG.강사.length;
+while (CONFIG.강사.length < CONFIG.강사수) CONFIG.강사.push('');
 
 var SHEETS = {
   대시보드: '대시보드', 급여: '강사_급여', 입력: '입력',
@@ -223,7 +228,7 @@ function buildInput(ss) {
   }
 
   sh.getRange(3, 1, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation()
-    .requireValueInRange(ss.getSheetByName(SHEETS.급여).getRange('B3:B12'), true).setAllowInvalid(true).build());
+    .requireValueInRange(ss.getSheetByName(SHEETS.급여).getRange('B3:B' + (2 + CONFIG.강사.length)), true).setAllowInvalid(true).build());
   sh.getRange(3, 2, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['대치점','도곡점','구룡초점'], true).build());
   sh.getRange(3, 3, L - 2, 1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['정규','방학'], true).build());
 
@@ -373,7 +378,7 @@ function buildDaily(ss, branch, noSunday) {
   titleRow(sh, '데일리 강사현황 · ' + branch + '점   (입력 시트 기준 자동 계산 · 숫자=근무시간h)', cols, C.head);
   sh.getRange(2, 1).setValue('날짜'); sh.getRange(2, 2).setValue('요일');
   var hForm = [];
-  for (var k = 0; k < n; k++) hForm.push("='" + SHEETS.급여 + "'!B" + (3 + k));
+  for (var k = 0; k < n; k++) { var sref = "'" + SHEETS.급여 + "'!B" + (3 + k); hForm.push("=IF(" + sref + '="","",' + sref + ")"); }
   sh.getRange(2, 3, 1, n).setFormulas([hForm]);
   sh.getRange(2, mCol).setValue('일합계'); sh.getRange(2, nCol).setValue('구분');
   styleHead(sh.getRange(2, 1, 1, cols), C.head);
@@ -390,9 +395,9 @@ function buildDaily(ss, branch, noSunday) {
       if (closed) { row.push(''); }
       else {
         var hcell = colLetter(3 + c) + '$2', dcd = DAYCOL[w];
-        row.push('=IFERROR(SUMPRODUCT((' + IN + '$A$3:$A$' + L + '=' + hcell + ')*(' +
+        row.push('=IF(' + hcell + '="","",IFERROR(SUMPRODUCT((' + IN + '$A$3:$A$' + L + '=' + hcell + ')*(' +
           IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="' + gubun + '")*(' +
-          IN + '$' + dcd + '$3:$' + dcd + '$' + L + '=TRUE)*(' + IN + '$L$3:$L$' + L + '-' + IN + '$K$3:$K$' + L + ')),0)');
+          IN + '$' + dcd + '$3:$' + dcd + '$' + L + '=TRUE)*(' + IN + '$L$3:$L$' + L + '-' + IN + '$K$3:$K$' + L + ')),0))');
       }
     }
     instr.push(row);
@@ -459,6 +464,8 @@ function buildDashboard(ss, dailyTotalRow) {
   var n = CONFIG.강사.length, tcol = colLetter(3 + n);
   var SG = "'" + SHEETS.급여 + "'!", D1 = "'" + SHEETS.데일리['대치'] + "'!", D2 = "'" + SHEETS.데일리['도곡'] + "'!", D3 = "'" + SHEETS.데일리['구룡초'] + "'!";
   var WON = '#,##0"원"', HH = '0.0"h"', NM = '0"명"', PCT = '0.0%';
+  var lr = 2 + n;                       // 급여 시트 마지막 데이터 행
+  var RB = 'B3:B' + lr, RD = 'D3:D' + lr, RG = 'G3:G' + lr, RH = 'H3:H' + lr, RI = 'I3:I' + lr, RJ = 'J3:J' + lr;
   titleRow(sh, '경영 대시보드 · 강사 운영 / 인건비 / 손익  (' + CONFIG.YEAR + ')', 5, '#C55A11');
   function section(p, t) { sh.getRange(p, 1, 1, 5).merge().setValue(t).setBackground('#7F7F7F').setFontColor('#FFFFFF').setFontWeight('bold').setVerticalAlignment('middle'); sh.setRowHeight(p, 24); }
   function kv(p, label, formula, fmt, input, big) {
@@ -473,24 +480,24 @@ function buildDashboard(ss, dailyTotalRow) {
     sh.setRowHeight(p, 22);
   }
   section(2, '■ 핵심 운영 지표');
-  kv(3, '강사 수', '=COUNTA(' + SG + 'B3:B12)', NM);
-  kv(4, '시급제 인원', '=COUNTIF(' + SG + 'D3:D12,"시급제")', NM);
-  kv(5, '월급제 인원', '=COUNTIF(' + SG + 'D3:D12,"월급제")', NM);
-  kv(6, '총 정규 근무시간', '=SUM(' + SG + 'G3:G12)', HH);
-  kv(7, '총 방학 근무시간', '=SUM(' + SG + 'H3:H12)', HH);
-  kv(8, '총 근무시간', '=SUM(' + SG + 'I3:I12)', HH);
+  kv(3, '강사 수', '=COUNTA(' + SG + RB + ')', NM);
+  kv(4, '시급제 인원', '=COUNTIF(' + SG + RD + ',"시급제")', NM);
+  kv(5, '월급제 인원', '=COUNTIF(' + SG + RD + ',"월급제")', NM);
+  kv(6, '총 정규 근무시간', '=SUM(' + SG + RG + ')', HH);
+  kv(7, '총 방학 근무시간', '=SUM(' + SG + RH + ')', HH);
+  kv(8, '총 근무시간', '=SUM(' + SG + RI + ')', HH);
   section(9, '■ 인건비');
-  kv(10, '시급제 인건비', '=SUMIF(' + SG + 'D3:D12,"시급제",' + SG + 'J3:J12)', WON);
-  kv(11, '월급제 인건비', '=SUMIF(' + SG + 'D3:D12,"월급제",' + SG + 'J3:J12)', WON);
-  kv(12, '총 인건비 (월)', '=SUM(' + SG + 'J3:J12)', WON, false, true);
-  kv(13, '강사 1인 평균급여', '=IFERROR(SUM(' + SG + 'J3:J12)/COUNTA(' + SG + 'B3:B12),0)', WON);
+  kv(10, '시급제 인건비', '=SUMIF(' + SG + RD + ',"시급제",' + SG + RJ + ')', WON);
+  kv(11, '월급제 인건비', '=SUMIF(' + SG + RD + ',"월급제",' + SG + RJ + ')', WON);
+  kv(12, '총 인건비 (월)', '=SUM(' + SG + RJ + ')', WON, false, true);
+  kv(13, '강사 1인 평균급여', '=IFERROR(SUM(' + SG + RJ + ')/COUNTA(' + SG + RB + '),0)', WON);
   section(14, '■ 지점별 총 근무시간');
   kv(15, '대치점', '=' + D1 + tcol + dailyTotalRow, HH);
   kv(16, '도곡점', '=' + D2 + tcol + dailyTotalRow, HH);
   kv(17, '구룡초점', '=' + D3 + tcol + dailyTotalRow, HH);
   section(18, '■ 매출 · 손익  (월 매출을 노란칸에 입력)');
   kv(19, '월 매출 (입력)', null, WON, true);
-  kv(20, '총 인건비', '=SUM(' + SG + 'J3:J12)', WON);
+  kv(20, '총 인건비', '=SUM(' + SG + RJ + ')', WON);
   kv(21, '인건비 비율', '=IFERROR(C20/C19,0)', PCT);
   kv(22, '인건비 차감 이익', '=C19-C20', WON, false, true);
 
