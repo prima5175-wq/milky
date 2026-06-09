@@ -201,7 +201,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v37 (2026-06-03) 수업일지 시간칸 오후 자동변환';
+const CODE_VERSION = 'v38 (2026-06-03) 시간칸 오전/오후 표시 존중';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -1040,19 +1040,28 @@ function isTimeCol_(sh, col) {
   return false;
 }
 
-// 시간 칸: 숫자만 쳐도 오후로 변환(4 → 오후 4:00, 4:30 → 오후 4:30, 9 → 오후 9:00)
-//   1~11시는 오후로 보정, 12·13~23시는 그대로. 오전/오후 형식으로 표시.
-function fixPmTime_(range) {
-  const v = range.getValue();
-  if (v === '' || v === null) return;
+// 시간 칸: 숫자만 쳐도 오후로(4→오후4:00). '오전'/'am' 적으면 오전, '오후'/'pm' 적으면 오후.
+//   기본(표시 없음)은 1~11시를 오후로 보정. 오전 수업은 '오전10' 처럼 적으면 오전 그대로.
+function fixPmTime_(e) {
+  const range = e.range;
+  const cellVal = range.getValue();
+  const raw = (e && e.value != null ? String(e.value) : String(cellVal)).trim();
+  if (raw === '') return;
+  const isAm = /오전|am/i.test(raw);
+  const isPm = /오후|pm/i.test(raw);
   let hour, minute;
-  if (typeof v === 'number') {
-    if (v > 0 && v < 1) { const t = Math.round(v * 24 * 60); hour = Math.floor(t / 60); minute = t % 60; } // 시간값(4:30 AM 등)
-    else if (v >= 1 && v <= 23) { hour = Math.floor(v); minute = Math.round((v - hour) * 60); }            // 4, 4.5 같은 숫자
-    else return;
-  } else if (v instanceof Date) { hour = v.getHours(); minute = v.getMinutes(); }
-  else return; // 글자면 건드리지 않음
-  if (hour >= 1 && hour <= 11) hour += 12; // 오후 보정
+  if (cellVal instanceof Date) { hour = cellVal.getHours(); minute = cellVal.getMinutes(); }
+  else if (typeof cellVal === 'number' && cellVal > 0 && cellVal < 1) { const t = Math.round(cellVal * 1440); hour = Math.floor(t / 60); minute = t % 60; }
+  else if (typeof cellVal === 'number' && cellVal >= 1 && cellVal <= 23) { hour = Math.floor(cellVal); minute = Math.round((cellVal - hour) * 60); }
+  else {
+    const m = raw.match(/(\d{1,2})\s*[:시]?\s*(\d{1,2})?/);
+    if (!m) return;
+    hour = +m[1]; minute = m[2] ? +m[2] : 0;
+  }
+  if (hour > 23 || minute > 59) return;
+  if (isAm) { if (hour === 12) hour = 0; }            // 오전 명시
+  else if (isPm) { if (hour < 12) hour += 12; }       // 오후 명시
+  else { if (hour >= 1 && hour <= 11) hour += 12; }   // 표시 없으면 기본 오후
   range.setValue(new Date(1899, 11, 30, hour, minute, 0)).setNumberFormat('오전/오후 h:mm');
 }
 
@@ -1063,8 +1072,8 @@ function handleLogEdit_(e) {
   const row = e.range.getRow(), col = e.range.getColumn();
   if (row <= LOG_HEADER_ROW) return;
 
-  // 1) 시간 칸 → 오후 자동 변환
-  if (isTimeCol_(sh, col)) { fixPmTime_(e.range); return; }
+  // 1) 시간 칸 → 오후 자동 변환(오전/오후 표시 존중)
+  if (isTimeCol_(sh, col)) { fixPmTime_(e); return; }
 
   // 2) 이슈체크 칸 → 결제 시트에 기록
   const issueCol = findColByHeader_(sh, ISSUE_HEADER, LOG_HEADER_ROW);
