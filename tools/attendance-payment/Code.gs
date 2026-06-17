@@ -35,7 +35,7 @@ const COL_NEXTREG = 12;     // L 다음등록일(달력)
 const WEEK_START  = 13;     // M열부터 주차 띠(한 줄=한 달, 5주씩)
 const WEEK_COLS   = 5;      // 한 달당 주차 칸 수(5주)
 const GRID_START  = WEEK_START + WEEK_COLS; // 18(R)열부터 회차 칸
-const GRID_COLS   = 31;     // 회차 칸 가로 개수(매일반 대응)
+const GRID_COLS   = 15;     // 회차 칸 가로 개수(15칸씩 줄바꿈) — 매일반=15×6줄
 const HELPER_COL   = GRID_START + GRID_COLS;     // 연속행 표시용(숨김)
 const HELPER_PRICE = GRID_START + GRID_COLS + 1; // 형제할인 전 원가 저장(숨김)
 const DISC_SIB  = 0.95;     // 형제할인 5%
@@ -269,7 +269,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v44 (2026-06-03) 전체 경계선 적용+번호 검증 자동제거';
+const CODE_VERSION = 'v45 (2026-06-03) 회차칸 15칸 폭+매일반 6줄';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -512,9 +512,9 @@ function parsePlan_(text) {
 
   const daily = (freq === '매일반');
   const cycle = (daily || t.indexOf('분기') >= 0) ? '분기' : '월';
-  const perMonth = daily ? GRID_COLS : FREQ_PERMONTH[freq];
-  const rows = (daily || cycle === '분기') ? 3 : 1;
-  const months = (daily || cycle === '분기') ? 3 : 1; // 다음등록일 계산용
+  const perMonth = daily ? GRID_COLS : FREQ_PERMONTH[freq]; // 매일반=15칸/줄
+  const rows = daily ? 6 : (cycle === '분기' ? 3 : 1);      // 매일반=6줄(15×6=90), 분기=3줄, 월=1줄
+  const months = (daily || cycle === '분기') ? 3 : 1;        // 다음등록일 계산용
   return { freq, dur, cycle, daily, perMonth, rows, months };
 }
 
