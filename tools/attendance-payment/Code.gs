@@ -2,8 +2,8 @@
  * 학원 명단 시트 - 등록회차 클릭 시 회차 칸 자동 생성
  * ------------------------------------------------------------
  * 시트 구조(열):
- *   A 번호 · B 이름 · C 이슈기록 · D 학교/학년 · E 휴대전화 · F 등록여부 · G 결제방식 · H 결제금액
- *   I 결제일 · J 등록회차 · K 할인 · L 등록일 · M 다음등록일 · N~R 주차 띠(5주) · S열~ 회차(출석) 칸
+ *   A 번호 · B 이름 · C 학교/학년 · D 휴대전화 · E 등록여부 · F 결제방식 · G 결제금액
+ *   H 결제일 · I 등록회차 · J 할인 · K 등록일 · L 다음등록일 · M~Q 주차 띠(5주) · R열~ 회차(출석) 칸
  *
  * 동작:
  *   G(등록회차) 드롭다운을 고르면  →  그 자리에서 바로 회차 칸이 생성됩니다.
@@ -24,18 +24,17 @@ const SHEET_PRICE   = '플랜단가';
 const DATA_START_ROW = 2;   // 머리글이 1행, 데이터는 2행부터
 const COL_NUM   = 1;        // A 번호(자동 누적)
 const COL_NAME  = 2;        // B 이름
-const COL_ISSUE = 3;        // C 이슈기록(수업일지 연동) ← 이름 오른쪽
-const COL_REG   = 6;        // F 등록여부
-const COL_PAYMETHOD = 7;    // G 결제방식
-const COL_PRICE = 8;        // H 결제금액
-const COL_PAYDATE = 9;      // I 결제일(달력)
-const COL_PLAN  = 10;       // J 등록회차
-const COL_SIBLING = 11;     // K 할인
-const COL_REGDATE = 12;     // L 등록일(달력)
-const COL_NEXTREG = 13;     // M 다음등록일(달력)
-const WEEK_START  = 14;     // N열부터 주차 띠(한 줄=한 달, 5주씩)
+const COL_REG   = 5;        // E 등록여부
+const COL_PAYMETHOD = 6;    // F 결제방식
+const COL_PRICE = 7;        // G 결제금액
+const COL_PAYDATE = 8;      // H 결제일(달력)
+const COL_PLAN  = 9;        // I 등록회차
+const COL_SIBLING = 10;     // J 할인
+const COL_REGDATE = 11;     // K 등록일(달력)
+const COL_NEXTREG = 12;     // L 다음등록일(달력)
+const WEEK_START  = 13;     // M열부터 주차 띠(한 줄=한 달, 5주씩)
 const WEEK_COLS   = 5;      // 한 달당 주차 칸 수(5주)
-const GRID_START  = WEEK_START + WEEK_COLS; // 19(S)열부터 회차 칸
+const GRID_START  = WEEK_START + WEEK_COLS; // 18(R)열부터 회차 칸
 const GRID_COLS   = 31;     // 회차 칸 가로 개수(매일반 대응)
 const HELPER_COL   = GRID_START + GRID_COLS;     // 연속행 표시용(숨김)
 const HELPER_PRICE = GRID_START + GRID_COLS + 1; // 형제할인 전 원가 저장(숨김)
@@ -88,11 +87,9 @@ function onOpen() {
     .addItem('🛠 결제금액·결제일 칸 정리', 'fixPayColumns')
     .addItem('🧹 번호·결제방식·결제일 정리', 'fixRosterBasics')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
-    .addItem('🔗 수업일지 연동 설치 (이슈체크→결제기록)', 'setupIssueLink')
-    .addItem('🔁 이슈 전체 다시 집계 (모든 수업일지)', 'aggregateIssues')
+    .addSeparator()
     .addItem('📅 한 달치 수업일지 만들기', 'makeMonthLogs')
     .addItem('📦 지난 달 수업일지 보관(이동)', 'archiveMonthLogs')
-    .addItem('🧪 연동 데모 만들기 (빈 새 시트에서)', 'makeDemo')
     .addItem('🔎 코드 버전 확인', 'showVersion')
     .addSeparator()
     .addSubMenu(ui.createMenu('🌴 방학특강')
@@ -252,7 +249,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v40 (2026-06-03) 보강(이월) 파란칸 추가-정규후 채움';
+const CODE_VERSION = 'v41 (2026-06-03) 이슈기록 칸 제거-출석칸 안 밀림';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -276,15 +273,12 @@ function setupSheet() {
     SpreadsheetApp.getUi().alert('명단 시트(이름·등록회차가 있는 시트)에서 실행하세요.');
     return;
   }
-  // 이슈기록 칸 보장: 이름(B) 오른쪽에 '이슈기록'이 없으면 한 칸 삽입(전체 +1 정렬)
-  ensurePayIssueCol_(sh);
-
   const maxRow = sh.getMaxRows();
   const n = maxRow - DATA_START_ROW + 1;
 
-  // 머리글 A~M (이름 오른쪽 '이슈기록', 결제금액 오른쪽 '결제일' 포함)
+  // 머리글 A~L (결제금액 오른쪽 '결제일' 포함)
   sh.getRange(1, 1, 1, COL_NEXTREG).setValues([[
-    '번호','이름','이슈기록','학교/학년','휴대전화','등록여부','결제방식','결제금액','결제일','등록회차','할인','등록일','다음등록일']])
+    '번호','이름','학교/학년','휴대전화','등록여부','결제방식','결제금액','결제일','등록회차','할인','등록일','다음등록일']])
     .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
 
   // G 등록회차 드롭다운
