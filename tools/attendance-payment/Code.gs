@@ -86,6 +86,7 @@ function onOpen() {
     .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
     .addItem('🛠 결제금액·결제일 칸 정리', 'fixPayColumns')
     .addItem('🧹 번호·결제방식·결제일 정리', 'fixRosterBasics')
+    .addItem('🧯 이슈기록 칸 삭제 (정렬 복구)', 'removeIssueColumn')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addSeparator()
     .addItem('📅 한 달치 수업일지 만들기', 'makeMonthLogs')
@@ -195,6 +196,24 @@ function fixPayColumns() {
     ui.ButtonSet.OK);
 }
 
+// 🧯 이슈기록 칸 삭제: 이미 만들어진 '이슈기록' 칸을 지우고 나머지를 왼쪽으로 당겨 정렬 복구
+function removeIssueColumn() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const sh = ss.getActiveSheet();
+  const col = findColByHeader_(sh, PAY_LOG_HEADER, 1); // '이슈기록'
+  if (!col) {
+    ui.alert("'이슈기록' 머리글을 못 찾았어요.\n혹시 머리글이 이미 어긋났다면, 먼저 [파일 ▸ 버전 기록]으로 '이슈기록' 글자가 보이던 시점으로 되돌린 뒤 다시 실행하세요.");
+    return;
+  }
+  const res = ui.alert('이슈기록 칸 삭제',
+    "'이슈기록' 칸(" + columnLetter_(col) + "열)을 삭제하고 나머지를 왼쪽으로 당겨 정렬을 되돌립니다.\n진행할까요?",
+    ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+  sh.deleteColumn(col);
+  ui.alert('완료', "'이슈기록' 칸을 삭제했어요. 출석칸·결제칸 정렬이 원래대로 돌아왔습니다.\n이제 정상이면 됩니다. (필요하면 🧹 번호·결제방식·결제일 정리만 한 번 눌러주세요)", ui.ButtonSet.OK);
+}
+
 // 🧹 번호(빨간표시 제거+순번) · 결제방식 드롭다운 · 결제일 달력 — 머리글로 찾아 안전하게 정리
 function fixRosterBasics() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -249,7 +268,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v41 (2026-06-03) 이슈기록 칸 제거-출석칸 안 밀림';
+const CODE_VERSION = 'v42 (2026-06-03) 이슈기록 칸 삭제 버튼(정렬 복구)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
