@@ -268,7 +268,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v42 (2026-06-03) 이슈기록 칸 삭제 버튼(정렬 복구)';
+const CODE_VERSION = 'v43 (2026-06-03) 정규끝 붉은선+보강끝 오른쪽아래선';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -642,6 +642,32 @@ function drawGrid_(sh, row, plan, extra) {
   for (let rr = 0; rr < rows; rr++)
     for (let cc = 0; cc < GRID_COLS; cc++)
       if (notes[rr][cc] === MAKEUP_NOTE) sh.getRange(row + rr, GRID_START + cc).setBackground(C_MAKEUP);
+  redrawGridMarks_(sh, row);
+}
+
+// 회차 칸 경계 표시: 정규 마지막 칸=붉은 오른쪽선 / 보강 마지막 칸=붉은 오른쪽+아래선
+function redrawGridMarks_(sh, owner) {
+  const plan = parsePlan_(sh.getRange(owner, COL_PLAN).getValue());
+  if (!plan) return;
+  const rows = plan.rows;
+  const per = Math.min(plan.perMonth, GRID_COLS);
+  const block = sh.getRange(owner, GRID_START, rows, GRID_COLS);
+  const RED = '#ff0000', TH = SpreadsheetApp.BorderStyle.SOLID_THICK;
+  // 1) 회차 영역 테두리 초기화
+  block.setBorder(false, false, false, false, false, false);
+  // 2) 정규 마지막 칸(각 줄의 정규 끝)에 붉은 오른쪽 선
+  if (per >= 1)
+    for (let r = 0; r < rows; r++)
+      sh.getRange(owner + r, GRID_START + per - 1).setBorder(null, null, null, true, null, null, RED, TH);
+  // 3) 보강(메모 '보강') 중 마지막 칸에 붉은 오른쪽+아래 선
+  const notes = block.getNotes();
+  let lr = -1, lc = -1;
+  for (let rr = 0; rr < rows; rr++)
+    for (let cc = 0; cc < GRID_COLS; cc++)
+      if (notes[rr][cc] === MAKEUP_NOTE) { lr = rr; lc = cc; }
+  if (lr >= 0) sh.getRange(owner + lr, GRID_START + lc).setBorder(null, null, true, true, null, null, RED, TH);
+  // 4) 학생 첫 줄 위쪽 굵은 구분선 복원(테두리 초기화로 지워졌을 수 있음)
+  setTopBorder_(sh, owner);
 }
 
 // 할인: '형제할인'=5%, '오픈할인'=20%, '정상'=원가 복원
@@ -1015,7 +1041,7 @@ function setMakeup_(sh, owner, cnt) {
         sh.getRange(owner + rr, GRID_START + cc).setNote('');
         styleGridCell_(sh, owner + rr, GRID_START + cc); // 빈칸이면 흰색/정규색으로 정리
       }
-  if (cnt <= 0) return 0;
+  if (cnt <= 0) { redrawGridMarks_(sh, owner); return 0; }
 
   // 2) 새 보강 칸: 정규(시간색)·내용 있는 칸은 건너뛰고 첫 흰 빈칸부터 파란색+메모
   const vals = sh.getRange(owner, GRID_START, rows, GRID_COLS).getValues();
@@ -1030,6 +1056,7 @@ function setMakeup_(sh, owner, cnt) {
         added++;
       }
     }
+  redrawGridMarks_(sh, owner); // 정규/보강 경계 붉은 선 다시 그림
   return added;
 }
 
