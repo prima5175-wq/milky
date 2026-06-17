@@ -88,6 +88,7 @@ function onOpen() {
     .addItem('🧹 번호·결제방식·결제일 정리', 'fixRosterBasics')
     .addItem('🧯 이슈기록 칸 삭제 (정렬 복구)', 'removeIssueColumn')
     .addItem('🟥 전체 경계선·번호 다시 그리기', 'redrawAllMarks')
+    .addItem('📐 기존 데이터 15칸으로 정리 (사본에서 1회)', 'migrateGridTo15')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addSeparator()
     .addItem('📅 한 달치 수업일지 만들기', 'makeMonthLogs')
@@ -269,7 +270,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v45 (2026-06-03) 회차칸 15칸 폭+매일반 6줄';
+const CODE_VERSION = 'v46 (2026-06-03) 기존 데이터 15칸 마이그레이션';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -693,6 +694,75 @@ function redrawAllMarks() {
     r += 1 + countContBelow_(sh, r, last);
   }
   ui.alert('완료', '기존 ' + cnt + '명에 정규/보강 경계선을 다시 그렸어요.\n번호 칸 빨간 표시도 정리했습니다.', ui.ButtonSet.OK);
+}
+
+// 📐 기존 데이터(옛 31칸)를 새 15칸 배치로 1회 정리. ※ 반드시 사본에서 먼저!
+//   안 쓰는 가로 16칸을 삭제 → 숨은 도우미/출석 날짜가 자동 정렬, 매일반만 6줄로 다시 펴줌
+function migrateGridTo15() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0 || sh.getName() === T_SHEET) {
+    ui.alert('수강생대장(명단) 시트에서 실행하세요.'); return;
+  }
+  const OLD_GC = 31;                 // 옛 회차 칸 폭
+  const delCount = OLD_GC - GRID_COLS; // 삭제할 칸 수(16)
+  if (delCount <= 0) { ui.alert('이미 15칸 배치예요.'); return; }
+  const oldHelpCol = GRID_START + OLD_GC; // 옛 도우미 위치(49)
+
+  // 이미 정리됐는지 점검: 옛 도우미 자리에 '_blk'가 없으면 이미 새 배치
+  if (String(sh.getRange(1, oldHelpCol).getValue()) !== '_blk') {
+    ui.alert('이미 15칸 배치로 정리된 것 같아요. (옛 도우미 칸이 없음)\n그래도 모양이 이상하면 알려주세요.');
+    return;
+  }
+
+  const res = ui.alert('기존 데이터 15칸으로 정리',
+    '⚠️ 반드시 사본에서 실행하세요!\n안 쓰는 가로 ' + delCount + '칸을 삭제해 기존 학생 데이터를 새 15칸 배치로 맞춥니다.\n매일반은 6줄로 다시 펴집니다. 출석 날짜는 보존돼요.\n\n진행할까요?',
+    ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+
+  // 1) 매일반 학생 날짜 미리 수집(삭제로 잘릴 수 있으므로) — 컬럼 삭제는 행을 안 바꿈
+  const last = sh.getLastRow();
+  const dailyData = [];
+  let r = DATA_START_ROW;
+  while (r <= last) {
+    if (String(sh.getRange(r, oldHelpCol).getValue()) === CONT) { r++; continue; }
+    const plan = parsePlan_(sh.getRange(r, COL_PLAN).getValue());
+    let oldExtra = 0;
+    while (String(sh.getRange(r + 1 + oldExtra, oldHelpCol).getValue()) === CONT) oldExtra++;
+    if (plan && plan.daily) {
+      const block = sh.getRange(r, GRID_START, oldExtra + 1, OLD_GC).getValues();
+      const dates = [];
+      block.forEach(row => row.forEach(v => { if (v instanceof Date) dates.push(v); }));
+      dailyData.push({ row: r, dates: dates });
+    }
+    r += 1 + oldExtra;
+  }
+
+  // 2) 안 쓰는 가로 칸 삭제 → 옛 도우미(49,50)·이후 칸들이 왼쪽으로 당겨져 새 위치(33,34)에 정렬
+  sh.deleteColumns(GRID_START + GRID_COLS, delCount); // deleteColumns(33, 16)
+
+  // 3) 매일반 학생만 6줄로 다시 펴고 날짜 복원(행이 늘어나므로 아래쪽부터 처리)
+  dailyData.sort((a, b) => b.row - a.row);
+  dailyData.forEach(d => {
+    const plan = parsePlan_(sh.getRange(d.row, COL_PLAN).getValue());
+    if (!plan) return;
+    handlePlanChange_(sh, d.row);              // 6줄로 재생성(15칸)
+    const newExtra = plan.rows - 1;
+    d.dates.sort((a, b) => a - b);
+    d.dates.forEach(dt => {
+      const t = firstEmptyGridCell_(sh, d.row, newExtra + 1);
+      if (t) sh.getRange(t.r, t.c).setValue(dt).setNumberFormat('M/d').setBackground(C_USED);
+    });
+    recomputeStripOwner_(sh, d.row);
+    redrawGridMarks_(sh, d.row);
+  });
+
+  renumber_(sh);
+  ui.alert('정리 완료',
+    '기존 데이터를 15칸 배치로 옮겼어요. 매일반은 6줄로 펴졌습니다.\n' +
+    '확인 후, 경계선이 필요하면 [🟥 전체 경계선·번호 다시 그리기]도 한 번 눌러주세요.',
+    ui.ButtonSet.OK);
 }
 
 // 할인: '형제할인'=5%, '오픈할인'=20%, '정상'=원가 복원
