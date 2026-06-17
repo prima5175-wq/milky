@@ -45,6 +45,8 @@ const DISC_OPEN = 0.80;     // 오픈할인 20%
 // 색상
 const C_DUR  = { '60분': '#fce4ec', '90분': '#d9ead3', '120분': '#fff2cc' };
 const C_USED = '#cfcfcf';   // 출석 완료
+const C_MAKEUP = '#9fc5e8'; // 보강(이월) 칸 — 파란색
+const MAKEUP_NOTE = '보강'; // 보강 칸 표시(메모) — 출석 취소 시 색 복원·식별용
 const C_CONT = '#f3f3f3';   // 분기납 연속행 표시
 const C_WEEK_OK   = '#b6d7a8'; // 그 주 출석 있음
 const C_WEEK_MISS = '#ea9999'; // 그 주 결석(지난 주)
@@ -79,6 +81,7 @@ function onOpen() {
     .addItem('📋 한꺼번에 출석 (이름 붙여넣기)', 'bulkAttendance')
     .addItem('⏪ 방금 한꺼번에 출석 되돌리기', 'undoLastBulk')
     .addItem('↩️ 선택 칸 출석 취소', 'unmarkAttendance')
+    .addItem('➕ 보강(이월) 칸 추가 (파란칸)', 'addMakeup')
     .addSeparator()
     .addItem('🗑 선택 학생 삭제 (휴원)', 'deleteStudent')
     .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
@@ -249,7 +252,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v39 (2026-06-03) 번호 빨간표시제거+결제방식(계좌이체)+결제일 달력 정리';
+const CODE_VERSION = 'v40 (2026-06-03) 보강(이월) 파란칸 추가-정규후 채움';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -608,17 +611,24 @@ function countContBelow_(sh, row, maxRow) {
 }
 
 function clearGrid_(sh, row, extra) {
-  sh.getRange(row, GRID_START, extra + 1, GRID_COLS).setBackground(null).clearContent();
+  sh.getRange(row, GRID_START, extra + 1, GRID_COLS).setBackground(null).clearContent().clearNote();
 }
 
 function drawGrid_(sh, row, plan, extra) {
-  // 회차 칸 영역 초기화 후 색칠
-  sh.getRange(row, GRID_START, extra + 1, GRID_COLS).setBackground(null).clearContent();
+  const rows = extra + 1;
+  const block = sh.getRange(row, GRID_START, rows, GRID_COLS);
+  const notes = block.getNotes();                 // 보강 칸 메모 보존용
+  // 회차 칸 영역 초기화(보강 메모는 clearContent/배경이 안 지움)
+  block.setBackground(null).clearContent();
   const color = C_DUR[plan.dur] || C_DUR['90분'];
+  const per = Math.min(plan.perMonth, GRID_COLS);
   for (let r = 0; r <= extra; r++) {
-    const n = Math.min(plan.perMonth, GRID_COLS);
-    sh.getRange(row + r, GRID_START, 1, n).setBackground(color);
+    sh.getRange(row + r, GRID_START, 1, per).setBackground(color);
   }
+  // 보강(이월) 칸은 파란색으로 복원(정규 색 위에 덮어씀)
+  for (let rr = 0; rr < rows; rr++)
+    for (let cc = 0; cc < GRID_COLS; cc++)
+      if (notes[rr][cc] === MAKEUP_NOTE) sh.getRange(row + rr, GRID_START + cc).setBackground(C_MAKEUP);
 }
 
 // 할인: '형제할인'=5%, '오픈할인'=20%, '정상'=원가 복원
@@ -736,6 +746,8 @@ function styleGridCell_(sh, r, c) {
   const cell = sh.getRange(r, c);
   const v = cell.getValue();
   if (v === '' || v === null) {
+    // 보강 칸이면 파란색 복원(정규보다 우선)
+    if (cell.getNote() === MAKEUP_NOTE) { cell.setBackground(C_MAKEUP); return; }
     // 비움 → 등록된 회차칸이면 시간색 복원
     const owner = ownerRow_(sh, r);
     const plan = parsePlan_(sh.getRange(owner, COL_PLAN).getValue());
@@ -929,20 +941,83 @@ function undoLastBulk() {
 function firstEmptyGridCell_(sh, owner, rows) {
   const vals = sh.getRange(owner, GRID_START, rows, GRID_COLS).getValues();
   const bgs  = sh.getRange(owner, GRID_START, rows, GRID_COLS).getBackgrounds();
-  // 1순위: 시간색(등록된 회차)인데 비어있는 칸
+  // 1순위: 시간색(등록된 정규 회차)인데 비어있는 칸 → 정규부터 채움
   for (let rr = 0; rr < rows; rr++)
     for (let cc = 0; cc < GRID_COLS; cc++) {
       const v = vals[rr][cc], bg = String(bgs[rr][cc]).toLowerCase();
       const colored = (bg === C_DUR['60분'] || bg === C_DUR['90분'] || bg === C_DUR['120분']);
       if ((v === '' || v === null) && colored) return { r: owner + rr, c: GRID_START + cc };
     }
-  // 2순위: 그냥 첫 빈칸
+  // 2순위: 보강(파란) 칸 중 비어있는 칸 → 정규 다 쓴 뒤 보강 채움
+  for (let rr = 0; rr < rows; rr++)
+    for (let cc = 0; cc < GRID_COLS; cc++) {
+      const v = vals[rr][cc], bg = String(bgs[rr][cc]).toLowerCase();
+      if ((v === '' || v === null) && bg === C_MAKEUP) return { r: owner + rr, c: GRID_START + cc };
+    }
+  // 3순위: 그냥 첫 빈칸
   for (let rr = 0; rr < rows; rr++)
     for (let cc = 0; cc < GRID_COLS; cc++) {
       const v = vals[rr][cc];
       if (v === '' || v === null) return { r: owner + rr, c: GRID_START + cc };
     }
   return null;
+}
+
+// ➕ 보강(이월) 칸 추가: 선택한 학생 줄에 보강 회차 개수를 받아 정규 칸 뒤에 파란 칸 생성
+function addMakeup() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0 || sh.getName() === T_SHEET) {
+    ui.alert('수강생대장(명단) 시트에서 사용하세요.'); return;
+  }
+  const sel = sh.getActiveRange();
+  if (!sel || sel.getRow() < DATA_START_ROW) { ui.alert('보강을 추가할 학생 줄의 칸을 먼저 선택하세요.'); return; }
+  const owner = ownerRow_(sh, sel.getRow());
+  const name = sh.getRange(owner, COL_NAME).getValue() || '(이름 없음)';
+
+  const r = ui.prompt('보강(이월) 칸 추가 — ' + name,
+    '추가할 보강 회차 개수를 입력하세요. (예: 2)\n0을 넣으면 이 학생의 보강 칸을 모두 지웁니다.',
+    ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  const cnt = parseInt(String(r.getResponseText()).trim(), 10);
+  if (isNaN(cnt) || cnt < 0) { ui.alert('숫자를 입력하세요. (예: 2)'); return; }
+
+  const added = setMakeup_(sh, owner, cnt);
+  recomputeStripOwner_(sh, owner);
+  if (cnt === 0) ui.alert(name + ' 학생의 보강 칸을 모두 지웠어요.');
+  else if (added < cnt) ui.alert('칸이 부족해 ' + added + '개만 추가했어요. (그 학생의 빈 칸이 모자람)');
+  else ui.alert('✅ ' + name + ' 학생에게 보강(파란) 칸 ' + added + '개를 추가했어요.\n정규 회차를 다 쓴 뒤 이 칸에 출석이 채워집니다.');
+}
+
+// 보강 칸 설정: 기존 보강 제거 후 cnt개를 정규 칸 뒤 첫 빈칸들에 파란색+메모로 생성. 반환=실제 추가 수
+function setMakeup_(sh, owner, cnt) {
+  const plan = parsePlan_(sh.getRange(owner, COL_PLAN).getValue());
+  const rows = plan ? plan.rows : 1;
+
+  // 1) 기존 보강 칸 제거: 메모 지우고, 빈 칸이면 색 원상복구
+  const notes = sh.getRange(owner, GRID_START, rows, GRID_COLS).getNotes();
+  for (let rr = 0; rr < rows; rr++)
+    for (let cc = 0; cc < GRID_COLS; cc++)
+      if (notes[rr][cc] === MAKEUP_NOTE) {
+        sh.getRange(owner + rr, GRID_START + cc).setNote('');
+        styleGridCell_(sh, owner + rr, GRID_START + cc); // 빈칸이면 흰색/정규색으로 정리
+      }
+  if (cnt <= 0) return 0;
+
+  // 2) 새 보강 칸: 정규(시간색)·내용 있는 칸은 건너뛰고 첫 흰 빈칸부터 파란색+메모
+  const vals = sh.getRange(owner, GRID_START, rows, GRID_COLS).getValues();
+  const bgs  = sh.getRange(owner, GRID_START, rows, GRID_COLS).getBackgrounds();
+  let added = 0;
+  for (let rr = 0; rr < rows && added < cnt; rr++)
+    for (let cc = 0; cc < GRID_COLS && added < cnt; cc++) {
+      const v = vals[rr][cc], bg = String(bgs[rr][cc]).toLowerCase();
+      const isRegular = (bg === C_DUR['60분'] || bg === C_DUR['90분'] || bg === C_DUR['120분']);
+      if ((v === '' || v === null) && !isRegular) {
+        sh.getRange(owner + rr, GRID_START + cc).setBackground(C_MAKEUP).setNote(MAKEUP_NOTE);
+        added++;
+      }
+    }
+  return added;
 }
 
 function sameDay_(a, b) {
