@@ -87,6 +87,7 @@ function onOpen() {
     .addItem('🛠 결제금액·결제일 칸 정리', 'fixPayColumns')
     .addItem('🧹 번호·결제방식·결제일 정리', 'fixRosterBasics')
     .addItem('🧯 이슈기록 칸 삭제 (정렬 복구)', 'removeIssueColumn')
+    .addItem('🟥 전체 경계선·번호 다시 그리기', 'redrawAllMarks')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addSeparator()
     .addItem('📅 한 달치 수업일지 만들기', 'makeMonthLogs')
@@ -268,7 +269,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v43 (2026-06-03) 정규끝 붉은선+보강끝 오른쪽아래선';
+const CODE_VERSION = 'v44 (2026-06-03) 전체 경계선 적용+번호 검증 자동제거';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -449,7 +450,9 @@ function renumber_(sh) {
     if (String(helper[i][0]) === CONT || String(names[i][0]).trim() === '') out.push(['']);
     else { c++; out.push([c]); }
   }
-  sh.getRange(DATA_START_ROW, COL_NUM, n, 1).setValues(out);
+  const numRange = sh.getRange(DATA_START_ROW, COL_NUM, n, 1);
+  numRange.clearDataValidations();  // 번호 칸 빨간 삼각형(잘못된 입력값) 방지
+  numRange.setValues(out);
 }
 
 // 학생 첫 줄마다 위쪽 굵은 구분선
@@ -668,6 +671,28 @@ function redrawGridMarks_(sh, owner) {
   if (lr >= 0) sh.getRange(owner + lr, GRID_START + lc).setBorder(null, null, true, true, null, null, RED, TH);
   // 4) 학생 첫 줄 위쪽 굵은 구분선 복원(테두리 초기화로 지워졌을 수 있음)
   setTopBorder_(sh, owner);
+}
+
+// 🟥 전체 학생에 정규/보강 경계선 다시 그리기 + 번호 칸 정리(기존 데이터에도 적용)
+function redrawAllMarks() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0 || sh.getName() === T_SHEET) {
+    ui.alert('수강생대장(명단) 시트에서 실행하세요.'); return;
+  }
+  // 1) 번호 칸 검증(빨간 삼각형) 제거 + 순번 정리
+  renumber_(sh);
+  // 2) 모든 학생(소유행)에 경계선
+  const last = sh.getLastRow();
+  let r = DATA_START_ROW, cnt = 0;
+  while (r <= last) {
+    if (String(sh.getRange(r, HELPER_COL).getValue()) === CONT) { r++; continue; }
+    const plan = parsePlan_(sh.getRange(r, COL_PLAN).getValue());
+    if (plan) { redrawGridMarks_(sh, r); cnt++; }
+    r += 1 + countContBelow_(sh, r, last);
+  }
+  ui.alert('완료', '기존 ' + cnt + '명에 정규/보강 경계선을 다시 그렸어요.\n번호 칸 빨간 표시도 정리했습니다.', ui.ButtonSet.OK);
 }
 
 // 할인: '형제할인'=5%, '오픈할인'=20%, '정상'=원가 복원
