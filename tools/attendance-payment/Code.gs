@@ -88,6 +88,7 @@ function onOpen() {
     .addItem('🧹 번호·결제방식·결제일 정리', 'fixRosterBasics')
     .addItem('🧯 이슈기록 칸 삭제 (정렬 복구)', 'removeIssueColumn')
     .addItem('🟥 전체 경계선·번호 다시 그리기', 'redrawAllMarks')
+    .addItem('🅰 체크 칸 설정 (상담·비문학·긴글·포폴)', 'setupCheckColumns')
     .addItem('📐 기존 데이터 15칸으로 정리 (사본에서 1회)', 'migrateGridTo15')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addSeparator()
@@ -270,7 +271,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v46 (2026-06-03) 기존 데이터 15칸 마이그레이션';
+const CODE_VERSION = 'v47 (2026-06-03) 분기 박스+체크칸(비문학 레벨/번호·상담/긴글/포폴 달력)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -649,27 +650,32 @@ function drawGrid_(sh, row, plan, extra) {
   redrawGridMarks_(sh, row);
 }
 
-// 회차 칸 경계 표시: 정규 마지막 칸=붉은 오른쪽선 / 보강 마지막 칸=붉은 오른쪽+아래선
+// 회차 칸 경계 표시: 학생 블록(정규)을 테두리 박스로 묶음(분기=3줄 박스/월=1줄 박스), 보강은 파란 박스
 function redrawGridMarks_(sh, owner) {
   const plan = parsePlan_(sh.getRange(owner, COL_PLAN).getValue());
   if (!plan) return;
   const rows = plan.rows;
   const per = Math.min(plan.perMonth, GRID_COLS);
   const block = sh.getRange(owner, GRID_START, rows, GRID_COLS);
-  const RED = '#ff0000', TH = SpreadsheetApp.BorderStyle.SOLID_THICK;
+  const GRAY = '#666666', BLUE = '#1155cc';
+  const MED = SpreadsheetApp.BorderStyle.SOLID_MEDIUM;
   // 1) 회차 영역 테두리 초기화
   block.setBorder(false, false, false, false, false, false);
-  // 2) 정규 마지막 칸(각 줄의 정규 끝)에 붉은 오른쪽 선
+  // 2) 정규 블록(rows × per)을 회색 테두리 박스로 묶음 → 분기(3줄)·월(1줄) 구분 + 가독성
   if (per >= 1)
-    for (let r = 0; r < rows; r++)
-      sh.getRange(owner + r, GRID_START + per - 1).setBorder(null, null, null, true, null, null, RED, TH);
-  // 3) 보강(메모 '보강') 중 마지막 칸에 붉은 오른쪽+아래 선
+    sh.getRange(owner, GRID_START, rows, per).setBorder(true, true, true, true, false, false, GRAY, MED);
+  // 3) 보강(메모 '보강') 칸들의 바깥 테두리(파란 박스)
   const notes = block.getNotes();
-  let lr = -1, lc = -1;
+  let minR = 99, maxR = -1, minC = 99, maxC = -1;
   for (let rr = 0; rr < rows; rr++)
     for (let cc = 0; cc < GRID_COLS; cc++)
-      if (notes[rr][cc] === MAKEUP_NOTE) { lr = rr; lc = cc; }
-  if (lr >= 0) sh.getRange(owner + lr, GRID_START + lc).setBorder(null, null, true, true, null, null, RED, TH);
+      if (notes[rr][cc] === MAKEUP_NOTE) {
+        if (rr < minR) minR = rr; if (rr > maxR) maxR = rr;
+        if (cc < minC) minC = cc; if (cc > maxC) maxC = cc;
+      }
+  if (maxR >= 0)
+    sh.getRange(owner + minR, GRID_START + minC, maxR - minR + 1, maxC - minC + 1)
+      .setBorder(true, true, true, true, false, false, BLUE, MED);
   // 4) 학생 첫 줄 위쪽 굵은 구분선 복원(테두리 초기화로 지워졌을 수 있음)
   setTopBorder_(sh, owner);
 }
@@ -694,6 +700,54 @@ function redrawAllMarks() {
     r += 1 + countContBelow_(sh, r, last);
   }
   ui.alert('완료', '기존 ' + cnt + '명에 정규/보강 경계선을 다시 그렸어요.\n번호 칸 빨간 표시도 정리했습니다.', ui.ButtonSet.OK);
+}
+
+// 🅰 체크 칸 설정: 상담·긴글·포폴=달력, 비문학=레벨(P,A,B~J)+비문학번호(1~12) — 머리글로 찾음
+function setupCheckColumns() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  if (findColByHeader_(sh, '이름', 1) === 0) { ui.alert("'이름' 머리글이 있는 수강생대장 시트에서 실행하세요."); return; }
+  const last = sh.getLastRow();
+  if (last < 2) { ui.alert('데이터가 없어요.'); return; }
+  const rows = last - 1;
+  const done = [];
+
+  // 상담·긴글·포폴 → 더블클릭 달력
+  ['상담', '긴글', '포폴'].forEach(function (h) {
+    const c = findColByHeader_(sh, h, 1);
+    if (c) {
+      sh.getRange(2, c, rows, 1).clearDataValidations();
+      sh.getRange(2, c, rows, 1).setNumberFormat('M/d').setDataValidation(
+        SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
+      done.push(h + '=달력');
+    }
+  });
+
+  // 비문학 → 레벨 드롭다운 + '비문학번호'(1~12) 칸
+  const bc = findColByHeader_(sh, '비문학', 1);
+  if (bc) {
+    sh.getRange(2, bc, rows, 1).setDataValidation(
+      SpreadsheetApp.newDataValidation()
+        .requireValueInList(['P', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'], true).build());
+    let nc = findColByHeader_(sh, '비문학번호', 1);
+    if (!nc) {
+      sh.insertColumnAfter(bc); nc = bc + 1;
+      sh.getRange(1, nc).setValue('비문학번호').setFontWeight('bold')
+        .setHorizontalAlignment('center').setVerticalAlignment('middle');
+      sh.setColumnWidth(nc, 56);
+    }
+    const nums = [];
+    for (let i = 1; i <= 12; i++) nums.push(String(i));
+    sh.getRange(2, nc, rows, 1).setDataValidation(
+      SpreadsheetApp.newDataValidation().requireValueInList(nums, true).build());
+    done.push('비문학=레벨+번호');
+  }
+
+  if (!done.length) { ui.alert("'상담·비문학·긴글·포폴' 머리글을 못 찾았어요. 머리글 줄(1행)에 그 칸들이 있는지 확인해주세요."); return; }
+  ui.alert('체크 칸 설정 완료',
+    done.join(' · ') + "\n\n비문학은 레벨(P,A,B~J)과 비문학번호(1~12)를 각각 골라 'B5'처럼 쓰면 돼요.\n분기 3줄 박스는 [🟥 전체 경계선·번호 다시 그리기]로 적용됩니다.",
+    ui.ButtonSet.OK);
 }
 
 // 📐 기존 데이터(옛 31칸)를 새 15칸 배치로 1회 정리. ※ 반드시 사본에서 먼저!
