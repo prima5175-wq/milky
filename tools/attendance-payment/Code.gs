@@ -83,6 +83,7 @@ function onOpen() {
     .addItem('🗑 선택 학생 삭제 (휴원)', 'deleteStudent')
     .addItem('🔄 주차 띠 전체 새로고침 (오늘 기준)', 'refreshWeekStrips')
     .addItem('🛠 결제금액·결제일 칸 정리', 'fixPayColumns')
+    .addItem('🧹 번호·결제방식·결제일 정리', 'fixRosterBasics')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
     .addItem('🔗 수업일지 연동 설치 (이슈체크→결제기록)', 'setupIssueLink')
     .addItem('🔁 이슈 전체 다시 집계 (모든 수업일지)', 'aggregateIssues')
@@ -194,6 +195,53 @@ function fixPayColumns() {
     ui.ButtonSet.OK);
 }
 
+// 🧹 번호(빨간표시 제거+순번) · 결제방식 드롭다운 · 결제일 달력 — 머리글로 찾아 안전하게 정리
+function fixRosterBasics() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const sh = ss.getActiveSheet();
+  const nameCol = findColByHeader_(sh, '이름', 1);
+  if (!nameCol) { ui.alert("'이름' 머리글이 있는 수강생대장 시트에서 실행하세요."); return; }
+  const last = sh.getLastRow();
+  if (last < 2) { ui.alert('데이터가 없어요.'); return; }
+  const rows = last - 1;
+  let note = '';
+
+  // 1) 번호: 데이터 검증(빨간 삼각형) 제거 + 순번 다시(이름 있는 줄만)
+  const numCol = findColByHeader_(sh, '번호', 1) || 1;
+  sh.getRange(2, numCol, rows, 1).clearDataValidations();
+  const names = sh.getRange(2, nameCol, rows, 1).getValues();
+  const nums = []; let c = 0;
+  for (let i = 0; i < rows; i++) {
+    const nm = String(names[i][0]).trim();
+    if (nm) { c++; nums.push([c]); } else nums.push(['']);
+  }
+  sh.getRange(2, numCol, rows, 1).setValues(nums).setNumberFormat('0');
+
+  // 2) 결제방식 드롭다운(결제선생/카드/현금/서울페이/계좌이체, 직접입력 허용)
+  const pmCol = findColByHeader_(sh, '결제방식', 1);
+  if (pmCol) {
+    sh.getRange(2, pmCol, rows, 1).setDataValidation(
+      SpreadsheetApp.newDataValidation()
+        .requireValueInList(['결제선생', '카드', '현금', '서울페이', '계좌이체'], true)
+        .setAllowInvalid(true).build());
+  } else note += "\n· '결제방식' 칸을 못 찾아 건너뜀";
+
+  // 3) 결제일 달력(날짜 선택기) + 형식
+  const pdCol = findColByHeader_(sh, '결제일', 1);
+  if (pdCol) {
+    sh.getRange(2, pdCol, rows, 1).clearDataValidations();
+    sh.getRange(2, pdCol, rows, 1).setNumberFormat('yyyy-mm-dd').setDataValidation(
+      SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
+  } else note += "\n· '결제일' 칸을 못 찾아 건너뜀";
+
+  ui.alert('정리 완료',
+    '✅ 번호: 빨간 표시 제거 + 순번 다시 정리\n' +
+    '✅ 결제방식: 결제선생·카드·현금·서울페이·계좌이체 드롭다운\n' +
+    '✅ 결제일: 더블클릭하면 달력' + (note ? ('\n\n참고:' + note) : ''),
+    ui.ButtonSet.OK);
+}
+
 function tidyNumberBorders() {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   renumber_(sh);
@@ -201,7 +249,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v38 (2026-06-03) 시간칸 오전/오후 표시 존중';
+const CODE_VERSION = 'v39 (2026-06-03) 번호 빨간표시제거+결제방식(계좌이체)+결제일 달력 정리';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -259,7 +307,7 @@ function setupSheet() {
   sh.getRange(1, COL_PAYMETHOD).setNote('여러 개면 "카드, 현금"처럼 직접 입력 가능. "기타: 무통장입금" 식으로 내용도 적을 수 있어요.\n(진짜 다중선택 칩: 데이터 ▸ 데이터 확인 ▸ 다중 선택 허용 켜기)');
   sh.getRange(DATA_START_ROW, COL_PAYMETHOD, n, 1).setDataValidation(
     SpreadsheetApp.newDataValidation()
-      .requireValueInList(['결제선생', '카드', '현금', '서울페이', '기타'], true)
+      .requireValueInList(['결제선생', '카드', '현금', '서울페이', '계좌이체'], true)
       .setAllowInvalid(true).build());
   sh.setColumnWidth(COL_PAYMETHOD, 84);
 
