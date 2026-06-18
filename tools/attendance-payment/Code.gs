@@ -271,7 +271,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v47 (2026-06-03) 분기 박스+체크칸(비문학 레벨/번호·상담/긴글/포폴 달력)';
+const CODE_VERSION = 'v48 (2026-06-03) 분기 가운데선 제거+체크칸 박스 묶음';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -650,33 +650,37 @@ function drawGrid_(sh, row, plan, extra) {
   redrawGridMarks_(sh, row);
 }
 
-// 회차 칸 경계 표시: 학생 블록(정규)을 테두리 박스로 묶음(분기=3줄 박스/월=1줄 박스), 보강은 파란 박스
-function redrawGridMarks_(sh, owner) {
+// 체크 칸(상담~포폴) 머리글 범위 찾기 → {c1, c2} (없으면 null)
+function getCheckColRange_(sh) {
+  const heads = ['상담', '비문학', '비문학번호', '긴글', '포폴'];
+  let c1 = 1e9, c2 = -1;
+  heads.forEach(function (h) {
+    const c = findColByHeader_(sh, h, 1);
+    if (c) { if (c < c1) c1 = c; if (c > c2) c2 = c; }
+  });
+  return c2 >= 0 ? { c1: c1, c2: c2 } : null;
+}
+
+// 학생 블록 표시: 분기 3줄의 '가운데 가로선'을 없애 한 사람으로 보이게 + 체크 칸을 박스로 묶음
+//   (셀 병합 안 함 → 모든 줄에 체크·기입 가능). 회차 칸의 잡선/붉은선은 제거.
+function redrawGridMarks_(sh, owner, checkRange) {
   const plan = parsePlan_(sh.getRange(owner, COL_PLAN).getValue());
   if (!plan) return;
   const rows = plan.rows;
-  const per = Math.min(plan.perMonth, GRID_COLS);
-  const block = sh.getRange(owner, GRID_START, rows, GRID_COLS);
-  const GRAY = '#666666', BLUE = '#1155cc';
   const MED = SpreadsheetApp.BorderStyle.SOLID_MEDIUM;
-  // 1) 회차 영역 테두리 초기화
-  block.setBorder(false, false, false, false, false, false);
-  // 2) 정규 블록(rows × per)을 회색 테두리 박스로 묶음 → 분기(3줄)·월(1줄) 구분 + 가독성
-  if (per >= 1)
-    sh.getRange(owner, GRID_START, rows, per).setBorder(true, true, true, true, false, false, GRAY, MED);
-  // 3) 보강(메모 '보강') 칸들의 바깥 테두리(파란 박스)
-  const notes = block.getNotes();
-  let minR = 99, maxR = -1, minC = 99, maxC = -1;
-  for (let rr = 0; rr < rows; rr++)
-    for (let cc = 0; cc < GRID_COLS; cc++)
-      if (notes[rr][cc] === MAKEUP_NOTE) {
-        if (rr < minR) minR = rr; if (rr > maxR) maxR = rr;
-        if (cc < minC) minC = cc; if (cc > maxC) maxC = cc;
-      }
-  if (maxR >= 0)
-    sh.getRange(owner + minR, GRID_START + minC, maxR - minR + 1, maxC - minC + 1)
-      .setBorder(true, true, true, true, false, false, BLUE, MED);
-  // 4) 학생 첫 줄 위쪽 굵은 구분선 복원(테두리 초기화로 지워졌을 수 있음)
+  const cr = checkRange || getCheckColRange_(sh);
+  const lastCol = cr ? cr.c2 : (GRID_START + GRID_COLS - 1);
+
+  // 1) 회차 영역의 옛 테두리(붉은선/박스) 제거
+  sh.getRange(owner, GRID_START, rows, GRID_COLS).setBorder(false, false, false, false, false, false);
+  // 2) 분기(여러 줄) 블록의 내부 '가로선'만 제거 → 가운데 줄 없어져 한 사람처럼 보임
+  if (rows > 1)
+    sh.getRange(owner, 1, rows, lastCol).setBorder(null, null, null, null, null, false);
+  // 3) 체크 칸(상담~포폴)을 박스로 묶음(외곽+세로 칸 구분선, 가운데 가로선은 없음)
+  if (cr)
+    sh.getRange(owner, cr.c1, rows, cr.c2 - cr.c1 + 1)
+      .setBorder(true, true, true, true, true, false, '#666666', MED);
+  // 4) 학생 첫 줄 위쪽 굵은 구분선 복원
   setTopBorder_(sh, owner);
 }
 
@@ -690,16 +694,17 @@ function redrawAllMarks() {
   }
   // 1) 번호 칸 검증(빨간 삼각형) 제거 + 순번 정리
   renumber_(sh);
-  // 2) 모든 학생(소유행)에 경계선
+  // 2) 모든 학생(소유행)에 박스/가운데선 정리
   const last = sh.getLastRow();
+  const checkRange = getCheckColRange_(sh); // 한 번만 계산해 넘김(속도)
   let r = DATA_START_ROW, cnt = 0;
   while (r <= last) {
     if (String(sh.getRange(r, HELPER_COL).getValue()) === CONT) { r++; continue; }
     const plan = parsePlan_(sh.getRange(r, COL_PLAN).getValue());
-    if (plan) { redrawGridMarks_(sh, r); cnt++; }
+    if (plan) { redrawGridMarks_(sh, r, checkRange); cnt++; }
     r += 1 + countContBelow_(sh, r, last);
   }
-  ui.alert('완료', '기존 ' + cnt + '명에 정규/보강 경계선을 다시 그렸어요.\n번호 칸 빨간 표시도 정리했습니다.', ui.ButtonSet.OK);
+  ui.alert('완료', '기존 ' + cnt + '명 정리 완료.\n분기 3줄 가운데 선을 없애고 체크 칸을 박스로 묶었어요.\n번호 칸 빨간 표시도 정리했습니다.', ui.ButtonSet.OK);
 }
 
 // 🅰 체크 칸 설정: 상담·긴글·포폴=달력, 비문학=레벨(P,A,B~J)+비문학번호(1~12) — 머리글로 찾음
