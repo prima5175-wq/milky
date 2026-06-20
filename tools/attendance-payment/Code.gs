@@ -271,7 +271,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v49 (2026-06-03) 체크칸 없으면 자동 생성';
+const CODE_VERSION = 'v50 (2026-06-03) 머리글 색+회차 1~15 머리글 통일';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -298,10 +298,14 @@ function setupSheet() {
   const maxRow = sh.getMaxRows();
   const n = maxRow - DATA_START_ROW + 1;
 
-  // 머리글 A~L (결제금액 오른쪽 '결제일' 포함)
+  // 머리글 A~L (결제금액 오른쪽 '결제일' 포함) + 색
   sh.getRange(1, 1, 1, COL_NEXTREG).setValues([[
     '번호','이름','학교/학년','휴대전화','등록여부','결제방식','결제금액','결제일','등록회차','할인','등록일','다음등록일']])
-    .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
+    .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle')
+    .setBackground('#cfe2f3').setFontColor('#1c4587');           // 정보 머리글 연파랑
+  sh.getRange(1, COL_REG).setBackground('#6fa8dc').setFontColor('#ffffff');   // 등록여부 진파랑
+  sh.getRange(1, COL_PLAN).setBackground('#6fa8dc').setFontColor('#ffffff');  // 등록회차 진파랑
+  sh.setRowHeight(1, 34);
 
   // G 등록회차 드롭다운
   sh.getRange(DATA_START_ROW, COL_PLAN, n, 1).setDataValidation(
@@ -382,6 +386,12 @@ function setupSheet() {
   // 회차 칸도 날짜 검증 제거(날짜 입력 시 오류삼각형 방지)
   sh.getRange(DATA_START_ROW, GRID_START, n, GRID_COLS).clearDataValidations();
 
+  // 회차 칸 머리글(1~15) + 색
+  const gHead = [];
+  for (let i = 1; i <= GRID_COLS; i++) gHead.push(i);
+  sh.getRange(1, GRID_START, 1, GRID_COLS).setValues([gHead])
+    .setBackground('#d9ead3').setFontColor('#274e13').setFontWeight('bold')
+    .setHorizontalAlignment('center').setFontSize(8);
   // 회차 칸 서식
   sh.getRange(DATA_START_ROW, GRID_START, n, GRID_COLS)
     .setNumberFormat('M/d').setHorizontalAlignment('center').setFontSize(9);
@@ -758,6 +768,13 @@ function setupCheckColumns() {
     sh.getRange(2, cc, rows, 1).clearDataValidations();
     sh.getRange(2, cc, rows, 1).setNumberFormat('M/d').setDataValidation(
       SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
+  });
+
+  // 체크 칸 머리글 색 통일(노랑 계열)
+  ['상담', '비문학', '비문학번호', '긴글', '포폴'].forEach(function (h) {
+    const cc = findColByHeader_(sh, h, 1);
+    if (cc) sh.getRange(1, cc).setBackground('#ffe599').setFontColor('#7f6000')
+      .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
   });
 
   ui.alert('체크 칸 설정 완료',
