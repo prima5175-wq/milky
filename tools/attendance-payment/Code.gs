@@ -88,6 +88,7 @@ function onOpen() {
     .addItem('🧹 번호·결제방식·결제일 정리', 'fixRosterBasics')
     .addItem('🧯 이슈기록 칸 삭제 (정렬 복구)', 'removeIssueColumn')
     .addItem('🟥 전체 경계선·번호 다시 그리기', 'redrawAllMarks')
+    .addItem('🧭 회차 날짜 정렬 맞추기 (1주칸 밀림 수정)', 'realignDates')
     .addItem('🅰 체크 칸 설정 (상담·비문학·긴글·포폴)', 'setupCheckColumns')
     .addItem('📐 기존 데이터 15칸으로 정리 (사본에서 1회)', 'migrateGridTo15')
     .addItem('🔢 번호·구분선 다시 정리', 'tidyNumberBorders')
@@ -271,7 +272,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v50 (2026-06-03) 머리글 색+회차 1~15 머리글 통일';
+const CODE_VERSION = 'v51 (2026-06-03) 회차 날짜 정렬 맞추기(1주칸 밀림 수정)';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -715,6 +716,54 @@ function redrawAllMarks() {
     r += 1 + countContBelow_(sh, r, last);
   }
   ui.alert('완료', '기존 ' + cnt + '명 정리 완료.\n분기 3줄 가운데 선을 없애고 체크 칸을 박스로 묶었어요.\n번호 칸 빨간 표시도 정리했습니다.', ui.ButtonSet.OK);
+}
+
+// 🧭 회차 날짜 정렬 맞추기: 주차 칸으로 밀린 출석 날짜를 회차 칸(R~)으로 다시 배치
+//   (이미 제자리인 학생은 그대로 유지 — 안전)
+function realignDates() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getActiveSheet();
+  const ui = SpreadsheetApp.getUi();
+  if (HELPER_SHEETS.indexOf(sh.getName()) >= 0 || sh.getName() === T_SHEET) {
+    ui.alert('수강생대장(명단) 시트에서 실행하세요.'); return;
+  }
+  const res = ui.alert('회차 날짜 정렬 맞추기',
+    '주차 칸으로 밀린 출석 날짜를 회차 칸으로 다시 배치하고 주차 띠를 재계산합니다.\n(이미 제자리인 학생은 그대로) 진행할까요?',
+    ui.ButtonSet.OK_CANCEL);
+  if (res !== ui.Button.OK) return;
+
+  const last = sh.getLastRow();
+  const width = GRID_START + GRID_COLS - WEEK_START; // 주차 시작~회차 끝
+  let r = DATA_START_ROW, cnt = 0;
+  while (r <= last) {
+    if (String(sh.getRange(r, HELPER_COL).getValue()) === CONT) { r++; continue; }
+    const plan = parsePlan_(sh.getRange(r, COL_PLAN).getValue());
+    const extra = plan ? Math.min(countContBelow_(sh, r, last), plan.rows - 1) : countContBelow_(sh, r, last);
+    const rows = extra + 1;
+    if (plan) {
+      // 1) 주차~회차 영역에서 날짜만 수집(주차 횟수는 숫자라 안 잡힘)
+      const rng = sh.getRange(r, WEEK_START, rows, width);
+      const vals = rng.getValues();
+      const dates = [];
+      vals.forEach(function (row) { row.forEach(function (v) { if (v instanceof Date) dates.push(v); }); });
+      // 2) 영역 비우고 회차 칸 다시 그림
+      rng.clearContent();
+      sh.getRange(r, GRID_START, rows, GRID_COLS).setBackground(null);
+      sh.getRange(r, WEEK_START, rows, WEEK_COLS).setBackground(null);
+      drawGrid_(sh, r, plan, extra);
+      // 3) 날짜 회차 칸에 순서대로 채움
+      dates.sort(function (a, b) { return a - b; });
+      dates.forEach(function (d) {
+        const t = firstEmptyGridCell_(sh, r, rows);
+        if (t) sh.getRange(t.r, t.c).setValue(d).setNumberFormat('M/d').setBackground(C_USED);
+      });
+      recomputeStripOwner_(sh, r);
+      redrawGridMarks_(sh, r);
+      cnt++;
+    }
+    r += rows;
+  }
+  ui.alert('완료', cnt + '명의 출석 날짜를 회차 칸으로 정렬하고 주차 띠를 다시 계산했어요.', ui.ButtonSet.OK);
 }
 
 // 머리글 칸 보장: 없으면 맨 오른쪽에 새로 만들고 열 번호 반환
