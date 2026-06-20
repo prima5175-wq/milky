@@ -271,7 +271,7 @@ function tidyNumberBorders() {
   SpreadsheetApp.getActiveSpreadsheet().toast('번호·구분선 정리 완료', '학원관리', 3);
 }
 
-const CODE_VERSION = 'v48 (2026-06-03) 분기 가운데선 제거+체크칸 박스 묶음';
+const CODE_VERSION = 'v49 (2026-06-03) 체크칸 없으면 자동 생성';
 function showVersion() {
   SpreadsheetApp.getUi().alert('현재 코드 버전\n\n' + CODE_VERSION +
     '\n\n이 문구가 보이면 최신 코드가 잘 들어간 거예요.');
@@ -707,7 +707,19 @@ function redrawAllMarks() {
   ui.alert('완료', '기존 ' + cnt + '명 정리 완료.\n분기 3줄 가운데 선을 없애고 체크 칸을 박스로 묶었어요.\n번호 칸 빨간 표시도 정리했습니다.', ui.ButtonSet.OK);
 }
 
-// 🅰 체크 칸 설정: 상담·긴글·포폴=달력, 비문학=레벨(P,A,B~J)+비문학번호(1~12) — 머리글로 찾음
+// 머리글 칸 보장: 없으면 맨 오른쪽에 새로 만들고 열 번호 반환
+function ensureHeaderCol_(sh, header, width) {
+  let c = findColByHeader_(sh, header, 1);
+  if (!c) {
+    c = sh.getLastColumn() + 1;
+    sh.getRange(1, c).setValue(header).setFontWeight('bold')
+      .setHorizontalAlignment('center').setVerticalAlignment('middle');
+    if (width) sh.setColumnWidth(c, width);
+  }
+  return c;
+}
+
+// 🅰 체크 칸 설정: (없으면 새로 만들고) 상담·긴글·포폴=달력, 비문학=레벨+비문학번호(1~12)
 function setupCheckColumns() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getActiveSheet();
@@ -716,42 +728,41 @@ function setupCheckColumns() {
   const last = sh.getLastRow();
   if (last < 2) { ui.alert('데이터가 없어요.'); return; }
   const rows = last - 1;
-  const done = [];
 
-  // 상담·긴글·포폴 → 더블클릭 달력
-  ['상담', '긴글', '포폴'].forEach(function (h) {
-    const c = findColByHeader_(sh, h, 1);
-    if (c) {
-      sh.getRange(2, c, rows, 1).clearDataValidations();
-      sh.getRange(2, c, rows, 1).setNumberFormat('M/d').setDataValidation(
-        SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
-      done.push(h + '=달력');
-    }
+  // 상담 → 달력
+  let c = ensureHeaderCol_(sh, '상담', 70);
+  sh.getRange(2, c, rows, 1).clearDataValidations();
+  sh.getRange(2, c, rows, 1).setNumberFormat('M/d').setDataValidation(
+    SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
+
+  // 비문학 → 레벨(P,A,B~J)  +  비문학번호(1~12)
+  const bc = ensureHeaderCol_(sh, '비문학', 54);
+  sh.getRange(2, bc, rows, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation()
+      .requireValueInList(['P', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'], true).build());
+  let nc = findColByHeader_(sh, '비문학번호', 1);
+  if (!nc) {
+    sh.insertColumnAfter(bc); nc = bc + 1;
+    sh.getRange(1, nc).setValue('비문학번호').setFontWeight('bold')
+      .setHorizontalAlignment('center').setVerticalAlignment('middle');
+    sh.setColumnWidth(nc, 56);
+  }
+  const nums = [];
+  for (let i = 1; i <= 12; i++) nums.push(String(i));
+  sh.getRange(2, nc, rows, 1).setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(nums, true).build());
+
+  // 긴글·포폴 → 달력
+  ['긴글', '포폴'].forEach(function (h) {
+    const cc = ensureHeaderCol_(sh, h, 70);
+    sh.getRange(2, cc, rows, 1).clearDataValidations();
+    sh.getRange(2, cc, rows, 1).setNumberFormat('M/d').setDataValidation(
+      SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(false).build());
   });
 
-  // 비문학 → 레벨 드롭다운 + '비문학번호'(1~12) 칸
-  const bc = findColByHeader_(sh, '비문학', 1);
-  if (bc) {
-    sh.getRange(2, bc, rows, 1).setDataValidation(
-      SpreadsheetApp.newDataValidation()
-        .requireValueInList(['P', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'], true).build());
-    let nc = findColByHeader_(sh, '비문학번호', 1);
-    if (!nc) {
-      sh.insertColumnAfter(bc); nc = bc + 1;
-      sh.getRange(1, nc).setValue('비문학번호').setFontWeight('bold')
-        .setHorizontalAlignment('center').setVerticalAlignment('middle');
-      sh.setColumnWidth(nc, 56);
-    }
-    const nums = [];
-    for (let i = 1; i <= 12; i++) nums.push(String(i));
-    sh.getRange(2, nc, rows, 1).setDataValidation(
-      SpreadsheetApp.newDataValidation().requireValueInList(nums, true).build());
-    done.push('비문학=레벨+번호');
-  }
-
-  if (!done.length) { ui.alert("'상담·비문학·긴글·포폴' 머리글을 못 찾았어요. 머리글 줄(1행)에 그 칸들이 있는지 확인해주세요."); return; }
   ui.alert('체크 칸 설정 완료',
-    done.join(' · ') + "\n\n비문학은 레벨(P,A,B~J)과 비문학번호(1~12)를 각각 골라 'B5'처럼 쓰면 돼요.\n분기 3줄 박스는 [🟥 전체 경계선·번호 다시 그리기]로 적용됩니다.",
+    "상담·긴글·포폴=달력, 비문학=레벨(P,A,B~J)+비문학번호(1~12) 칸을 만들고 설정했어요.\n" +
+    "(없던 칸은 맨 오른쪽에 새로 생겼어요)\n분기 3줄 박스는 [🟥 전체 경계선·번호 다시 그리기]로 적용됩니다.",
     ui.ButtonSet.OK);
 }
 
