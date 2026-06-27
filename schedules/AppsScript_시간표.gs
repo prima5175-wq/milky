@@ -34,8 +34,12 @@ var CONFIG = {
 
   // 방학 운영 시간(30분 그리드용): 09:00~12:00, 12:00~12:30 휴식, 12:30~19:30
   방학운영: { open: 9, close: 19.5, 휴식: [12, 12.5] },
-  // 정규 운영
-  정규운영: { 평일: [12, 21], 토: [9, 17], 일: [9, 14] },
+  // 정규 운영 시간 — 지점별 [시작, 끝] (필요시 지점마다 수정)
+  정규운영: {
+    '대치':  { 평일: [9, 21],  토: [9, 17], 일: [9, 14] },   // ★ 대치는 주중 오전(9시)부터 운영
+    '도곡':  { 평일: [12, 21], 토: [9, 17], 일: [9, 14] },
+    '구룡초': { 평일: [12, 21], 토: [9, 17], 일: [9, 14] }
+  },
 
   샘플: [
     ['이도연','대치점','정규','월~금', 13,  21],
@@ -239,10 +243,11 @@ function buildInput(ss) {
 }
 
 /* ===================== 통합 정규시간표 (3지점 한 시트) ====== */
-function regOper(d, t, sun) {
-  if (d <= 4) return t >= CONFIG.정규운영.평일[0] && t < CONFIG.정규운영.평일[1];
-  if (d === 5) return t >= CONFIG.정규운영.토[0] && t < CONFIG.정규운영.토[1];
-  if (d === 6) return sun && t >= CONFIG.정규운영.일[0] && t < CONFIG.정규운영.일[1];
+function regOper(d, t, sun, branch) {
+  var h = CONFIG.정규운영[branch] || CONFIG.정규운영['대치'];
+  if (d <= 4) return t >= h.평일[0] && t < h.평일[1];
+  if (d === 5) return t >= h.토[0] && t < h.토[1];
+  if (d === 6) return sun && t >= h.일[0] && t < h.일[1];
   return false;
 }
 function buildCombinedRegular(ss) {
@@ -276,7 +281,7 @@ function buildCombinedRegular(ss) {
     for (var bj = 0; bj < brs.length; bj++) {
       var BF = brs[bj].b + '점';
       for (var d = 0; d < 7; d++) {
-        if (!regOper(d, t, brs[bj].sun)) { row.push(''); }
+        if (!regOper(d, t, brs[bj].sun, brs[bj].b)) { row.push(''); }
         else {
           var dc = DAYCOL[days[d]];
           row.push('=IFERROR(TEXTJOIN(", ",TRUE,FILTER(' + IN + '$A$3:$A$' + L + ',(' +
@@ -295,7 +300,7 @@ function buildCombinedRegular(ss) {
     var tt = slots[k];
     for (var bk = 0; bk < brs.length; bk++)
       for (var d2 = 0; d2 < 7; d2++)
-        if (!regOper(d2, tt, brs[bk].sun)) sh.getRange(dataStart + k, 2 + bk * 7 + d2).setBackground(CONFIG.색.closed);
+        if (!regOper(d2, tt, brs[bk].sun, brs[bk].b)) sh.getRange(dataStart + k, 2 + bk * 7 + d2).setBackground(CONFIG.색.closed);
     sh.setRowHeight(dataStart + k, 30);
   }
   sh.getRange(2, 1, R + 2, ncols).setBorder(true, true, true, true, true, true, '#BFBFBF', SpreadsheetApp.BorderStyle.SOLID);
@@ -318,9 +323,10 @@ function buildGrid(ss, branch, gubun, sundayOpen) {
       if (t >= CONFIG.방학운영.휴식[0] && t < CONFIG.방학운영.휴식[1]) return false; // 점심
       return t >= CONFIG.방학운영.open && t < CONFIG.방학운영.close;
     }
-    if (d <= 4) return t >= CONFIG.정규운영.평일[0] && t < CONFIG.정규운영.평일[1];
-    if (d === 5) return t >= CONFIG.정규운영.토[0] && t < CONFIG.정규운영.토[1];
-    if (d === 6) return sundayOpen && t >= CONFIG.정규운영.일[0] && t < CONFIG.정규운영.일[1];
+    var h = CONFIG.정규운영[branch] || CONFIG.정규운영['대치'];
+    if (d <= 4) return t >= h.평일[0] && t < h.평일[1];
+    if (d === 5) return t >= h.토[0] && t < h.토[1];
+    if (d === 6) return sundayOpen && t >= h.일[0] && t < h.일[1];
     return false;
   }
 
