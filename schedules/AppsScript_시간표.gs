@@ -61,7 +61,7 @@ CONFIG.강사수 = CONFIG.강사수 || CONFIG.강사.length;
 while (CONFIG.강사.length < CONFIG.강사수) CONFIG.강사.push('');
 
 var SHEETS = {
-  대시보드: '대시보드', 급여: '강사_급여', 입력: '입력',
+  대시보드: '대시보드', 급여: '강사_급여', 입력: '입력', 통합: '통합시간표',
   정규: { '대치': '정규시간표_대치', '도곡': '정규시간표_도곡', '구룡초': '정규시간표_구룡초' },
   방학: { '대치': '방학시간표_대치', '도곡': '방학시간표_도곡', '구룡초': '방학시간표_구룡초' },
   데일리: { '대치': '데일리현황_대치', '도곡': '데일리현황_도곡', '구룡초': '데일리현황_구룡초' }
@@ -89,9 +89,7 @@ function buildAll() {
 
   step('강사_급여', function () { buildSalary(ss); });
   step('입력',      function () { buildInput(ss); });
-  step('정규시간표_대치', function () { buildGrid(ss, '대치', '정규', true); });
-  step('정규시간표_도곡', function () { buildGrid(ss, '도곡', '정규', false); });
-  step('정규시간표_구룡초', function () { buildGrid(ss, '구룡초', '정규', true); });
+  step('통합 정규시간표', function () { buildCombinedRegular(ss); });
   step('방학시간표_대치', function () { buildVacationDates(ss, '대치'); });
   step('방학시간표_도곡', function () { buildVacationDates(ss, '도곡'); });
   step('방학시간표_구룡초', function () { buildVacationDates(ss, '구룡초'); });
@@ -238,6 +236,72 @@ function buildInput(ss) {
   sh.getRange(3, 1, L - 2, ncols).setHorizontalAlignment('center');
   [80,70,55,32,32,32,32,32,32,32,70,70,160].forEach(function (w, i) { sh.setColumnWidth(i + 1, w); });
   sh.setFrozenRows(2); sh.setFrozenColumns(3);
+}
+
+/* ===================== 통합 정규시간표 (3지점 한 시트) ====== */
+function regOper(d, t, sun) {
+  if (d <= 4) return t >= CONFIG.정규운영.평일[0] && t < CONFIG.정규운영.평일[1];
+  if (d === 5) return t >= CONFIG.정규운영.토[0] && t < CONFIG.정규운영.토[1];
+  if (d === 6) return sun && t >= CONFIG.정규운영.일[0] && t < CONFIG.정규운영.일[1];
+  return false;
+}
+function buildCombinedRegular(ss) {
+  var sh = freshSheet(ss, SHEETS.통합), L = CONFIG.LASTIN;
+  var days = ['월','화','수','목','금','토','일'];
+  var brs = [{ b:'대치', sun:true }, { b:'도곡', sun:false }, { b:'구룡초', sun:true }];
+  var ncols = 1 + brs.length * 7;       // 시간 + 3지점×7요일 = 22
+
+  titleRow(sh, '통합 정규시간표 (대치 · 도곡 · 구룡초)   30분 단위 · 한 칸 여러 강사 · 입력시트 자동', ncols, '#C55A11');
+
+  // 2행: 지점 헤더(7칸 병합) / 3행: 요일
+  sh.getRange(2, 1, 2, 1).merge().setValue('시간');
+  styleHead(sh.getRange(2, 1, 2, 1), '#404040');
+  for (var bi = 0; bi < brs.length; bi++) {
+    var sc = 2 + bi * 7, C = CONFIG.색[brs[bi].b];
+    sh.getRange(2, sc, 1, 7).merge().setValue(brs[bi].b + '점');
+    styleHead(sh.getRange(2, sc, 1, 7), C.head);
+    sh.getRange(3, sc, 1, 7).setValues([days]);
+    styleHead(sh.getRange(3, sc, 1, 7), C.head);
+    sh.getRange(3, sc + 5).setBackground(CONFIG.색.sat).setFontColor('#1F4E79'); // 토
+    sh.getRange(3, sc + 6).setBackground(CONFIG.색.sun).setFontColor('#C00000'); // 일
+  }
+
+  var startT = 9, endT = 20.5, steps = Math.round((endT - startT) / 0.5), slots = [];
+  for (var s = 0; s <= steps; s++) slots.push(startT + s * 0.5);
+  var dataStart = 4, labels = [], grid = [];
+  for (var i = 0; i < slots.length; i++) {
+    var t = slots[i];
+    labels.push([fmtHM(t) + '~' + fmtHM(t + 0.5)]);
+    var row = [];
+    for (var bj = 0; bj < brs.length; bj++) {
+      var BF = brs[bj].b + '점';
+      for (var d = 0; d < 7; d++) {
+        if (!regOper(d, t, brs[bj].sun)) { row.push(''); }
+        else {
+          var dc = DAYCOL[days[d]];
+          row.push('=IFERROR(TEXTJOIN(", ",TRUE,FILTER(' + IN + '$A$3:$A$' + L + ',(' +
+            IN + '$B$3:$B$' + L + '="' + BF + '")*(' + IN + '$C$3:$C$' + L + '="정규")*(' +
+            IN + '$' + dc + '$3:$' + dc + '$' + L + '=TRUE)*(' + IN + '$K$3:$K$' + L + '<=' + t + ')*(' +
+            IN + '$L$3:$L$' + L + '>' + t + '))),"")');
+        }
+      }
+    }
+    grid.push(row);
+  }
+  var R = slots.length;
+  sh.getRange(dataStart, 1, R, 1).setValues(labels).setBackground('#F2F2F2').setFontWeight('bold').setHorizontalAlignment('center').setFontSize(9);
+  sh.getRange(dataStart, 2, R, ncols - 1).setFormulas(grid).setHorizontalAlignment('center').setVerticalAlignment('middle').setWrap(true).setFontSize(9);
+  for (var k = 0; k < R; k++) {
+    var tt = slots[k];
+    for (var bk = 0; bk < brs.length; bk++)
+      for (var d2 = 0; d2 < 7; d2++)
+        if (!regOper(d2, tt, brs[bk].sun)) sh.getRange(dataStart + k, 2 + bk * 7 + d2).setBackground(CONFIG.색.closed);
+    sh.setRowHeight(dataStart + k, 30);
+  }
+  sh.getRange(2, 1, R + 2, ncols).setBorder(true, true, true, true, true, true, '#BFBFBF', SpreadsheetApp.BorderStyle.SOLID);
+  sh.setColumnWidth(1, 95);
+  for (var c = 2; c <= ncols; c++) sh.setColumnWidth(c, 78);
+  sh.setFrozenRows(3); sh.setFrozenColumns(1);
 }
 
 /* ===================== 시간표 그리드 (30분 · 정규/방학 공용) === */
@@ -513,16 +577,14 @@ function buildDashboard(ss, dailyTotalRow) {
 /* ----------------------- 정리/정렬 ------------------------- */
 function cleanupSheets(ss) {
   var keep = {};
-  [SHEETS.대시보드, SHEETS.급여, SHEETS.입력,
-   SHEETS.정규['대치'], SHEETS.정규['도곡'], SHEETS.정규['구룡초'],
+  [SHEETS.대시보드, SHEETS.급여, SHEETS.입력, SHEETS.통합,
    SHEETS.방학['대치'], SHEETS.방학['도곡'], SHEETS.방학['구룡초'],
    SHEETS.데일리['대치'], SHEETS.데일리['도곡'], SHEETS.데일리['구룡초']]
    .forEach(function (n) { keep[n] = true; });
   ss.getSheets().forEach(function (sh) { if (!keep[sh.getName()]) { try { ss.deleteSheet(sh); } catch (e) {} } });
 }
 function reorderSheets(ss) {
-  [SHEETS.대시보드, SHEETS.급여, SHEETS.입력,
-   SHEETS.정규['대치'], SHEETS.정규['도곡'], SHEETS.정규['구룡초'],
+  [SHEETS.대시보드, SHEETS.급여, SHEETS.입력, SHEETS.통합,
    SHEETS.방학['대치'], SHEETS.방학['도곡'], SHEETS.방학['구룡초'],
    SHEETS.데일리['대치'], SHEETS.데일리['도곡'], SHEETS.데일리['구룡초']]
    .forEach(function (name, idx) { var sh = ss.getSheetByName(name); if (sh) { ss.setActiveSheet(sh); ss.moveActiveSheet(idx + 1); } });
