@@ -83,15 +83,19 @@ function buildAll() {
   var errs = [];
   function step(name, fn) { try { return fn(); } catch (e) { errs.push('• ' + name + ' → ' + (e && e.message ? e.message : e)); return null; } }
 
+  // 데일리현황 날짜 범위는 결정적이므로 미리 계산 → 급여연동/대시보드를 데일리 성공여부와 분리
+  var nd = dateList(CONFIG.DAILY_START, CONFIG.DAILY_END).length;
+  var dDS = 3, dDE = 2 + nd, dTR = dDE + 1;
+
   step('강사_급여', function () { buildSalary(ss); });
   step('입력', function () { buildInput(ss); });
   step('통합 정규시간표', function () { buildCombinedRegular(ss); });
   step('통합 방학시간표', function () { buildCombinedVacation(ss); });
-  var d대치 = step('데일리현황_대치', function () { return buildDaily(ss, '대치', false); });
-  var d도곡 = step('데일리현황_도곡', function () { return buildDaily(ss, '도곡', true); });
-  var d구룡초 = step('데일리현황_구룡초', function () { return buildDaily(ss, '구룡초', false); });
-  step('급여 연동', function () { if (d대치 && d도곡 && d구룡초) linkSalary(ss, d대치.dataStart, d대치.dataEnd); });
-  step('대시보드', function () { if (d대치) buildDashboard(ss, d대치.totalRow); });
+  step('데일리현황_대치', function () { buildDaily(ss, '대치', false); });
+  step('데일리현황_도곡', function () { buildDaily(ss, '도곡', true); });
+  step('데일리현황_구룡초', function () { buildDaily(ss, '구룡초', false); });
+  step('급여 연동', function () { linkSalary(ss, dDS, dDE); });
+  step('대시보드', function () { buildDashboard(ss, dTR); });
   step('정리/정렬', function () { cleanupSheets(ss); reorderSheets(ss); });
 
   if (errs.length) SpreadsheetApp.getUi().alert('일부 단계 오류(나머지는 생성됨):\n\n' + errs.join('\n'));
