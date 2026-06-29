@@ -292,12 +292,24 @@ function getTodayTabName() {
 function parseTime(timeStr) {
   if (!timeStr) return null;
   timeStr = timeStr.replace(/"/g, '').trim();
+  const dateMatch = timeStr.match(/Date\(\d+,\d+,\d+,(\d+),(\d+)/);
+  if (dateMatch) {
+    return parseInt(dateMatch[1]) * 60 + parseInt(dateMatch[2]);
+  }
   const match = timeStr.match(/(\d{1,2}):(\d{2})/);
   if (!match) return null;
   let h = parseInt(match[1]);
   let m = parseInt(match[2]);
-  // 학원은 오후~저녁 운영: 1~8시는 13~20시로 변환
-  if (h >= 1 && h <= 8) h += 12;
+  if (h >= 13) return h * 60 + m;
+  const day = new Date().getDay();
+  const isWeekend = (day === 0 || day === 6);
+  if (isWeekend) {
+    // 주말: 8~12시는 오전, 1~7시는 오후
+    if (h >= 1 && h <= 7) h += 12;
+  } else {
+    // 평일: 전부 오후 (1~12시 → 13~24시, 12는 그대로)
+    if (h >= 1 && h <= 11) h += 12;
+  }
   return h * 60 + m;
 }
 
