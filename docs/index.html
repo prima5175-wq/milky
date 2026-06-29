@@ -302,52 +302,49 @@ function formatTime(totalMin) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
 
-function parseCSV(text) {
-  const rows = [];
-  const lines = text.split('\n');
-  for (const line of lines) {
-    if (!line.trim()) continue;
-    const cols = [];
-    let inQuote = false;
-    let val = '';
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        if (inQuote && line[i+1] === '"') { val += '"'; i++; }
-        else { inQuote = !inQuote; }
-      } else if (ch === ',' && !inQuote) {
-        cols.push(val.trim());
-        val = '';
-      } else {
-        val += ch;
-      }
-    }
-    cols.push(val.trim());
-    rows.push(cols);
-  }
-  return rows;
-}
-
-async function fetchData() {
+function fetchData() {
   const tabName = getTodayTabName();
   document.getElementById('clockTabName').textContent = `시트: ${tabName}`;
 
-  try {
-    const url = `https://docs.google.com/spreadsheets/d/${currentSheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`탭 "${tabName}"을 찾을 수 없습니다`);
-    const text = await res.text();
-    const rows = parseCSV(text);
-    processStudents(rows);
-
-    document.getElementById('syncDot').style.background = '#00ff88';
-    document.getElementById('syncText').textContent =
-      `동기화: ${new Date().toLocaleTimeString('ko-KR')}`;
-  } catch (e) {
-    console.error(e);
+  const cbName = '_sheetCB_' + Date.now();
+  const timeout = setTimeout(() => {
+    delete window[cbName];
     document.getElementById('syncDot').style.background = '#ff5555';
-    document.getElementById('syncText').textContent = `오류: ${e.message}`;
-  }
+    document.getElementById('syncText').textContent = '오류: 시트 응답 없음';
+  }, 10000);
+
+  window[cbName] = function(response) {
+    clearTimeout(timeout);
+    delete window[cbName];
+    try {
+      if (response.status === 'error') throw new Error(response.errors[0].detailed_message);
+      const table = response.table;
+      const rows = [];
+      for (const row of table.rows) {
+        const cells = row.c.map(cell => (cell && cell.v != null) ? String(cell.v) : '');
+        rows.push(cells);
+      }
+      processStudents(rows);
+      document.getElementById('syncDot').style.background = '#00ff88';
+      document.getElementById('syncText').textContent =
+        `동기화: ${new Date().toLocaleTimeString('ko-KR')}`;
+    } catch (e) {
+      console.error(e);
+      document.getElementById('syncDot').style.background = '#ff5555';
+      document.getElementById('syncText').textContent = `오류: ${e.message}`;
+    }
+  };
+
+  const script = document.createElement('script');
+  script.src = `https://docs.google.com/spreadsheets/d/${currentSheetId}/gviz/tq?sheet=${encodeURIComponent(tabName)}&tqx=responseHandler:${cbName}`;
+  script.onerror = () => {
+    clearTimeout(timeout);
+    delete window[cbName];
+    document.getElementById('syncDot').style.background = '#ff5555';
+    document.getElementById('syncText').textContent = '오류: 스크립트 로드 실패';
+  };
+  document.head.appendChild(script);
+  script.onload = () => script.remove();
 }
 
 function processStudents(rows) {
@@ -412,7 +409,6 @@ function processStudents(rows) {
   }
 
   categories.overdue.sort((a, b) => a.diff - b.diff);
-
   renderStudents(categories);
 }
 
