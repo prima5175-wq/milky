@@ -292,7 +292,7 @@ function parseTime(timeStr) {
   if (!match) return null;
   let h = parseInt(match[1]);
   let m = parseInt(match[2]);
-  if (h >= 1 && h <= 8) h += 12;
+  if (h >= 1 && h <= 11) h += 12;
   return h * 60 + m;
 }
 
