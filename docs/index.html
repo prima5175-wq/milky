@@ -422,12 +422,8 @@ function processStudents(rows) {
     const diff = endMin - nowMin;
 
     let extraNote = '';
-    if (note && /하원|픽업|데리러/.test(note)) {
-      extraNote = note;
-    }
-    if (special && /하원|픽업|데리러/.test(special)) {
-      extraNote = extraNote ? extraNote + ' / ' + special : special;
-    }
+    if (special) extraNote = special;
+    if (note) extraNote = extraNote ? extraNote + ' / ' + note : note;
 
     const student = {
       name,
