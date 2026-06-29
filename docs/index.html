@@ -300,9 +300,12 @@ function parseTime(timeStr) {
     m = parseInt(match[2]);
   }
   if (h < 13) {
-    const day = new Date().getDay();
+    const now = new Date();
+    const day = now.getDay();
+    const mmdd = (now.getMonth() + 1) * 100 + now.getDate();
     const isWeekend = (day === 0 || day === 6);
-    if (isWeekend) {
+    const isVacation = (mmdd >= 724 && mmdd <= 820);
+    if (isWeekend || isVacation) {
       if (h >= 1 && h <= 7) h += 12;
     } else {
       if (h >= 1 && h <= 11) h += 12;
