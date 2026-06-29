@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>대치점 책나무 하원 현황</title>
+<title>대치점 하원 현황</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -14,83 +14,214 @@
     overflow: hidden;
     display: flex;
   }
+
   .clock-panel {
     width: 50%;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     background: linear-gradient(135deg, #0d1b2a, #1b2838);
     border-right: 2px solid #1e3a5f;
   }
-  .clock-date { font-size: 2.8vw; color: #8ecae6; margin-bottom: 2vh; }
+  .clock-date {
+    font-size: 2.8vw;
+    color: #8ecae6;
+    margin-bottom: 2vh;
+  }
   .clock-time {
-    font-size: 10vw; font-weight: 700; color: #00f0ff;
+    font-size: 10vw;
+    font-weight: 700;
+    color: #00f0ff;
     text-shadow: 0 0 30px rgba(0,240,255,0.5);
-    font-variant-numeric: tabular-nums; letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
   }
-  .clock-seconds { font-size: 3.5vw; color: #4cc9f0; margin-top: 1vh; }
-  .clock-tab-name { font-size: 1.4vw; color: #4a6a8a; margin-top: 4vh; }
-  .status-panel { width: 50%; display: flex; flex-direction: column; background: #0f1923; }
+  .clock-seconds {
+    font-size: 3.5vw;
+    color: #4cc9f0;
+    margin-top: 1vh;
+  }
+  .clock-tab-name {
+    font-size: 1.4vw;
+    color: #4a6a8a;
+    margin-top: 4vh;
+  }
+
+  .status-panel {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    background: #0f1923;
+  }
   .status-header {
-    padding: 1.5vh 1.5vw; background: #1a2634; border-bottom: 2px solid #1e3a5f;
-    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.5vh 1.5vw;
+    background: #1a2634;
+    border-bottom: 2px solid #1e3a5f;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
-  .status-header h1 { font-size: 1.8vw; color: #8ecae6; }
-  .status-header .sync-info { font-size: 0.9vw; color: #4a6a8a; }
+  .status-header h1 {
+    font-size: 1.8vw;
+    color: #8ecae6;
+  }
+  .status-header .sync-info {
+    font-size: 0.9vw;
+    color: #4a6a8a;
+  }
   .sync-dot {
-    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-    background: #00ff88; margin-right: 6px; animation: pulse 2s infinite;
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #00ff88;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
   }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .student-list { flex: 1; overflow-y: auto; padding: 1vh 1vw; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .student-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1vh 1vw;
+  }
+
   .category { margin-bottom: 1.5vh; }
-  .category-label { font-size: 1.2vw; padding: 0.4vh 0.8vw; border-radius: 6px; margin-bottom: 0.5vh; font-weight: 600; }
-  .cat-overdue .category-label { background: rgba(255,50,50,0.2); color: #ff5555; border-left: 4px solid #ff5555; }
-  .cat-now .category-label { background: rgba(255,165,0,0.2); color: #ffa500; border-left: 4px solid #ffa500; }
-  .cat-3min .category-label { background: rgba(255,255,0,0.2); color: #ffff00; border-left: 4px solid #ffff00; }
-  .cat-5min .category-label { background: rgba(0,200,255,0.2); color: #00c8ff; border-left: 4px solid #00c8ff; }
-  .student-card {
-    display: flex; align-items: center; padding: 0.7vh 0.8vw;
-    margin-bottom: 0.3vh; border-radius: 6px; font-size: 1.2vw; animation: fadeIn 0.3s ease-in;
+  .category-label {
+    font-size: 1.2vw;
+    padding: 0.4vh 0.8vw;
+    border-radius: 6px;
+    margin-bottom: 0.5vh;
+    font-weight: 600;
   }
-  @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-  .cat-overdue .student-card { background: rgba(255,50,50,0.1); }
-  .cat-now .student-card { background: rgba(255,165,0,0.1); }
-  .cat-3min .student-card { background: rgba(255,255,0,0.05); }
-  .cat-5min .student-card { background: rgba(0,200,255,0.05); }
-  .student-name { flex: 1; font-weight: 600; }
-  .student-time { margin-left: 0.5vw; font-variant-numeric: tabular-nums; opacity: 0.8; font-size: 1.1vw; }
-  .student-arrival { margin-left: 0.5vw; font-size: 0.9vw; opacity: 0.5; }
-  .student-diff { margin-left: 0.5vw; font-weight: 700; min-width: 5vw; text-align: right; }
-  .student-note { display: block; font-size: 0.9vw; opacity: 0.7; margin-top: 0.2vh; padding-left: 0.8vw; color: #b478ff; }
+
+  .cat-overdue .category-label {
+    background: rgba(255, 50, 50, 0.2);
+    color: #ff5555;
+    border-left: 4px solid #ff5555;
+  }
+  .cat-now .category-label {
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffa500;
+    border-left: 4px solid #ffa500;
+  }
+  .cat-3min .category-label {
+    background: rgba(255, 255, 0, 0.2);
+    color: #ffff00;
+    border-left: 4px solid #ffff00;
+  }
+  .cat-5min .category-label {
+    background: rgba(0, 200, 255, 0.2);
+    color: #00c8ff;
+    border-left: 4px solid #00c8ff;
+  }
+
+  .student-card {
+    display: flex;
+    align-items: center;
+    padding: 0.7vh 0.8vw;
+    margin-bottom: 0.3vh;
+    border-radius: 6px;
+    font-size: 1.2vw;
+    animation: fadeIn 0.3s ease-in;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .cat-overdue .student-card { background: rgba(255, 50, 50, 0.1); }
+  .cat-now .student-card { background: rgba(255, 165, 0, 0.1); }
+  .cat-3min .student-card { background: rgba(255, 255, 0, 0.05); }
+  .cat-5min .student-card { background: rgba(0, 200, 255, 0.05); }
+
+  .student-name { flex: 1; font-weight: 600; font-size: 1.6vw; }
+  .student-time {
+    margin-left: 0.5vw;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+    font-size: 1.1vw;
+  }
+  .student-arrival {
+    margin-left: 0.5vw;
+    font-size: 0.9vw;
+    opacity: 0.5;
+  }
+  .student-diff {
+    margin-left: 0.5vw;
+    font-weight: 700;
+    min-width: 5vw;
+    text-align: right;
+  }
+  .student-note {
+    display: block;
+    font-size: 0.9vw;
+    opacity: 0.7;
+    margin-top: 0.2vh;
+    padding-left: 0.8vw;
+    color: #b478ff;
+  }
+
   .cat-overdue .student-diff { color: #ff5555; }
   .cat-now .student-diff { color: #ffa500; }
   .cat-3min .student-diff { color: #ffff00; }
   .cat-5min .student-diff { color: #00c8ff; }
-  .empty-message { text-align: center; color: #4a6a8a; font-size: 1.5vw; padding: 5vh; }
+
+  .empty-message {
+    text-align: center;
+    color: #4a6a8a;
+    font-size: 1.5vw;
+    padding: 5vh;
+  }
+
   .student-list::-webkit-scrollbar { width: 6px; }
   .student-list::-webkit-scrollbar-track { background: transparent; }
   .student-list::-webkit-scrollbar-thumb { background: #2a4a6a; border-radius: 3px; }
+
   .setup-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-    display: flex; align-items: center; justify-content: center; z-index: 100;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
   }
-  .setup-box { background: #1a2634; border-radius: 12px; padding: 3vh 3vw; max-width: 500px; width: 90%; }
+  .setup-box {
+    background: #1a2634;
+    border-radius: 12px;
+    padding: 3vh 3vw;
+    max-width: 500px;
+    width: 90%;
+  }
   .setup-box h2 { color: #8ecae6; margin-bottom: 2vh; font-size: 1.6vw; }
   .setup-box p { color: #aaa; font-size: 1vw; margin-bottom: 1vh; line-height: 1.6; }
   .setup-box label { color: #8ecae6; font-size: 1vw; display: block; margin-bottom: 0.3vh; margin-top: 1vh; }
-  .setup-box input { width: 100%; padding: 0.8vh 0.8vw; font-size: 1.1vw; border-radius: 6px; border: 1px solid #3a5a7a; background: #0f1923; color: #fff; }
-  .setup-box button { margin-top: 2vh; background: #00c8ff; color: #000; border: none; padding: 1vh 2vw; font-size: 1.1vw; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  .setup-box input {
+    width: 100%; padding: 0.8vh 0.8vw; font-size: 1.1vw;
+    border-radius: 6px; border: 1px solid #3a5a7a; background: #0f1923; color: #fff;
+  }
+  .setup-box button {
+    margin-top: 2vh; background: #00c8ff; color: #000; border: none;
+    padding: 1vh 2vw; font-size: 1.1vw; border-radius: 6px; cursor: pointer; font-weight: 600;
+  }
   .setup-box button:hover { background: #00a8dd; }
   .setup-box .hint { font-size: 0.85vw; color: #666; margin-top: 1vh; }
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+
 <div class="clock-panel">
   <div class="clock-date" id="clockDate"></div>
   <div class="clock-time" id="clockTime"></div>
   <div class="clock-seconds" id="clockSeconds"></div>
   <div class="clock-tab-name" id="clockTabName"></div>
 </div>
+
 <div class="status-panel">
   <div class="status-header">
     <h1>대치점 책나무 하원 현황</h1>
@@ -103,24 +234,30 @@
     <div class="empty-message">구글 시트 연결 중...</div>
   </div>
 </div>
+
 <div class="setup-overlay" id="setupOverlay" style="display:none">
   <div class="setup-box">
     <h2>수업일지 시트 연결 설정</h2>
     <p>대치점 수업일지 구글 시트와 연결합니다.</p>
+
     <label>구글 시트 ID</label>
     <input type="text" id="inputSheetId" value="1hEAPjspagxcETkkwdK5YzCdC8DewUQZa2wJoBa-J568">
+
     <label>탭 이름 형식 (자동감지됨)</label>
     <input type="text" id="inputTabFormat" placeholder="예: 6/29 월" value="">
     <p class="hint">비워두면 오늘 날짜로 자동 감지합니다.<br>
     형식: "월/일 요일" (예: 6/29 월)<br><br>
     ⚠️ 시트를 <b>"웹에 게시"</b>해야 합니다!<br>
     파일 → 공유 → 웹에 게시 → 전체 문서 → 게시</p>
+
     <button onclick="saveSetup()">연결 시작</button>
   </div>
 </div>
+
 <script>
 const SHEET_ID = '1hEAPjspagxcETkkwdK5YzCdC8DewUQZa2wJoBa-J568';
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+
 const COL_NAME = 2;
 const COL_SPECIAL = 3;
 const COL_START = 4;
@@ -176,9 +313,36 @@ function formatTime(totalMin) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
 
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split('\n');
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const cols = [];
+    let inQuote = false;
+    let val = '';
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuote && line[i+1] === '"') { val += '"'; i++; }
+        else { inQuote = !inQuote; }
+      } else if (ch === ',' && !inQuote) {
+        cols.push(val.trim());
+        val = '';
+      } else {
+        val += ch;
+      }
+    }
+    cols.push(val.trim());
+    rows.push(cols);
+  }
+  return rows;
+}
+
 function fetchData() {
   const tabName = getTodayTabName();
   document.getElementById('clockTabName').textContent = `시트: ${tabName}`;
+
   const cbName = '_sheetCB_' + Date.now();
   const timeout = setTimeout(() => {
     delete window[cbName];
@@ -223,48 +387,80 @@ function fetchData() {
 function processStudents(rows) {
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
-  const categories = { overdue: [], now: [], min3: [], min5: [] };
+
+  const categories = {
+    overdue: [],
+    now: [],
+    min3: [],
+    min5: [],
+  };
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const numStr = (row[0] || '').replace(/"/g, '').trim();
     if (!/^\d+$/.test(numStr)) continue;
+
     const name = (row[COL_NAME] || '').replace(/"/g, '').trim();
     if (!name) continue;
+
     const endTimeStr = (row[COL_END] || '').replace(/"/g, '').trim();
     const startTimeStr = (row[COL_START] || '').replace(/"/g, '').trim();
     const special = (row[COL_SPECIAL] || '').replace(/"/g, '').trim();
     const note = (row[COL_NOTE] || '').replace(/"/g, '').trim();
+
     const endMin = parseTime(endTimeStr);
     if (endMin === null) continue;
+
     const startMin = parseTime(startTimeStr);
     const diff = endMin - nowMin;
+
     let extraNote = '';
-    if (note && /하원|픽업|데리러/.test(note)) extraNote = note;
-    if (special && /하원|픽업|데리러/.test(special))
+    if (note && /하원|픽업|데리러/.test(note)) {
+      extraNote = note;
+    }
+    if (special && /하원|픽업|데리러/.test(special)) {
       extraNote = extraNote ? extraNote + ' / ' + special : special;
+    }
+
     const student = {
-      name, endTime: formatTime(endMin),
-      startTime: startMin ? formatTime(startMin) : '', diff, note: extraNote,
+      name,
+      endTime: formatTime(endMin),
+      startTime: startMin ? formatTime(startMin) : '',
+      diff,
+      note: extraNote,
     };
-    if (diff < 0) { student.diffText = `${Math.abs(diff)}분 지남`; categories.overdue.push(student); }
-    else if (diff <= 1) { student.diffText = '하원시간'; categories.now.push(student); }
-    else if (diff <= 3) { student.diffText = `${diff}분 전`; categories.min3.push(student); }
-    else if (diff <= 5) { student.diffText = `${diff}분 전`; categories.min5.push(student); }
+
+    if (diff < 0) {
+      student.diffText = `${Math.abs(diff)}분 지남`;
+      categories.overdue.push(student);
+    } else if (diff <= 1) {
+      student.diffText = '하원시간';
+      categories.now.push(student);
+    } else if (diff <= 3) {
+      student.diffText = `${diff}분 전`;
+      categories.min3.push(student);
+    } else if (diff <= 5) {
+      student.diffText = `${diff}분 전`;
+      categories.min5.push(student);
+    }
   }
+
   categories.overdue.sort((a, b) => a.diff - b.diff);
+
   renderStudents(categories);
 }
 
 function renderStudents(cats) {
   const container = document.getElementById('studentList');
   let html = '';
+
   const sections = [
     { key: 'overdue', cls: 'cat-overdue', label: '하원시간 지남' },
     { key: 'now', cls: 'cat-now', label: '하원시간' },
     { key: 'min3', cls: 'cat-3min', label: '3분 전' },
     { key: 'min5', cls: 'cat-5min', label: '5분 전' },
   ];
+
   let hasAny = false;
   for (const sec of sections) {
     const students = cats[sec.key];
@@ -275,15 +471,23 @@ function renderStudents(cats) {
     for (const s of students) {
       html += `<div class="student-card">`;
       html += `<span class="student-name">${escapeHtml(s.name)}</span>`;
-      if (s.startTime) html += `<span class="student-arrival">${s.startTime}</span>`;
+      if (s.startTime) {
+        html += `<span class="student-arrival">${s.startTime}</span>`;
+      }
       html += `<span class="student-time">${s.endTime}</span>`;
       html += `<span class="student-diff">${s.diffText}</span>`;
       html += `</div>`;
-      if (s.note) html += `<div class="student-note">${escapeHtml(s.note)}</div>`;
+      if (s.note) {
+        html += `<div class="student-note">${escapeHtml(s.note)}</div>`;
+      }
     }
     html += `</div>`;
   }
-  if (!hasAny) html = '<div class="empty-message">현재 하원 예정 학생이 없습니다</div>';
+
+  if (!hasAny) {
+    html = '<div class="empty-message">현재 하원 예정 학생이 없습니다</div>';
+  }
+
   container.innerHTML = html;
 }
 
