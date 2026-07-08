@@ -1824,7 +1824,7 @@ function makeDemo() {
 // ====================================================================
 const T_SHEET = '방학특강';
 const T_ROWS  = 200;            // 준비 행 수
-const T_GRID  = 10;             // 회차 1번 칸(J열)
+const T_GRID  = 11;             // 회차 1번 칸(K열) — 남은회차 칸(H) 추가로 한 칸 밀림
 const T_N     = 20;             // 회차 칸 개수
 const T_NOTE  = T_GRID + T_N;   // 특이사항 열(30, AD)
 const T_PARTS   = ['1부', '2부', '3부'];
@@ -1846,7 +1846,7 @@ function makeSpecialSheet() {
   const rows = Math.max(T_ROWS, used + 20);
 
   // 머리글
-  const head = ['부', '이름', '학년', '학교', '전화번호', '재원생여부', '결제일', '첫브리핑', '포폴배부'];
+  const head = ['부', '이름', '학년', '학교', '전화번호', '재원생여부', '결제일', '남은회차', '첫브리핑', '포폴배부'];
   for (let i = 1; i <= T_N; i++) head.push(String(i));
   head.push('특이사항');
   sh.getRange(1, 1, 1, T_NOTE).setValues([head])
@@ -1865,8 +1865,14 @@ function makeSpecialSheet() {
   sh.getRange(2, 7, rows, 1).setNumberFormat('yyyy-mm-dd')
     .setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(true).build());
 
-  // 첫브리핑 · 포폴배부 = 체크박스(옛 남은회차/보강 자리 정리 후 체크박스)
-  sh.getRange(2, 8, rows, 2).clearContent().clearDataValidations().insertCheckboxes().setHorizontalAlignment('center');
+  // 남은회차(H) = 20 - 채워진 회차 수 (회차 칸에 날짜/숫자 넣으면 자동으로 줄어듦)
+  const gA = columnLetter_(T_GRID), gB = columnLetter_(T_GRID + T_N - 1);
+  const leftF = [];
+  for (let li = 0; li < rows; li++) { const lr = 2 + li; leftF.push(['=IF($B' + lr + '="","",' + T_N + '-COUNT($' + gA + lr + ':$' + gB + lr + '))']); }
+  sh.getRange(2, 8, rows, 1).setFormulas(leftF).setNumberFormat('0').setHorizontalAlignment('center');
+
+  // 첫브리핑(I) · 포폴배부(J) = 체크박스
+  sh.getRange(2, 9, rows, 2).clearContent().clearDataValidations().insertCheckboxes().setHorizontalAlignment('center');
 
   // 회차 칸(J~AC): 날짜서식, 잘못된 데이터검증 제거
   sh.getRange(2, T_GRID, rows, T_N).clearDataValidations()
@@ -1894,7 +1900,7 @@ function makeSpecialSheet() {
   sh.setConditionalFormatRules(rules);   // 이 시트의 조건부서식은 이 둘만
 
   // 열너비 · 고정
-  const w = [46, 80, 60, 80, 110, 110, 90, 64, 64];
+  const w = [46, 80, 60, 80, 110, 110, 90, 70, 64, 64];
   for (let c = 1; c <= w.length; c++) sh.setColumnWidth(c, w[c - 1]);
   for (let c = T_GRID; c < T_GRID + T_N; c++) sh.setColumnWidth(c, 34);
   sh.setColumnWidth(T_NOTE, 200);
@@ -1904,7 +1910,7 @@ function makeSpecialSheet() {
 
   ss.setActiveSheet(sh);
   ui.alert('방학특강 시트 준비 완료 🌴',
-    '· 첫브리핑·포폴배부 = 체크박스\n· 1~20 칸에 "보강 날짜"를 적으면 회색으로 표시\n· 특이사항 칸은 자유 입력(회색으로 안 변함)\n\n' +
+    '· 남은회차 = 20에서 채운 만큼 자동 차감\n· 첫브리핑·포폴배부 = 체크박스\n· 1~20 칸에 날짜를 적으면 회색 표시(+남은회차 감소)\n· 특이사항 칸은 자유 입력(회색으로 안 변함)\n\n' +
     (isNew ? '새 시트를 만들었어요.' : '기존 시트에 새 서식을 적용했어요. (입력한 데이터는 유지)'),
     ui.ButtonSet.OK);
 }
