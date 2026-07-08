@@ -1847,6 +1847,11 @@ function makeSpecialSheet() {
   const T_CAP = 40;                     // 부(1·2·3부)당 정원
   const rows = T_CAP * T_PARTS.length;  // 40 × 3부 = 120
 
+  // ★ 방학특강 영역(1~121행) 서식·조건부서식·검증·메모 전부 초기화 → 이전 잔재(회색/흰색 어긋남) 제거
+  //   (값은 안 지움 → 입력한 이름·회차 데이터는 유지)
+  sh.clearConditionalFormatRules();
+  sh.getRange(1, 1, rows + 1, T_NOTE).setBackground(null).clearNote().clearDataValidations();
+
   // 머리글
   const head = ['부', '번호', '이름', '학교', '전화번호', '재원생여부', '결제일', '남은회차', '보강회차', '첫브리핑', '포폴배부'];
   for (let i = 1; i <= T_N; i++) head.push(String(i));
@@ -1857,10 +1862,13 @@ function makeSpecialSheet() {
   sh.setRowHeight(1, 30);
   sh.getRange(1, T_GRID).setNote('1~20 회차: 출결은 0 입력(바탕색 유지), 보강은 날짜 입력 → 회색. 남은회차/보강회차 자동 집계.');
 
-  // 부(A) = 1부·2부·3부 각 40명씩 미리 채움 + 드롭다운
-  const partCol = [];
-  T_PARTS.forEach(function (p) { for (let k = 0; k < T_CAP; k++) partCol.push([p]); });
-  sh.getRange(2, 1, rows, 1).setValues(partCol).setDataValidation(
+  // 부(A) = 신규 시트일 때만 1·2·3부 40명씩 미리 채움(기존 데이터는 유지), 드롭다운은 항상
+  if (isNew) {
+    const partCol = [];
+    T_PARTS.forEach(function (p) { for (let k = 0; k < T_CAP; k++) partCol.push([p]); });
+    sh.getRange(2, 1, rows, 1).setValues(partCol);
+  }
+  sh.getRange(2, 1, rows, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(T_PARTS, true).setAllowInvalid(true).build());
 
   // 번호(B) = 각 부 안에서 1~40 자동 매김(부를 바꾸면 자동 재정렬)
