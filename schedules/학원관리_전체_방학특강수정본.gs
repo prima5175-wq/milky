@@ -1905,8 +1905,8 @@ function makeSpecialSheet() {
     sh.getRange(2, col, rows, 1).setBackground(wc);
   }
 
-  // 특이사항(AD): 서식·함수 없음(왼쪽정렬만) → 무엇을 적어도 회색으로 안 변함
-  sh.getRange(2, T_NOTE, rows, 1).setHorizontalAlignment('left');
+  // 특이사항: 글자 전용(@) → 날짜로 안 바뀌고, 흰 배경 고정, 조건부서식 범위 밖이라 회색으로 안 변함
+  sh.getRange(2, T_NOTE, rows, 1).clearDataValidations().setNumberFormat('@').setBackground('#ffffff').setHorizontalAlignment('left');
 
   // 조건부서식: ①부 색(1·2·3부) ②회차칸에 값 있으면 회색  (특이사항은 범위 밖)
   const rules = [];
