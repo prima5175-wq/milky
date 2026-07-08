@@ -1844,11 +1844,11 @@ function makeSpecialSheet() {
   let sh = ss.getSheetByName(T_SHEET);
   const isNew = !sh;
   if (!sh) sh = ss.insertSheet(T_SHEET);
-  const used = isNew ? 0 : Math.max(sh.getLastRow() - 1, 0);
-  const rows = Math.max(T_ROWS, used + 20);
+  const T_CAP = 40;                     // 부(1·2·3부)당 정원
+  const rows = T_CAP * T_PARTS.length;  // 40 × 3부 = 120
 
   // 머리글
-  const head = ['부', '이름', '학년', '학교', '전화번호', '재원생여부', '결제일', '남은회차', '보강회차', '첫브리핑', '포폴배부'];
+  const head = ['부', '번호', '이름', '학교', '전화번호', '재원생여부', '결제일', '남은회차', '보강회차', '첫브리핑', '포폴배부'];
   for (let i = 1; i <= T_N; i++) head.push(String(i));
   head.push('특이사항');
   sh.getRange(1, 1, 1, T_NOTE).setValues([head])
@@ -1857,9 +1857,18 @@ function makeSpecialSheet() {
   sh.setRowHeight(1, 30);
   sh.getRange(1, T_GRID).setNote('1~20 회차: 출결은 0 입력(바탕색 유지), 보강은 날짜 입력 → 회색. 남은회차/보강회차 자동 집계.');
 
-  // 드롭다운(부·재원생여부)
-  sh.getRange(2, 1, rows, 1).setDataValidation(
+  // 부(A) = 1부·2부·3부 각 40명씩 미리 채움 + 드롭다운
+  const partCol = [];
+  T_PARTS.forEach(function (p) { for (let k = 0; k < T_CAP; k++) partCol.push([p]); });
+  sh.getRange(2, 1, rows, 1).setValues(partCol).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(T_PARTS, true).setAllowInvalid(true).build());
+
+  // 번호(B) = 각 부 안에서 1~40 자동 매김(부를 바꾸면 자동 재정렬)
+  const numF = [];
+  for (let li = 0; li < rows; li++) { const lr = 2 + li; numF.push(['=IF($A' + lr + '="","",COUNTIF($A$2:$A' + lr + ',$A' + lr + '))']); }
+  sh.getRange(2, 2, rows, 1).clearDataValidations().setFormulas(numF).setNumberFormat('0').setHorizontalAlignment('center').setFontColor('#808080');
+
+  // 재원생여부(F) 드롭다운
   sh.getRange(2, 6, rows, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(T_MEMBERS, true).setAllowInvalid(true).build());
 
@@ -1913,7 +1922,7 @@ function makeSpecialSheet() {
   sh.setConditionalFormatRules(rules);   // 이 시트의 조건부서식은 이 둘만
 
   // 열너비 · 고정
-  const w = [46, 80, 60, 80, 110, 110, 90, 64, 64, 64, 64];
+  const w = [46, 40, 80, 80, 110, 110, 90, 64, 64, 64, 64];
   for (let c = 1; c <= w.length; c++) sh.setColumnWidth(c, w[c - 1]);
   for (let c = T_GRID; c < T_GRID + T_N; c++) sh.setColumnWidth(c, 34);
   sh.setColumnWidth(T_NOTE, 200);
@@ -1923,7 +1932,7 @@ function makeSpecialSheet() {
 
   ss.setActiveSheet(sh);
   ui.alert('방학특강 시트 준비 완료 🌴',
-    '· 출결: 회차칸에 0 입력 → 바탕색 유지(+남은회차 감소)\n· 보강: 회차칸에 날짜 입력 → 회색 표시(+보강회차 증가)\n· 남은회차=20−채운칸 · 보강회차=날짜(회색)칸 수\n· 첫브리핑=초록☑ · 포폴배부=핑크☑\n· 특이사항=자유 입력(회색 안 변함)\n\n' +
+    '· 부 = 1·2·3부 각 40명 정원, 번호는 부마다 1~40 자동\n· 출결: 회차칸에 0 → 바탕색 유지(+남은회차 감소)\n· 보강: 회차칸에 날짜 → 회색(+보강회차 증가)\n· 첫브리핑=초록☑ · 포폴배부=핑크☑ · 특이사항=자유입력\n\n' +
     (isNew ? '새 시트를 만들었어요.' : '기존 시트에 새 서식을 적용했어요. (입력한 데이터는 유지)'),
     ui.ButtonSet.OK);
 }
