@@ -1824,14 +1824,16 @@ function makeDemo() {
 // ====================================================================
 const T_SHEET = '방학특강';
 const T_ROWS  = 200;            // 준비 행 수
-const T_GRID  = 11;             // 회차 1번 칸(K열) — 남은회차 칸(H) 추가로 한 칸 밀림
+const T_GRID  = 12;             // 회차 1번 칸(L열) — 남은회차(H)·보강회차(I) 추가로 밀림
 const T_N     = 20;             // 회차 칸 개수
-const T_NOTE  = T_GRID + T_N;   // 특이사항 열(30, AD)
+const T_NOTE  = T_GRID + T_N;   // 특이사항 열(32, AF)
 const T_PARTS   = ['1부', '2부', '3부'];
 const T_MEMBERS = ['현재재원생', '비재원생', '예전재원생(현재휴원)', '대치점 재원생'];
 const T_PART_COLOR = { '1부': '#fce4ec', '2부': '#fff2cc', '3부': '#ccf2e3' };
 const T_GRAY = '#b7b7b7';       // 보강 날짜 입력 시 회색
 const T_WEEK = ['#fce4ec', '#fff2cc', '#ccf2e3', '#cfe2f3']; // 1~4주 파스텔(분홍·노랑·민트·하늘), 5칸씩
+const T_CHK_BRIEF = '#38761d'; // 첫브리핑 체크박스 = 초록
+const T_CHK_PORT  = '#e91e63'; // 포폴배부 체크박스 = 핑크
 
 // 방학특강 시트는 스크립트가 개입하지 않음(조건부서식만 사용)
 function T_onEdit_(e) {}
@@ -1846,14 +1848,14 @@ function makeSpecialSheet() {
   const rows = Math.max(T_ROWS, used + 20);
 
   // 머리글
-  const head = ['부', '이름', '학년', '학교', '전화번호', '재원생여부', '결제일', '남은회차', '첫브리핑', '포폴배부'];
+  const head = ['부', '이름', '학년', '학교', '전화번호', '재원생여부', '결제일', '남은회차', '보강회차', '첫브리핑', '포폴배부'];
   for (let i = 1; i <= T_N; i++) head.push(String(i));
   head.push('특이사항');
   sh.getRange(1, 1, 1, T_NOTE).setValues([head])
     .setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle')
     .setBackground('#674ea7').setFontColor('#ffffff');
   sh.setRowHeight(1, 30);
-  sh.getRange(1, T_GRID).setNote('1~20 회차 칸: 보강한 "날짜"를 적으면 그 칸이 회색으로 바뀝니다(그날 보강 완료 표시).');
+  sh.getRange(1, T_GRID).setNote('1~20 회차: 출결은 0 입력(바탕색 유지), 보강은 날짜 입력 → 회색. 남은회차/보강회차 자동 집계.');
 
   // 드롭다운(부·재원생여부)
   sh.getRange(2, 1, rows, 1).setDataValidation(
@@ -1865,14 +1867,24 @@ function makeSpecialSheet() {
   sh.getRange(2, 7, rows, 1).setNumberFormat('yyyy-mm-dd')
     .setDataValidation(SpreadsheetApp.newDataValidation().requireDate().setAllowInvalid(true).build());
 
-  // 남은회차(H) = 20 - 채워진 회차 수 (회차 칸에 날짜/숫자 넣으면 자동으로 줄어듦)
+  // 남은회차(H)=20-채운 칸 수 / 보강회차(I)=날짜(회색) 칸 수  ※ 옛 검증·메모 제거 → 빨간 삼각형 방지
   const gA = columnLetter_(T_GRID), gB = columnLetter_(T_GRID + T_N - 1);
-  const leftF = [];
-  for (let li = 0; li < rows; li++) { const lr = 2 + li; leftF.push(['=' + T_N + '-COUNT($' + gA + lr + ':$' + gB + lr + ')']); }
-  sh.getRange(2, 8, rows, 1).setFormulas(leftF).setNumberFormat('0').setHorizontalAlignment('center');
+  const remF = [], mkF = [];
+  for (let li = 0; li < rows; li++) {
+    const lr = 2 + li;
+    remF.push(['=' + T_N + '-COUNT($' + gA + lr + ':$' + gB + lr + ')']);
+    mkF.push(['=COUNTIF($' + gA + lr + ':$' + gB + lr + ',">1000")']);
+  }
+  sh.getRange(2, 8, rows, 1).clearDataValidations().clearNote().setBackground('#ffffff')
+    .setFormulas(remF).setNumberFormat('0').setHorizontalAlignment('center');
+  sh.getRange(2, 9, rows, 1).clearDataValidations().clearNote().setBackground('#ffffff')
+    .setFormulas(mkF).setNumberFormat('0').setHorizontalAlignment('center');
 
-  // 첫브리핑(I) · 포폴배부(J) = 체크박스
-  sh.getRange(2, 9, rows, 2).clearContent().clearDataValidations().insertCheckboxes().setHorizontalAlignment('center');
+  // 첫브리핑(J)=초록 체크박스 · 포폴배부(K)=핑크 체크박스 (배경 흰색)
+  sh.getRange(2, 10, rows, 1).clearContent().clearDataValidations().insertCheckboxes()
+    .setBackground('#ffffff').setFontColor(T_CHK_BRIEF).setHorizontalAlignment('center');
+  sh.getRange(2, 11, rows, 1).clearContent().clearDataValidations().insertCheckboxes()
+    .setBackground('#ffffff').setFontColor(T_CHK_PORT).setHorizontalAlignment('center');
 
   // 회차 칸(J~AC): 날짜서식, 잘못된 데이터검증 제거
   sh.getRange(2, T_GRID, rows, T_N).clearDataValidations()
@@ -1895,12 +1907,13 @@ function makeSpecialSheet() {
       .whenTextEqualTo(p).setBackground(T_PART_COLOR[p]).setRanges([partRange]).build());
   });
   rules.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenCellNotEmpty().setBackground(T_GRAY).setFontColor('#000000').setBold(true)
+    .whenFormulaSatisfied('=AND(ISNUMBER(' + gA + '2),' + gA + '2>1000)')  // 날짜(큰 숫자)만 회색, 0은 유지
+    .setBackground(T_GRAY).setFontColor('#000000').setBold(true)
     .setRanges([sh.getRange(2, T_GRID, rows, T_N)]).build());
   sh.setConditionalFormatRules(rules);   // 이 시트의 조건부서식은 이 둘만
 
   // 열너비 · 고정
-  const w = [46, 80, 60, 80, 110, 110, 90, 70, 64, 64];
+  const w = [46, 80, 60, 80, 110, 110, 90, 64, 64, 64, 64];
   for (let c = 1; c <= w.length; c++) sh.setColumnWidth(c, w[c - 1]);
   for (let c = T_GRID; c < T_GRID + T_N; c++) sh.setColumnWidth(c, 34);
   sh.setColumnWidth(T_NOTE, 200);
@@ -1910,7 +1923,7 @@ function makeSpecialSheet() {
 
   ss.setActiveSheet(sh);
   ui.alert('방학특강 시트 준비 완료 🌴',
-    '· 남은회차 = 20에서 채운 만큼 자동 차감\n· 첫브리핑·포폴배부 = 체크박스\n· 1~20 칸에 날짜를 적으면 회색 표시(+남은회차 감소)\n· 특이사항 칸은 자유 입력(회색으로 안 변함)\n\n' +
+    '· 출결: 회차칸에 0 입력 → 바탕색 유지(+남은회차 감소)\n· 보강: 회차칸에 날짜 입력 → 회색 표시(+보강회차 증가)\n· 남은회차=20−채운칸 · 보강회차=날짜(회색)칸 수\n· 첫브리핑=초록☑ · 포폴배부=핑크☑\n· 특이사항=자유 입력(회색 안 변함)\n\n' +
     (isNew ? '새 시트를 만들었어요.' : '기존 시트에 새 서식을 적용했어요. (입력한 데이터는 유지)'),
     ui.ButtonSet.OK);
 }
