@@ -1847,10 +1847,10 @@ function makeSpecialSheet() {
   const T_CAP = 40;                     // 부(1·2·3부)당 정원
   const rows = T_CAP * T_PARTS.length;  // 40 × 3부 = 120
 
-  // ★ 방학특강 영역(1~121행) 서식·조건부서식·검증·메모 전부 초기화 → 이전 잔재(회색/흰색 어긋남) 제거
-  //   (값은 안 지움 → 입력한 이름·회차 데이터는 유지)
+  // ★ 재실행 잔재 제거: 조건부서식 전체 + 회차칸(L~AE)·특이사항(AF)의 배경·메모 초기화
+  //   (이전 버전에서 남은 회색/흰색 어긋남 제거. 값은 안 지움, 결제일 등 정보칸 강조색은 유지)
   sh.clearConditionalFormatRules();
-  sh.getRange(1, 1, rows + 1, T_NOTE).setBackground(null).clearNote().clearDataValidations();
+  sh.getRange(1, T_GRID, rows + 1, T_N + 1).setBackground(null).clearNote();
 
   // 머리글
   const head = ['부', '번호', '이름', '학교', '전화번호', '재원생여부', '결제일', '남은회차', '보강회차', '첫브리핑', '포폴배부'];
