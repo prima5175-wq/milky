@@ -1862,13 +1862,10 @@ function makeSpecialSheet() {
   sh.setRowHeight(1, 30);
   sh.getRange(1, T_GRID).setNote('1~20 회차: 출결은 0 입력(바탕색 유지), 보강은 날짜 입력 → 회색. 남은회차/보강회차 자동 집계.');
 
-  // 부(A) = 신규 시트일 때만 1·2·3부 40명씩 미리 채움(기존 데이터는 유지), 드롭다운은 항상
-  if (isNew) {
-    const partCol = [];
-    T_PARTS.forEach(function (p) { for (let k = 0; k < T_CAP; k++) partCol.push([p]); });
-    sh.getRange(2, 1, rows, 1).setValues(partCol);
-  }
-  sh.getRange(2, 1, rows, 1).setDataValidation(
+  // 부(A) = 1부 40칸 → 2부 40칸 → 3부 40칸 항상 채움(블록 구조) + 드롭다운  ※ 이름 등 데이터는 그대로
+  const partCol = [];
+  T_PARTS.forEach(function (p) { for (let k = 0; k < T_CAP; k++) partCol.push([p]); });
+  sh.getRange(2, 1, rows, 1).setValues(partCol).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(T_PARTS, true).setAllowInvalid(true).build());
 
   // 번호(B) = 각 부 안에서 1~40 자동 매김(부를 바꾸면 자동 재정렬)
