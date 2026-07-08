@@ -1831,6 +1831,7 @@ const T_PARTS   = ['1부', '2부', '3부'];
 const T_MEMBERS = ['현재재원생', '비재원생', '예전재원생(현재휴원)', '대치점 재원생'];
 const T_PART_COLOR = { '1부': '#fce4ec', '2부': '#fff2cc', '3부': '#ccf2e3' };
 const T_GRAY = '#b7b7b7';       // 보강 날짜 입력 시 회색
+const T_WEEK = ['#fce4ec', '#fff2cc', '#ccf2e3', '#cfe2f3']; // 1~4주 파스텔(분홍·노랑·민트·하늘), 5칸씩
 
 // 방학특강 시트는 스크립트가 개입하지 않음(조건부서식만 사용)
 function T_onEdit_(e) {}
@@ -1867,9 +1868,15 @@ function makeSpecialSheet() {
   // 첫브리핑 · 포폴배부 = 체크박스(옛 남은회차/보강 자리 정리 후 체크박스)
   sh.getRange(2, 8, rows, 2).clearContent().clearDataValidations().insertCheckboxes().setHorizontalAlignment('center');
 
-  // 회차 칸(J~AC): 날짜서식·흰배경, 잘못된 데이터검증 제거
+  // 회차 칸(J~AC): 날짜서식, 잘못된 데이터검증 제거
   sh.getRange(2, T_GRID, rows, T_N).clearDataValidations()
-    .setNumberFormat('M/d').setHorizontalAlignment('center').setFontSize(9).setBackground('#ffffff');
+    .setNumberFormat('M/d').setHorizontalAlignment('center').setFontSize(9);
+  // 1~4주 파스텔 구분(5칸씩): 헤더 색 + 데이터 기본배경(보강 날짜 넣으면 그 칸만 회색으로 덮임)
+  for (let i = 0; i < T_N; i++) {
+    const col = T_GRID + i, wc = T_WEEK[Math.floor(i / 5)];
+    sh.getRange(1, col).setBackground(wc).setFontColor('#000000');
+    sh.getRange(2, col, rows, 1).setBackground(wc);
+  }
 
   // 특이사항(AD): 서식·함수 없음(왼쪽정렬만) → 무엇을 적어도 회색으로 안 변함
   sh.getRange(2, T_NOTE, rows, 1).setHorizontalAlignment('left');
