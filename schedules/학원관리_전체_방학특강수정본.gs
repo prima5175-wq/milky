@@ -1868,7 +1868,7 @@ function makeSpecialSheet() {
   // 남은회차(H) = 20 - 채워진 회차 수 (회차 칸에 날짜/숫자 넣으면 자동으로 줄어듦)
   const gA = columnLetter_(T_GRID), gB = columnLetter_(T_GRID + T_N - 1);
   const leftF = [];
-  for (let li = 0; li < rows; li++) { const lr = 2 + li; leftF.push(['=IF($B' + lr + '="","",' + T_N + '-COUNT($' + gA + lr + ':$' + gB + lr + '))']); }
+  for (let li = 0; li < rows; li++) { const lr = 2 + li; leftF.push(['=' + T_N + '-COUNT($' + gA + lr + ':$' + gB + lr + ')']); }
   sh.getRange(2, 8, rows, 1).setFormulas(leftF).setNumberFormat('0').setHorizontalAlignment('center');
 
   // 첫브리핑(I) · 포폴배부(J) = 체크박스
