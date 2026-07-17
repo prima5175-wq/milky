@@ -74,9 +74,12 @@ function lookupByLast4_(rawLast4) {
 
 // 오늘 날짜(M/D)로 시작하는 탭을 찾는다. "7/17 금", "7/17 (금)", "7/20(월)" 처럼
 // 지점마다 표기 방식이 달라서, 정확한 이름을 만들어 찾지 않고 접두어로 검색한다.
+const TIMEZONE = 'Asia/Seoul';
+
 function findTodaySheet_() {
-  const now = new Date();
-  const prefix = `${now.getMonth() + 1}/${now.getDate()}`;
+  // Apps Script의 new Date() 요일/날짜 계산은 프로젝트 기본 시간대를 따르므로,
+  // 한국 시간으로 명시적으로 고정해서 "오늘"을 구한다 (안 그러면 자정 근처에 하루 밀릴 수 있음).
+  const prefix = Utilities.formatDate(new Date(), TIMEZONE, 'M/d');
   const re = new RegExp('^' + prefix.replace('/', '\\/') + '(?!\\d)');
 
   const sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();
