@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>출석 체크인</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body {
+    height: 100%;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    background: #0a0a1a;
+    color: #fff;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 3vh 4vw;
+  }
+
+  .title {
+    font-size: 3.2vh;
+    color: #8ecae6;
+    margin-bottom: 1vh;
+    text-align: center;
+  }
+  .subtitle {
+    font-size: 2vh;
+    color: #4a6a8a;
+    margin-bottom: 4vh;
+    text-align: center;
+  }
+
+  .dots {
+    display: flex;
+    gap: 2.5vh;
+    margin-bottom: 5vh;
+  }
+  .dot {
+    width: 3vh; height: 3vh;
+    border-radius: 50%;
+    border: 2px solid #2a4a6a;
+    background: transparent;
+    transition: all 0.15s ease;
+  }
+  .dot.filled {
+    background: #00c8ff;
+    border-color: #00c8ff;
+    box-shadow: 0 0 20px rgba(0,200,255,0.6);
+  }
+
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2vh;
+    width: min(90vw, 480px);
+  }
+  .key {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: none;
+    background: #1a2634;
+    color: #fff;
+    font-size: 4vh;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .key:active { background: #2a4a6a; }
+  .key.wide { font-size: 2.2vh; color: #8ecae6; }
+  .key.confirm { background: #00c8ff; color: #000; }
+  .key.confirm:active { background: #00a8dd; }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5,10,20,0.97);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4vw;
+    z-index: 50;
+  }
+  .overlay.show { display: flex; }
+  .overlay .big { font-size: 5vh; font-weight: 700; margin-bottom: 2vh; }
+  .overlay .msg { font-size: 2.6vh; color: #aaa; line-height: 1.6; white-space: pre-line; }
+  .overlay.ok .big { color: #00ff88; }
+  .overlay.error .big { color: #ff5555; }
+  .overlay.already .big { color: #ffa500; }
+
+  .choice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    width: min(90vw, 480px);
+  }
+  .choice-btn {
+    padding: 3vh 2vw;
+    font-size: 3.4vh;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    background: #1a2634;
+    color: #fff;
+    cursor: pointer;
+  }
+  .choice-btn:active { background: #2a4a6a; }
+
+  .setup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .setup-overlay.show { display: flex; }
+  .setup-box {
+    background: #1a2634;
+    border-radius: 12px;
+    padding: 3vh 3vw;
+    max-width: 500px;
+    width: 90%;
+  }
+  .setup-box h2 { color: #8ecae6; margin-bottom: 2vh; font-size: 2.2vh; }
+  .setup-box label { color: #8ecae6; font-size: 1.6vh; display: block; margin-bottom: 0.4vh; margin-top: 1.5vh; }
+  .setup-box input {
+    width: 100%; padding: 1.2vh 1vw; font-size: 1.8vh;
+    border-radius: 6px; border: 1px solid #3a5a7a; background: #0f1923; color: #fff;
+  }
+  .setup-box button {
+    margin-top: 2.5vh; background: #00c8ff; color: #000; border: none;
+    padding: 1.4vh 2vw; font-size: 1.8vh; border-radius: 6px; cursor: pointer; font-weight: 600;
+  }
+  .setup-box .hint { font-size: 1.3vh; color: #666; margin-top: 1.2vh; line-height: 1.6; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="title">핸드폰 번호 뒷자리를 눌러주세요</div>
+<div class="subtitle" id="subtitle">4자리를 입력하고 확인을 눌러요</div>
+
+<div class="dots" id="dots">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</div>
+
+<div class="keypad" id="keypad">
+  <button class="key" data-k="1">1</button>
+  <button class="key" data-k="2">2</button>
+  <button class="key" data-k="3">3</button>
+  <button class="key" data-k="4">4</button>
+  <button class="key" data-k="5">5</button>
+  <button class="key" data-k="6">6</button>
+  <button class="key" data-k="7">7</button>
+  <button class="key" data-k="8">8</button>
+  <button class="key" data-k="9">9</button>
+  <button class="key wide" data-k="clear">지우기</button>
+  <button class="key" data-k="0">0</button>
+  <button class="key confirm" data-k="confirm">확인</button>
+</div>
+
+<div class="choice-list" id="choiceList" style="display:none"></div>
+
+<div class="overlay" id="overlay">
+  <div class="big" id="overlayBig"></div>
+  <div class="msg" id="overlayMsg"></div>
+</div>
+
+<div class="setup-overlay" id="setupOverlay">
+  <div class="setup-box">
+    <h2>출석 체크인 연결 설정</h2>
+    <label>Apps Script 웹앱 URL</label>
+    <input type="text" id="inputWebAppUrl" placeholder="https://script.google.com/macros/s/.../exec">
+    <label>토큰 (Apps Script의 SECRET_TOKEN과 동일해야 함)</label>
+    <input type="text" id="inputToken" placeholder="예: daechi2026">
+    <button onclick="saveSetup()">저장</button>
+    <p class="hint">이 화면을 다시 열려면 화면을 두 번 탭하세요.<br>
+    지점(수업일지 시트)마다 Apps Script를 따로 배포하고, 이 태블릿에는 해당 지점의 웹앱 URL을 입력하세요.</p>
+  </div>
+</div>
+
+<script>
+const DOTS_COUNT = 4;
+let digits = '';
+let mode = 'keypad'; // keypad | choices | overlay
+
+let webAppUrl = localStorage.getItem('checkin_webAppUrl') || '';
+let token = localStorage.getItem('checkin_token') || '';
+
+function renderDots() {
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < digits.length));
+}
+
+function resetToKeypad() {
+  digits = '';
+  mode = 'keypad';
+  renderDots();
+  document.getElementById('keypad').style.display = 'grid';
+  document.getElementById('dots').style.display = 'flex';
+  document.getElementById('choiceList').style.display = 'none';
+  document.getElementById('overlay').className = 'overlay';
+  document.getElementById('subtitle').textContent = '4자리를 입력하고 확인을 눌러요';
+}
+
+function showOverlay(kind, big, msg, autoResetMs) {
+  document.getElementById('keypad').style.display = 'none';
+  document.getElementById('dots').style.display = 'none';
+  document.getElementById('choiceList').style.display = 'none';
+  const el = document.getElementById('overlay');
+  el.className = 'overlay show ' + kind;
+  document.getElementById('overlayBig').textContent = big;
+  document.getElementById('overlayMsg').textContent = msg;
+  if (autoResetMs) setTimeout(resetToKeypad, autoResetMs);
+}
+
+function showChoices(names) {
+  document.getElementById('keypad').style.display = 'none';
+  document.getElementById('subtitle').textContent = '누구인지 골라주세요';
+  const list = document.getElementById('choiceList');
+  list.style.display = 'flex';
+  list.innerHTML = '';
+  names.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = name;
+    btn.onclick = () => doCheckin(name);
+    list.appendChild(btn);
+  });
+}
+
+document.getElementById('keypad').addEventListener('click', (e) => {
+  const btn = e.target.closest('.key');
+  if (!btn) return;
+  const k = btn.dataset.k;
+
+  if (k === 'clear') {
+    digits = digits.slice(0, -1);
+    renderDots();
+  } else if (k === 'confirm') {
+    if (digits.length !== DOTS_COUNT) return;
+    doLookup(digits);
+  } else if (digits.length < DOTS_COUNT) {
+    digits += k;
+    renderDots();
+    if (digits.length === DOTS_COUNT) doLookup(digits);
+  }
+});
+
+function jsonpCall(params, onResult, onError) {
+  if (!webAppUrl) {
+    onError('연결 설정이 안 되어 있어요. 화면을 두 번 탭해서 설정해주세요.');
+    return;
+  }
+  const cbName = '_checkinCB_' + Date.now();
+  const timeout = setTimeout(() => {
+    delete window[cbName];
+    onError('서버 응답이 없어요. 다시 시도해주세요.');
+  }, 10000);
+
+  window[cbName] = function(res) {
+    clearTimeout(timeout);
+    delete window[cbName];
+    onResult(res);
+  };
+
+  const qs = new URLSearchParams(Object.assign({ token, callback: cbName }, params));
+  const script = document.createElement('script');
+  script.src = `${webAppUrl}?${qs.toString()}`;
+  script.onerror = () => {
+    clearTimeout(timeout);
+    delete window[cbName];
+    onError('연결에 실패했어요. 설정을 확인해주세요.');
+  };
+  document.head.appendChild(script);
+  script.onload = () => script.remove();
+}
+
+function doLookup(last4) {
+  document.getElementById('subtitle').textContent = '확인 중...';
+  jsonpCall({ action: 'lookup', last4 }, (res) => {
+    if (res.status === 'error') {
+      showOverlay('error', '앗!', res.message, 2500);
+      return;
+    }
+    const matches = res.matches || [];
+    if (matches.length === 0) {
+      showOverlay('error', '앗!', '등록되지 않은 번호예요.\n선생님께 말씀해주세요.', 2500);
+    } else if (matches.length === 1) {
+      doCheckin(matches[0]);
+    } else {
+      showChoices(matches);
+    }
+  }, (msg) => showOverlay('error', '앗!', msg, 3000));
+}
+
+function doCheckin(name) {
+  showOverlay('ok', '확인 중...', '', 0);
+  jsonpCall({ action: 'checkin', name }, (res) => {
+    if (res.status === 'error') {
+      showOverlay('error', '앗!', res.message, 3000);
+      return;
+    }
+    if (res.alreadyDone) {
+      showOverlay('already', `${res.name}`, '이미 출석 처리되었어요.', 3000);
+    } else {
+      const endMsg = res.endTime ? `하원 예정 시각: ${res.endTime}` : '';
+      showOverlay('ok', `${res.name} 출석 완료!`, endMsg, 3000);
+    }
+  }, (msg) => showOverlay('error', '앗!', msg, 3000));
+}
+
+function saveSetup() {
+  webAppUrl = document.getElementById('inputWebAppUrl').value.trim();
+  token = document.getElementById('inputToken').value.trim();
+  localStorage.setItem('checkin_webAppUrl', webAppUrl);
+  localStorage.setItem('checkin_token', token);
+  document.getElementById('setupOverlay').classList.remove('show');
+}
+
+document.addEventListener('dblclick', () => {
+  document.getElementById('inputWebAppUrl').value = webAppUrl;
+  document.getElementById('inputToken').value = token;
+  document.getElementById('setupOverlay').classList.add('show');
+});
+
+renderDots();
+if (!webAppUrl) {
+  document.getElementById('setupOverlay').classList.add('show');
+}
+</script>
+</body>
+</html>
