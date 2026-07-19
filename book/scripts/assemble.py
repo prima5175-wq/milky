@@ -17,8 +17,10 @@ header = """# 대치동 윤원장의 북스펙
 ---
 """ % version
 
+# 학부모 파트(1-5,9,10)를 먼저 모으고, 리더 파트(6,7,8)를 뒤로
+order = [1, 2, 3, 4, 5, 9, 10, 6, 7, 8]
 parts = []
-for i in range(1, 11):
+for i in order:
     f = DRAFT / f"part-{i}.md"
     if f.exists():
         parts.append(f.read_text(encoding="utf-8").strip())
