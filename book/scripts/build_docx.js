@@ -6,7 +6,7 @@ const {
 } = require('docx');
 
 const BOOK = path.resolve(__dirname, '..');
-const src = fs.readFileSync(path.join(BOOK, '북스펙-초고-v1.md'), 'utf8');
+const src = fs.readFileSync(path.join(BOOK, '북스펙-초고-v2.md'), 'utf8');
 const lines = src.split('\n');
 
 // **bold** 인라인 → TextRun[] (본문 크기 기본)
@@ -37,7 +37,7 @@ children.push(new Paragraph({
 }));
 children.push(new Paragraph({
   alignment: AlignmentType.CENTER,
-  children: [new TextRun({ text: '읽는 순간, 오너가 된다 · 문답 40', size: 24, italics: true, color: '666666', font: '맑은 고딕' })],
+  children: [new TextRun({ text: '읽는 순간, 오너가 된다 · 문답 50', size: 24, italics: true, color: '666666', font: '맑은 고딕' })],
   spacing: { after: 1600 },
 }));
 children.push(new Paragraph({
@@ -99,7 +99,7 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then(buf => {
-  const out = path.join(BOOK, '대치동_윤원장의_북스펙_초고v1.docx');
+  const out = path.join(BOOK, '대치동_윤원장의_북스펙_초고v2.docx');
   fs.writeFileSync(out, buf);
   console.log('wrote', out, buf.length, 'bytes');
 });
