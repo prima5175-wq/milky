@@ -17,7 +17,23 @@ var SHEET_ID = '';
 var DATA_SHEET = '_시간표데이터';   // 데이터가 저장되는 탭 이름
 var CHUNK = 40000;                   // 셀 1칸 최대 5만자 → 4만자로 나눠 저장
 
-/** 웹앱 진입점 */
+/** 시트를 열면 상단에 '📅 시간표' 메뉴를 추가 */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('📅 시간표')
+    .addItem('시간표 열기', 'openTimetableDialog')
+    .addToUi();
+}
+
+/** 구글 시트 안에서 큰 창(모달)으로 시간표 열기 */
+function openTimetableDialog() {
+  var html = HtmlService.createHtmlOutputFromFile('Timetable')
+    .setWidth(1600)
+    .setHeight(1000);
+  SpreadsheetApp.getUi().showModalDialog(html, '주간 시간표');
+}
+
+/** 웹앱(링크)으로도 열 수 있게 유지 */
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('Timetable')
     .setTitle('주간 시간표')
