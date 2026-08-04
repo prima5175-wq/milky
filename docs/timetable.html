@@ -238,20 +238,9 @@ function removeItem(id){ var w=curWeek(); w.items=w.items.filter(function(x){ret
  *  초기 데이터
  * ============================================================= */
 function seed(){
+  // 빈 상태로 시작 — 일정 없이 '1주' 하나만 생성
   var w = newWeek("1주");
   state.curWeek = w.id;
-  var demo = [
-    ["쿠니","펜토스 고급TPL","화목","09:30","12:00"],
-    ["쿠니","미래인 물리브릿지//b반 박병수T","수금","09:30","12:00"],
-    ["다온","리라이팅 국어","월수금","14:00","16:00"],
-    ["다온","수학 심화","화목","16:30","18:30"],
-    ["세아","영어 회화","월화수목금","10:00","11:00"]
-  ];
-  demo.forEach(function(r){
-    parseDays(r[2]).forEach(function(d){
-      addItem({target:r[0], item:r[1], day:d, start:r[3], end:r[4]});
-    });
-  });
 }
 function parseDays(str){
   // "월수금" 또는 "월,수,금" 또는 "월 수 금"
