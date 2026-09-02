@@ -13,6 +13,7 @@ const TABS = [
   { id: 'steps', label: '오픈단계', icon: 'Route' },
   { id: 'books', label: '도서', icon: 'Book' },
   { id: 'marketing', label: '마케팅', icon: 'Megaphone' },
+  { id: 'quiz', label: '테스트', icon: 'Quiz' },
   { id: 'menu', label: '전체', icon: 'Menu' },
 ];
 
