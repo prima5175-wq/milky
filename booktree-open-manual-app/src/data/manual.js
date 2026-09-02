@@ -26,7 +26,7 @@ export const APP_META = {
 //
 // 순서는 인스타그램 → 블로그 순으로 표시됩니다.
 export const BRANCH_LINKS = {
-  instagram: '',   // 지사 인스타그램
+  instagram: 'https://www.instagram.com/booktr_gangnamseocho',   // 지사 인스타그램 (@booktr_gangnamseocho)
   blog: '',        // 지사 블로그
 };
 
