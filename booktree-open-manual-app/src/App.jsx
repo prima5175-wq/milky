@@ -42,8 +42,8 @@ function loadState() {
       };
     }
   } catch (e) {}
-  // 첫 실행이에요. 진행률은 0에서 시작하고, 지점 정보부터 입력받아요.
-  return { tab: 'home', viewMode: 'auto', checked: {}, quizScores: {}, openStep: null, config: DEFAULT_CONFIG, showSettings: true };
+  // 첫 실행이에요. 홈 화면부터 보여주고, 지점 설정은 홈의 안내 카드로 유도합니다.
+  return { tab: 'home', viewMode: 'auto', checked: {}, quizScores: {}, openStep: null, config: DEFAULT_CONFIG, showSettings: false };
 }
 
 function saveState(state) {

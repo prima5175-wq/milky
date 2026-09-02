@@ -66,9 +66,28 @@ function HomeScreen({ meta, steps, checked, onNavigate, onOpenStep, onOpenSettin
     </div>
   );
 
+  // 지점 정보가 아직 없으면 홈에서 바로 설정하도록 안내해요.
+  const needsSetup = !meta.district || !meta.openDate;
+
   const body = (
     <>
       {heroBlock}
+
+      {needsSetup && (
+        <div style={{ padding: '16px 20px 0' }}>
+          <button className="setup-card" onClick={onOpenSettings}>
+            <div className="setup-card-icon"><Icon.Settings /></div>
+            <div className="setup-card-body">
+              <div className="setup-card-title">먼저 지점 정보를 입력해 주세요</div>
+              <div className="setup-card-sub">
+                지점명 · 원장님 성함 · 오픈 예정일만 넣으면 D-Day와 20단계 일정이
+                자동으로 계산돼요.
+              </div>
+            </div>
+            <Icon.Chevron className="setup-card-chev" />
+          </button>
+        </div>
+      )}
 
       {/* 진행률 카드 */}
       <div className="progress-block">
