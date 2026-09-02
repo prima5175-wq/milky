@@ -1143,3 +1143,22 @@ ul, ol { list-style: none; }
   color: var(--bt-body);
 }
 .quiz-short-answer b { color: var(--bt-green); font-weight: 800; }
+
+/* ============ 지사 공유 안내 ============ */
+.share-notice {
+  margin-bottom: 16px;
+  padding: 13px 15px;
+  background: var(--bt-green-tint);
+  border: 1px solid var(--bt-green-light);
+  border-radius: 12px;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--bt-body);
+}
+.share-notice b {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--bt-green);
+  margin-bottom: 4px;
+}

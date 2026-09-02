@@ -61,6 +61,13 @@ localStorage 키: `booktree-manual-v5` (스키마 변경 시 v6, v7로 올릴 �
 
 ## 자주 수정하는 것들
 
+### 지사 진행상황 수집 (구글시트)
+→ `src/data/manual.js` 의 `REPORT_CONFIG` 에 Apps Script 웹앱 주소·토큰 입력.
+두 값이 비면 기능이 꺼진 상태로, 아무것도 전송되지 않아요.
+전송 로직은 `src/utils/report.js`, 서버 쪽은 `apps-script/ProgressScript.gs`.
+설정 절차는 `apps-script/README-progress.md` 참고.
+CORS 때문에 fetch 가 아니라 JSONP 를 씁니다(출석 체크인과 동일한 이유).
+
 ### 지사 채널 링크 (인스타그램·블로그)
 → `src/data/manual.js` 의 `BRANCH_LINKS` 에 주소 입력.
 빈 문자열이면 버튼을 렌더링하지 않아요 (`my.jsx` 의 `BranchLinks`).

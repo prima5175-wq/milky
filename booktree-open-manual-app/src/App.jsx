@@ -1,6 +1,7 @@
 import React from 'react';
 import { OPEN_STEPS } from './data/manual.js';
 import { calcDaysToOpen } from './utils/dates.js';
+import { reportProgress, isReportEnabled } from './utils/report.js';
 import { Icon } from './components/icons.jsx';
 import { TabBar, Sidebar } from './components/nav.jsx';
 import { HomeScreen } from './screens/home.jsx';
@@ -100,6 +101,32 @@ export default function App() {
   });
   const openSettings = () => setState(s => ({ ...s, showSettings: true, openStep: null }));
   const saveConfig = (config) => setState(s => ({ ...s, config: { ...s.config, ...config }, showSettings: false }));
+
+  // 진행상황을 지사 구글시트로 보냅니다. REPORT_CONFIG 가 비어 있으면 아무 일도 안 해요.
+  // 체크할 때마다 즉시 보내면 연타 시 요청이 쏟아지므로 2초 모았다가 한 번만 보냅니다.
+  const reportTimer = React.useRef(null);
+  React.useEffect(() => {
+    if (!isReportEnabled()) return;
+    if (!state.config.branchName) return;   // 지점 설정 전에는 보내지 않아요
+
+    clearTimeout(reportTimer.current);
+    reportTimer.current = setTimeout(() => {
+      const doneSteps = OPEN_STEPS.filter(s => state.checked[`step:${s.n}`]).map(s => s.n);
+      reportProgress({
+        branch: state.config.branchName,
+        manager: state.config.managerName,
+        openDate: state.config.openDate,
+        dday: calcDaysToOpen(state.config.openDate),
+        percent: Math.round((doneSteps.length / OPEN_STEPS.length) * 100),
+        doneCount: doneSteps.length,
+        totalCount: OPEN_STEPS.length,
+        doneSteps,
+        quiz: state.quizScores || {},
+      });
+    }, 2000);
+
+    return () => clearTimeout(reportTimer.current);
+  }, [state.checked, state.config, state.quizScores]);
 
   const meta = React.useMemo(() => {
     const daysToOpen = calcDaysToOpen(state.config.openDate) ?? 0;

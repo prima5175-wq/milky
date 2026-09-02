@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from '../components/icons.jsx';
 import { StatusBar } from './home.jsx';
 import { formatKoDate, calcDaysToOpen } from '../utils/dates.js';
+import { isReportEnabled } from '../utils/report.js';
 
 // 지점 설정 화면 - 지점명·원장님·주요 날짜 입력
 export function SettingsScreen({ config, onSave, onBack, viewMode }) {
@@ -34,6 +35,14 @@ export function SettingsScreen({ config, onSave, onBack, viewMode }) {
       )}
 
       <div className="screen-body" style={{ padding: isDesktop ? 0 : '0 20px 32px' }}>
+        {isReportEnabled() && (
+          <div className="share-notice">
+            <b>지사 공유 안내</b>
+            입력하신 지점 정보와 오픈 20단계 진행률이 지사에 자동으로 공유돼요.
+            지사장님이 진행 상황을 함께 확인하고 필요한 부분을 도와드리기 위한 것이며,
+            독서록·상담 내용 등 다른 정보는 전송되지 않아요.
+          </div>
+        )}
         {isDesktop && (
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, color: 'var(--bt-green)', fontWeight: 800, letterSpacing: '0.1em' }}>SETTINGS</div>

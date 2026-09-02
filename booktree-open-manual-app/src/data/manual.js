@@ -14,6 +14,22 @@ export const APP_META = {
   totalBranches: 647, // 2026년 8월 기준 전국 가맹점
 };
 
+// ============ 지사 진행상황 수집 (선택) ============
+//
+// 원장님이 단계를 체크하면 지사 구글시트에 자동으로 기록됩니다.
+// 지사장님은 그 시트만 열어보시면 전체 지점 현황을 한눈에 볼 수 있어요.
+//
+// 📌 두 값이 비어 있으면 기능이 꺼진 상태입니다. 아무것도 전송되지 않고,
+//    앱은 지금까지처럼 각자 기기에만 저장하며 그대로 동작합니다.
+//
+// 설정 방법: apps-script/README-progress.md 참고
+//   1) 지사 구글시트에 apps-script/ProgressScript.gs 를 붙여넣고 웹앱으로 배포
+//   2) 배포 주소를 webAppUrl 에, 스크립트에 적은 토큰을 token 에 입력
+export const REPORT_CONFIG = {
+  webAppUrl: '',   // 예: 'https://script.google.com/macros/s/AKfy...../exec'
+  token: '',       // ProgressScript.gs 의 PROGRESS_TOKEN 과 같은 값
+};
+
 // ============ 지사 채널 링크 ============
 //
 // 📌 주소를 아직 안 정하셨으면 빈 문자열('') 그대로 두세요.
