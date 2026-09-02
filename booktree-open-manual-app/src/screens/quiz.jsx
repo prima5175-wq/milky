@@ -3,26 +3,48 @@ import { Icon } from '../components/icons.jsx';
 import { StatusBar } from './home.jsx';
 import { QUIZ_DATA } from '../data/manual.js';
 
+// 주관식 채점: 띄어쓰기·쉼표·문장부호를 무시하고 비교해요.
+// 정답은 data 의 accept 배열에 허용 표기를 모두 적어둡니다.
+function normalizeAnswer(t) {
+  return String(t ?? '')
+    .toLowerCase()
+    .replace(/[\s,.·・\-~()"'`]/g, '')
+    .trim();
+}
+
+function isShortAnswerCorrect(q, input) {
+  const v = normalizeAnswer(input);
+  if (!v) return false;
+  return (q.accept || []).some(a => normalizeAnswer(a) === v);
+}
+
 // 퀴즈: 매뉴얼 이해도 테스트
 function QuizScreen({ viewMode, scores = {}, onFinish }) {
   const [active, setActive] = React.useState(null);
   const [step, setStep] = React.useState(0);
   const [selected, setSelected] = React.useState(null);
+  const [typed, setTyped] = React.useState('');
   const [answered, setAnswered] = React.useState(false);
   const [correctCount, setCorrectCount] = React.useState(0);
   const [finished, setFinished] = React.useState(false);
   const isDesktop = viewMode === 'desktop';
 
   const startQuiz = (q) => {
-    setActive(q); setStep(0); setSelected(null); setAnswered(false); setCorrectCount(0); setFinished(false);
+    setActive(q); setStep(0); setSelected(null); setTyped(''); setAnswered(false); setCorrectCount(0); setFinished(false);
   };
 
+  const currentQ = active ? active.questions[step] : null;
+  const isShort = currentQ?.type === 'short';
+  // 주관식은 입력값, 객관식은 보기 선택 여부로 '답할 준비가 됐는지' 판단해요.
+  const canSubmit = isShort ? typed.trim().length > 0 : selected !== null;
+  const isCorrect = !currentQ ? false
+    : isShort ? isShortAnswerCorrect(currentQ, typed)
+    : selected === currentQ.answer;
+
   const submit = () => {
-    if (selected === null) return;
+    if (!canSubmit || answered) return;
     setAnswered(true);
-    if (active.questions[step] && selected === active.questions[step].answer) {
-      setCorrectCount(c => c + 1);
-    }
+    if (isCorrect) setCorrectCount(c => c + 1);
   };
 
   const nextStep = () => {
@@ -34,6 +56,7 @@ function QuizScreen({ viewMode, scores = {}, onFinish }) {
     } else {
       setStep(s => s + 1);
       setSelected(null);
+      setTyped('');
       setAnswered(false);
     }
   };
@@ -171,43 +194,70 @@ function QuizScreen({ viewMode, scores = {}, onFinish }) {
 
       <div className="screen-body" style={{ padding: isDesktop ? '20px 40px 40px' : '8px 20px 32px' }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
-          <div className="chip" style={{ marginBottom: 12 }}>{active.title}</div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div className="chip">{active.title}</div>
+            <div className="chip" style={{ background: isShort ? 'var(--bt-yellow-soft)' : 'var(--bt-green-light)' }}>
+              {isShort ? '주관식' : '객관식'}
+            </div>
+          </div>
           <div className="font-serif" style={{ fontSize: isDesktop ? 22 : 18, fontWeight: 800, lineHeight: 1.5, letterSpacing: '-0.01em' }}>
             Q{step + 1}. {q.q}
           </div>
 
           <div style={{ marginTop: 24 }}>
-            {q.options.map((opt, i) => {
-              const letters = ['A', 'B', 'C', 'D'];
-              let cls = 'quiz-option';
-              if (answered) {
-                if (i === q.answer) cls += ' correct';
-                else if (i === selected) cls += ' wrong';
-              } else if (selected === i) cls += ' selected';
-
-              return (
-                <button
-                  key={i}
-                  className={cls}
-                  onClick={() => !answered && setSelected(i)}
+            {isShort ? (
+              <div>
+                <label className="quiz-short-label" htmlFor="quiz-short-input">직접 입력</label>
+                <input
+                  id="quiz-short-input"
+                  className={`quiz-short-input ${answered ? (isCorrect ? 'correct' : 'wrong') : ''}`}
+                  type="text"
+                  value={typed}
+                  onChange={e => setTyped(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { answered ? nextStep() : submit(); } }}
+                  placeholder={q.placeholder || '답을 입력해요'}
                   disabled={answered}
-                >
-                  <div className="quiz-option-letter">{letters[i]}</div>
-                  <div style={{ flex: 1 }}>{opt}</div>
-                </button>
-              );
-            })}
+                  autoComplete="off"
+                  enterKeyHint="done"
+                />
+                {q.hint && !answered && <div className="quiz-short-hint">힌트 · {q.hint}</div>}
+                {answered && !isCorrect && (
+                  <div className="quiz-short-answer">정답: <b>{q.accept[0]}</b></div>
+                )}
+              </div>
+            ) : (
+              q.options.map((opt, i) => {
+                const letters = ['A', 'B', 'C', 'D', 'E'];
+                let cls = 'quiz-option';
+                if (answered) {
+                  if (i === q.answer) cls += ' correct';
+                  else if (i === selected) cls += ' wrong';
+                } else if (selected === i) cls += ' selected';
+
+                return (
+                  <button
+                    key={i}
+                    className={cls}
+                    onClick={() => !answered && setSelected(i)}
+                    disabled={answered}
+                  >
+                    <div className="quiz-option-letter">{letters[i]}</div>
+                    <div style={{ flex: 1 }}>{opt}</div>
+                  </button>
+                );
+              })
+            )}
           </div>
 
           {answered && (
             <div className="anim-up" style={{
               marginTop: 14, padding: 14,
-              background: selected === q.answer ? 'var(--bt-green-tint)' : '#FEF0EC',
-              border: `1px solid ${selected === q.answer ? 'var(--bt-green-light)' : '#F5D5CC'}`,
+              background: isCorrect ? 'var(--bt-green-tint)' : '#FEF0EC',
+              border: `1px solid ${isCorrect ? 'var(--bt-green-light)' : '#F5D5CC'}`,
               borderRadius: 12,
             }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: selected === q.answer ? 'var(--bt-green)' : 'var(--bt-danger)', letterSpacing: '0.05em' }}>
-                {selected === q.answer ? '✓ 정답이에요!' : '✗ 정답을 확인해요'}
+              <div style={{ fontSize: 12, fontWeight: 800, color: isCorrect ? 'var(--bt-green)' : 'var(--bt-danger)', letterSpacing: '0.05em' }}>
+                {isCorrect ? '✓ 정답이에요!' : '✗ 정답을 확인해요'}
               </div>
               <div style={{ fontSize: 12.5, marginTop: 6, lineHeight: 1.6, color: 'var(--bt-body)' }}>{q.explain}</div>
             </div>
@@ -217,9 +267,9 @@ function QuizScreen({ viewMode, scores = {}, onFinish }) {
             {!answered ? (
               <button
                 className="btn-primary"
-                style={{ width: '100%', opacity: selected === null ? 0.4 : 1 }}
+                style={{ width: '100%', opacity: canSubmit ? 1 : 0.4 }}
                 onClick={submit}
-                disabled={selected === null}
+                disabled={!canSubmit}
               >정답 확인</button>
             ) : (
               <button className="btn-primary" style={{ width: '100%' }} onClick={nextStep}>

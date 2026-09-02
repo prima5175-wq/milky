@@ -1102,3 +1102,44 @@ ul, ol { list-style: none; }
 }
 .menu-row-sub { font-size: 11.5px; color: var(--bt-muted); margin-top: 3px; line-height: 1.45; }
 .menu-row-chev { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.45; }
+
+/* ============ 주관식 문항 ============ */
+.quiz-short-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--bt-muted);
+  margin-bottom: 8px;
+}
+.quiz-short-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--bt-ink);
+  background: white;
+  border: 1.5px solid var(--bt-border);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.quiz-short-input::placeholder { color: var(--bt-mute-2); font-weight: 400; }
+.quiz-short-input:focus { border-color: var(--bt-green); box-shadow: 0 0 0 3px var(--bt-green-tint); }
+.quiz-short-input.correct { border-color: var(--bt-green); background: var(--bt-green-tint); }
+.quiz-short-input.wrong { border-color: var(--bt-danger); background: #FEF0EC; }
+.quiz-short-input:disabled { opacity: 1; }
+.quiz-short-hint {
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--bt-muted);
+  line-height: 1.5;
+}
+.quiz-short-answer {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--bt-body);
+}
+.quiz-short-answer b { color: var(--bt-green); font-weight: 800; }
