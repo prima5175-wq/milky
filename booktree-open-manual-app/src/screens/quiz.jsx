@@ -4,7 +4,7 @@ import { StatusBar } from './home.jsx';
 import { QUIZ_DATA } from '../data/manual.js';
 
 // 퀴즈: 매뉴얼 이해도 테스트
-function QuizScreen({ viewMode }) {
+function QuizScreen({ viewMode, scores = {}, onFinish }) {
   const [active, setActive] = React.useState(null);
   const [step, setStep] = React.useState(0);
   const [selected, setSelected] = React.useState(null);
@@ -27,6 +27,9 @@ function QuizScreen({ viewMode }) {
 
   const nextStep = () => {
     if (step + 1 >= active.questions.length) {
+      const total = active.questions.length;
+      const finalCorrect = correctCount;
+      onFinish && onFinish(active.id, Math.round((finalCorrect / total) * 100));
       setFinished(true);
     } else {
       setStep(s => s + 1);
@@ -34,6 +37,11 @@ function QuizScreen({ viewMode }) {
       setAnswered(false);
     }
   };
+
+  // 실제로 푼 기록에서 계산해요 (아직 안 풀었으면 '-')
+  const takenIds = QUIZ_DATA.filter(q => scores[q.id] !== undefined);
+  const takenCount = takenIds.length;
+  const bestScore = takenCount > 0 ? Math.max(...takenIds.map(q => scores[q.id])) : 0;
 
   // 퀴즈 리스트
   if (!active) {
@@ -64,12 +72,14 @@ function QuizScreen({ viewMode }) {
           }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 10, opacity: 0.7, letterSpacing: '0.08em', fontWeight: 800 }}>MY BEST SCORE</div>
-              <div style={{ fontSize: 28, fontWeight: 900, marginTop: 4, letterSpacing: '-0.02em', color: 'var(--bt-yellow)' }}>92<span style={{ fontSize: 12, opacity: 0.7 }}>/100</span></div>
+              <div style={{ fontSize: 28, fontWeight: 900, marginTop: 4, letterSpacing: '-0.02em', color: 'var(--bt-yellow)' }}>
+                {takenCount > 0 ? bestScore : '-'}<span style={{ fontSize: 12, opacity: 0.7 }}>/100</span>
+              </div>
             </div>
             <div style={{ width: 1, height: 40, background: 'rgba(255,255,255,0.2)' }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 10, opacity: 0.7, letterSpacing: '0.08em', fontWeight: 800 }}>COMPLETED</div>
-              <div style={{ fontSize: 28, fontWeight: 900, marginTop: 4, letterSpacing: '-0.02em', color: 'var(--bt-yellow)' }}>1<span style={{ fontSize: 12, opacity: 0.7 }}>/{QUIZ_DATA.length}</span></div>
+              <div style={{ fontSize: 28, fontWeight: 900, marginTop: 4, letterSpacing: '-0.02em', color: 'var(--bt-yellow)' }}>{takenCount}<span style={{ fontSize: 12, opacity: 0.7 }}>/{QUIZ_DATA.length}</span></div>
             </div>
           </div>
 
@@ -90,6 +100,9 @@ function QuizScreen({ viewMode }) {
                     <span>{q.questions.length}문항</span>
                     <span>·</span>
                     <span>약 {q.estimatedMin}분</span>
+                    {scores[q.id] !== undefined && (
+                      <span style={{ marginLeft: 'auto', color: 'var(--bt-green)', fontWeight: 700 }}>{scores[q.id]}점</span>
+                    )}
                   </div>
                 </div>
                 <Icon.Chevron style={{ color: 'var(--bt-mute-2)', flexShrink: 0, marginTop: 8 }} />

@@ -4,11 +4,16 @@ import { Icon, BooktreeLogo } from './icons.jsx';
 // 하단 탭바 (모바일) & 사이드바 (데스크톱)
 
 // 모바일 탭 (5개는 좁으니 4개로: 홈 / 오픈단계 / 마케팅 / My)
+// 모바일 하단 탭. 자주 쓰는 4개 + '전체'.
+// ⚠️ 여기 없는 화면(도서·FAQ·퀴즈·가맹개요)은 '전체' 탭에서 갑니다.
+//    탭을 늘리거나 줄일 때 menu.jsx 의 MENU_GROUPS 도 함께 확인해 주세요.
+//    모든 화면은 반드시 최소 한 경로로 닿을 수 있어야 해요.
 const TABS = [
   { id: 'home', label: '홈', icon: 'Home' },
   { id: 'steps', label: '오픈단계', icon: 'Route' },
+  { id: 'books', label: '도서', icon: 'Book' },
   { id: 'marketing', label: '마케팅', icon: 'Megaphone' },
-  { id: 'my', label: 'My', icon: 'User' },
+  { id: 'menu', label: '전체', icon: 'Menu' },
 ];
 
 // 데스크톱 사이드바 (전체 매뉴얼 접근)

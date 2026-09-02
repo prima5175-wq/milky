@@ -12,6 +12,7 @@ import { BooksScreen } from './screens/books.jsx';
 import { FaqScreen } from './screens/faq.jsx';
 import { QuizScreen } from './screens/quiz.jsx';
 import { MyScreen } from './screens/my.jsx';
+import { MenuScreen } from './screens/menu.jsx';
 import { SettingsScreen } from './screens/settings.jsx';
 
 const STORAGE_KEY = 'booktree-manual-v5';
@@ -33,6 +34,7 @@ function loadState() {
         tab: parsed.tab || 'home',
         viewMode: parsed.viewMode || 'auto',
         checked: parsed.checked || {},
+        quizScores: parsed.quizScores || {},
         openStep: null,
         config: { ...DEFAULT_CONFIG, ...(parsed.config || {}) },
         showSettings: false,
@@ -40,13 +42,14 @@ function loadState() {
     }
   } catch (e) {}
   // 첫 실행이에요. 진행률은 0에서 시작하고, 지점 정보부터 입력받아요.
-  return { tab: 'home', viewMode: 'auto', checked: {}, openStep: null, config: DEFAULT_CONFIG, showSettings: true };
+  return { tab: 'home', viewMode: 'auto', checked: {}, quizScores: {}, openStep: null, config: DEFAULT_CONFIG, showSettings: true };
 }
 
 function saveState(state) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      tab: state.tab, viewMode: state.viewMode, checked: state.checked, config: state.config,
+      tab: state.tab, viewMode: state.viewMode, checked: state.checked,
+      quizScores: state.quizScores, config: state.config,
     }));
   } catch (e) {}
 }
@@ -89,6 +92,12 @@ export default function App() {
     return { ...s, checked: next };
   });
   const setViewMode = (mode) => setState(s => ({ ...s, viewMode: mode }));
+  // 퀴즈는 최고 점수만 남겨요 (다시 풀어서 점수가 낮아져도 기록은 유지)
+  const recordQuizScore = (quizId, pct) => setState(s => {
+    const prev = s.quizScores?.[quizId] ?? -1;
+    if (pct <= prev) return s;
+    return { ...s, quizScores: { ...s.quizScores, [quizId]: pct } };
+  });
   const openSettings = () => setState(s => ({ ...s, showSettings: true, openStep: null }));
   const saveConfig = (config) => setState(s => ({ ...s, config: { ...s.config, ...config }, showSettings: false }));
 
@@ -126,7 +135,8 @@ export default function App() {
       case 'contract': return <ContractScreen viewMode={viewMode} />;
       case 'books': return <BooksScreen viewMode={viewMode} />;
       case 'faq': return <FaqScreen viewMode={viewMode} />;
-      case 'quiz': return <QuizScreen viewMode={viewMode} />;
+      case 'quiz': return <QuizScreen viewMode={viewMode} scores={state.quizScores || {}} onFinish={recordQuizScore} />;
+      case 'menu': return <MenuScreen meta={meta} onNavigate={setTab} onOpenSettings={openSettings} viewMode={viewMode} />;
       case 'my': return <MyScreen meta={meta} steps={steps} checked={state.checked} onOpenSettings={openSettings} viewMode={viewMode} />;
       default: return <HomeScreen meta={meta} steps={steps} checked={state.checked} onNavigate={setTab} onOpenStep={openStep} onOpenSettings={openSettings} viewMode={viewMode} />;
     }
@@ -136,7 +146,7 @@ export default function App() {
     const titleMap = {
       home: '대시보드', steps: 'Ⅲ 신규지점 오픈 진행 20단계', marketing: 'Ⅳ 오픈 마케팅 플랜',
       contract: 'Ⅰ·Ⅱ·Ⅴ 프랜차이즈·가맹', books: 'Ⅵ·Ⅶ 도서·필독서',
-      faq: 'Ⅹ 실전 노하우 & FAQ', quiz: '매뉴얼 이해도 테스트', my: '내 기록 & 뱃지',
+      faq: 'Ⅹ 실전 노하우 & FAQ', quiz: '매뉴얼 이해도 테스트', my: '내 기록 & 뱃지', menu: '전체 메뉴',
     };
     const title = state.showSettings ? '지점 설정'
       : activeStep ? `STEP ${activeStep.n} · ${activeStep.title}`

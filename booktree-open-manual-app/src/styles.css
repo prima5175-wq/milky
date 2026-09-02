@@ -1061,3 +1061,41 @@ ul, ol { list-style: none; }
   line-height: 1.5;
   color: var(--bt-muted);
 }
+
+/* ============ 전체 메뉴 (menu.jsx) ============ */
+.menu-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bt-card);
+  border: 1px solid var(--bt-border-soft);
+  border-radius: 14px;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.menu-row:hover { border-color: var(--bt-green); box-shadow: var(--shadow-sm); }
+.menu-row:active { transform: scale(0.99); }
+.menu-row-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: var(--bt-green-tint);
+  color: var(--bt-green);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.menu-row-icon svg { width: 19px; height: 19px; }
+.menu-row-body { flex: 1; min-width: 0; }
+.menu-row-title {
+  font-size: 14px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.35;
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+}
+.menu-row-roman {
+  font-family: var(--font-serif);
+  font-size: 11px; font-weight: 900;
+  color: var(--bt-green); opacity: 0.75;
+  flex-shrink: 0;
+}
+.menu-row-sub { font-size: 11.5px; color: var(--bt-muted); margin-top: 3px; line-height: 1.45; }
+.menu-row-chev { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.45; }

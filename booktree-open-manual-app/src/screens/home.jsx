@@ -139,6 +139,8 @@ function HomeScreen({ meta, steps, checked, onNavigate, onOpenStep, onOpenSettin
           <QuickTile icon="Megaphone" label="마케팅 플랜" sub="시장조사 · 캘린더" onClick={() => onNavigate('marketing')} accent />
           <QuickTile icon="Book" label="도서 · 필독서" sub="구성 · 필독 LIST" onClick={() => onNavigate('books')} />
           <QuickTile icon="Alert" label="FAQ · 노하우" sub="자주 묻는 질문" onClick={() => onNavigate('faq')} />
+          <QuickTile icon="Quiz" label="이해도 테스트" sub="스스로 점검하기" onClick={() => onNavigate('quiz')} />
+          <QuickTile icon="Menu" label="전체 메뉴" sub="모든 항목 보기" onClick={() => onNavigate('menu')} />
         </div>
       </div>
 
