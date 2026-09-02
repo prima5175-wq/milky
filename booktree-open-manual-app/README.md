@@ -183,9 +183,26 @@ npm run preview    # 배포 버전 그대로 로컬에서 확인
 
 `dist/` 폴더를 정적 호스팅에 올리면 끝이에요. 서버나 DB가 필요 없어요.
 
+### Vercel 에 올리기 (권장)
+
+`vercel.json` 이 이미 들어 있어서 빌드 설정을 따로 입력할 필요가 없어요.
+**Root Directory 만 지정**하면 됩니다.
+
+1. https://vercel.com 접속 → **Continue with GitHub** 으로 로그인
+2. **Add New… → Project** → 이 저장소(`milky`) 옆 **Import**
+3. **Root Directory** 항목에서 **Edit** 을 누르고 `booktree-open-manual-app` 선택
+   - ⚠️ 이 앱은 저장소 루트가 아니라 하위 폴더에 있어서, 이걸 안 하면 빌드가 실패해요
+4. Framework 는 자동으로 **Vite** 로 잡힙니다. 나머지는 그대로 두세요
+5. **Deploy** 클릭 → 1~2분 뒤 `https://…vercel.app` 주소가 나옵니다
+
+이후로는 이 브랜치에 푸시할 때마다 자동으로 다시 배포돼요.
+Settings → Domains 에서 원하는 주소로 바꿀 수 있습니다.
+
+### 그 밖의 방법
+
 | 방법 | 준비 |
 | --- | --- |
-| **Vercel · Netlify · Cloudflare Pages** | GitHub 레포 연결 → 빌드 명령 `npm run build`, 출력 폴더 `dist` |
+| **Netlify · Cloudflare Pages** | Base directory `booktree-open-manual-app`, 빌드 `npm run build`, 출력 `dist` |
 | **GitHub Pages** | `vite.config.js` 에 `base: '/레포이름/'` 추가 후 `dist/` 배포 |
 | 자체 서버 | `dist/` 를 아무 웹서버에나 정적 서빙 |
 
