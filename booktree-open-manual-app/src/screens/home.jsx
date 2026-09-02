@@ -166,7 +166,7 @@ function HomeScreen({ meta, steps, checked, onNavigate, onOpenStep, onOpenSettin
       {/* 오늘의 지침 (핵심 지사 지침 3개) */}
       <div style={{ padding: '20px 20px 32px' }}>
         <div className="section-heading">
-          <span style={{ color: '#7C4E00' }}>★ 강남서초·광진성동지사 핵심 지침</span>
+          <span style={{ color: '#7C4E00' }}>★ 강남서초·광진성동·중랑·동대문지사 핵심 지침</span>
         </div>
 
         <div className="branch-directive" style={{ margin: '0 0 8px' }}>

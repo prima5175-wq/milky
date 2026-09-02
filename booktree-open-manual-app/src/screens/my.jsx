@@ -200,6 +200,28 @@ function MyScreen({ meta, steps, checked, onOpenSettings, viewMode }) {
             <div style={{ fontSize: 10, opacity: 0.7, letterSpacing: '0.08em', fontWeight: 700 }}>지사 문의</div>
             <div style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>{meta.supervisor}</div>
             <div style={{ fontSize: 11.5, opacity: 0.85, marginTop: 2 }}>{meta.branch}</div>
+
+            {/* 눌러서 바로 전화·메일 */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+              {meta.supervisorPhone && (
+                <a className="contact-btn" href={`tel:${meta.supervisorPhone.replace(/-/g, '')}`}>
+                  <Icon.Phone style={{ width: 14, height: 14 }} />
+                  {meta.supervisorPhone}
+                </a>
+              )}
+              {meta.supervisorEmail && (
+                <a className="contact-btn" href={`mailto:${meta.supervisorEmail}`}>
+                  <Icon.Mail style={{ width: 14, height: 14 }} />
+                  메일 보내기
+                </a>
+              )}
+            </div>
+            {meta.supervisorEmail && (
+              <div style={{ fontSize: 11, opacity: 0.75, marginTop: 8, wordBreak: 'break-all' }}>
+                {meta.supervisorEmail}
+              </div>
+            )}
+
             <BranchLinks />
           </div>
 
