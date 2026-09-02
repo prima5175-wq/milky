@@ -45,14 +45,14 @@ function HomeScreen({ meta, steps, checked, onNavigate, onOpenStep, onOpenSettin
       <div className="hero-title">오픈 준비, 오늘도<br/>화이팅이에요 🌱</div>
       <div className="hero-branch">
         <Icon.MapPin style={{ width: 12, height: 12 }} />
-        {meta.district} · {meta.branch}
+        {meta.district ? `${meta.district} · ${meta.branch}` : meta.branch}
       </div>
 
-      <div className="dday-card">
-        <div className="dday-num">D{meta.daysToOpen >= 0 ? '-' : '+'}{Math.abs(meta.daysToOpen)}</div>
+      <div className="dday-card" onClick={!meta.openDate ? onOpenSettings : undefined} style={!meta.openDate ? { cursor: 'pointer' } : undefined}>
+        <div className="dday-num">{meta.openDate ? `D${meta.daysToOpen >= 0 ? '-' : '+'}${Math.abs(meta.daysToOpen)}` : 'D-?'}</div>
         <div className="dday-info">
           <div className="dday-label">GRAND OPEN</div>
-          <div className="dday-date">{formatKoDate(meta.openDate)}</div>
+          <div className="dday-date">{meta.openDate ? formatKoDate(meta.openDate) : '오픈일을 설정해 주세요'}</div>
           <div className="dday-sub">
             {meta.contractDate && `계약 ${formatKoDate(meta.contractDate).replace(/\s?\(.*\)/, '')} · `}
             {meta.interiorDoneDate && `완공 ${formatKoDate(meta.interiorDoneDate).replace(/\s?\(.*\)/, '')}`}

@@ -199,13 +199,6 @@ function MyScreen({ meta, steps, checked, onOpenSettings, viewMode }) {
             <div style={{ fontSize: 10, opacity: 0.7, letterSpacing: '0.08em', fontWeight: 700 }}>지사 문의</div>
             <div style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>{meta.supervisor}</div>
             <div style={{ fontSize: 11.5, opacity: 0.85, marginTop: 2 }}>{meta.branch}</div>
-            <button style={{
-              marginTop: 12, background: 'rgba(255,255,255,0.15)',
-              color: 'white', padding: '8px 14px', borderRadius: 8,
-              fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <Icon.Bell style={{ width: 12, height: 12 }} /> 1:1 문의하기
-            </button>
           </div>
 
           <div style={{ textAlign: 'center', color: 'var(--bt-mute-2)', fontSize: 10.5, lineHeight: 1.7 }}>

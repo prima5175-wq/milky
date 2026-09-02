@@ -1,7 +1,12 @@
 import React from 'react';
 
 // 앱 전역 아이콘 (Lucide-style SVG 인라인)
-const Icon = {
+//
+// ⚠️ 아래 정의에는 width/height 가 없어요. 그래서 크기를 지정하지 않고 쓰면
+//    SVG가 남는 공간을 전부 차지해 옆 요소를 0px 로 찌그러뜨립니다.
+//    그런 사고를 막으려고 파일 하단에서 기본 크기(18px)를 주입해 export 해요.
+//    우선순위: 인라인 style > CSS 규칙 > 여기서 넣는 기본 속성
+const RAW_ICONS = {
   Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
   Book: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>,
   Quiz: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
@@ -45,6 +50,19 @@ const BooktreeLogo = ({ size = 24, color = 'currentColor' }) => (
       <rect x="24" y="50" width="16" height="4" rx="1.5"/>
     </g>
   </svg>
+);
+
+// 모든 아이콘에 기본 크기를 입혀요. 호출부에서 style·className·width 로 언제든 덮어쓸 수 있어요.
+const DEFAULT_ICON_SIZE = 18;
+
+const Icon = Object.fromEntries(
+  Object.entries(RAW_ICONS).map(([name, Svg]) => {
+    const Wrapped = (props) => (
+      <Svg width={DEFAULT_ICON_SIZE} height={DEFAULT_ICON_SIZE} {...props} />
+    );
+    Wrapped.displayName = `Icon.${name}`;
+    return [name, Wrapped];
+  })
 );
 
 export { Icon, BooktreeLogo };

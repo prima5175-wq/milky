@@ -39,6 +39,7 @@ App.jsx (useState)
   ├─ state.tab           # 활성 탭 ('home' | 'steps' | 'marketing' | ...)
   ├─ state.viewMode      # 'auto'(기본) | 'mobile' | 'desktop'
   │                      #  'auto' 면 matchMedia(min-width:1024px)로 자동 판정
+  │                      #  배포 빌드에서는 이 값을 무시하고 항상 'auto'
   ├─ state.checked       # { 'step:1': true, 'step:2': true, ... }
   ├─ state.openStep      # 상세 페이지 활성 단계 번호 (null이면 리스트)
   ├─ state.showSettings  # 지점 설정 화면 표시 여부
@@ -47,7 +48,7 @@ App.jsx (useState)
                             └─→ 모든 화면에 meta prop 전달
 ```
 
-localStorage 키: `booktree-manual-v4` (스키마 변경 시 v5, v6로 올릴 것)
+localStorage 키: `booktree-manual-v5` (스키마 변경 시 v6, v7로 올릴 것)
 
 ## 브랜드 시스템 (반드시 지킬 것)
 
@@ -86,7 +87,15 @@ localStorage 키: `booktree-manual-v4` (스키마 변경 시 v5, v6로 올릴 �
   760px 이하 실기기에서는 토글 자체가 숨겨집니다.
 - **미디어**: `src/data/manual.js` 의 `media` 배열 → `src/components/media.jsx` 가 렌더링.
   파일은 `public/media/` 에 두고 `/media/파일명` 으로 참조해요. 유튜브·비메오 링크는
-  자동으로 embed 로 바뀌고, `src` 가 없으면 "준비 중" 슬롯이 나옵니다.
+  자동으로 embed 로 바뀝니다. **`src` 가 없는 항목은 아무것도 그리지 않고 건너뜁니다** —
+  원장님이 보는 화면에 "준비 중" 같은 빈 자리를 노출하지 않기 위해서예요.
+- **아이콘 기본 크기**: `icons.jsx` 의 SVG 정의에는 width/height 가 없어요. 크기를 안 주고
+  쓰면 SVG가 남는 폭을 다 먹어서 형제 요소가 0px 로 찌그러집니다. 그래서 export 직전에
+  기본 18px 을 주입해요. 새 아이콘을 `RAW_ICONS` 에 추가하면 자동으로 적용됩니다.
+- **개발 전용 UI**: 목업 미리보기 토글(📱/🖥️)과 '9:41' 가짜 상태바는 개발 중에만 보여요.
+  배포 빌드에서는 토글이 렌더링되지 않고, viewMode 는 저장값과 무관하게 항상 'auto' 예요.
+- **첫 실행**: 저장된 상태가 없으면 지점 설정 화면부터 열려요. 기본 지점명·원장명은
+  비어 있고 완료된 단계도 없습니다 (데모 데이터를 넣지 말 것).
 - **`--bt-*` CSS 변수는 26개 이상 있음**. 새 컬러 추가 시 기존 팔레트와 조화 확인 필수
 
 ## 배포 옵션

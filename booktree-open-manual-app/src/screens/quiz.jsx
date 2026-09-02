@@ -90,7 +90,6 @@ function QuizScreen({ viewMode }) {
                     <span>{q.questions.length}문항</span>
                     <span>·</span>
                     <span>약 {q.estimatedMin}분</span>
-                    {i === 0 && <span style={{ marginLeft: 'auto', color: 'var(--bt-green)', fontWeight: 700 }}>92점</span>}
                   </div>
                 </div>
                 <Icon.Chevron style={{ color: 'var(--bt-mute-2)', flexShrink: 0, marginTop: 8 }} />

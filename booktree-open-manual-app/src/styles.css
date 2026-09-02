@@ -185,6 +185,10 @@ ul, ol { list-style: none; }
   color: var(--bt-ink);
   pointer-events: none;
 }
+/* '9:41' 가짜 상태바는 아이폰 목업 미리보기 전용이에요.
+   실제 화면(bleed)·데스크톱에서는 절대 노출되지 않아야 해요. */
+.status-bar { display: none; }
+.stage-mobile:not(.bleed) .phone-screen .status-bar { display: flex; }
 .status-bar .sb-icons { display: flex; gap: 5px; align-items: center; }
 .status-bar.on-dark { color: white; }
 
@@ -526,7 +530,7 @@ ul, ol { list-style: none; }
 .step-body { flex: 1; min-width: 0; }
 /* 카드 우측 chevron 등 아이콘. 크기를 안 주면 SVG가 남는 폭을 전부 먹어서
    .step-body 가 0px 으로 찌그러져요 (제목이 한 글자씩 세로로 쌓임). */
-.step-card > svg { width: 18px; height: 18px; flex-shrink: 0; }
+.step-card > svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.45; }
 .step-title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.35; }
 .step-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 11px; color: var(--bt-muted); flex-wrap: wrap; }
 .step-badge-star {
@@ -755,32 +759,6 @@ ul, ol { list-style: none; }
 .cal-item.milestone { background: var(--bt-yellow-soft); border-color: var(--bt-yellow); }
 .cal-item.milestone .cal-task { font-weight: 800; color: #5D3A00; }
 
-/* ============ 미디어 placeholder ============ */
-.media-slot {
-  background:
-    repeating-linear-gradient(
-      45deg,
-      #F4F1E6,
-      #F4F1E6 8px,
-      #EAE6D6 8px,
-      #EAE6D6 16px
-    );
-  border: 1px dashed var(--bt-border);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--bt-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 24px;
-  text-align: center;
-  gap: 8px;
-  flex-direction: column;
-}
-.media-slot svg { width: 28px; height: 28px; opacity: 0.5; }
-.media-slot.video { aspect-ratio: 16/9; }
-
 /* ============ 검색 ============ */
 .search-input {
   width: 100%;
@@ -986,9 +964,10 @@ ul, ol { list-style: none; }
 .stage-mobile.bleed .phone-frame::before { display: none; }  /* 노치 숨김 */
 .stage-mobile.bleed .phone-screen { border-radius: 0; }
 
-/* 노치가 없으니 상단 여백을 실제 safe-area로 대체해요 */
-.stage-mobile.bleed .status-bar { display: none; }
-.stage-mobile.bleed .phone-content { padding-top: env(safe-area-inset-top, 0px); }
+/* 가짜 상태바(47px) 자리 대신 실기기의 safe-area 만큼만 비워요.
+   이게 없으면 실제 앱 상단에 47px 흰 여백이 남아요. */
+.stage-mobile.bleed .mobile .app-screen,
+.stage-mobile.bleed .app-screen { padding-top: env(safe-area-inset-top, 0px); }
 .stage-mobile.bleed .tabbar { padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
 
 /* ---- 데스크톱 bleed: 브라우저 목업(타이틀바) 제거 ---- */
@@ -1082,5 +1061,3 @@ ul, ol { list-style: none; }
   line-height: 1.5;
   color: var(--bt-muted);
 }
-.media-slot .media-slot-label { font-family: var(--font-sans); font-weight: 700; font-size: 12px; color: var(--bt-body); }
-.media-slot.image { aspect-ratio: 4/3; }

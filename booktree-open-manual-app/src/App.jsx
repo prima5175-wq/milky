@@ -14,14 +14,14 @@ import { QuizScreen } from './screens/quiz.jsx';
 import { MyScreen } from './screens/my.jsx';
 import { SettingsScreen } from './screens/settings.jsx';
 
-const STORAGE_KEY = 'booktree-manual-v4';
+const STORAGE_KEY = 'booktree-manual-v5';
 
 const DEFAULT_CONFIG = {
-  branchName: '평촌캠퍼스',
-  managerName: '김수현 원장',
+  branchName: '',
+  managerName: '',
   contractDate: '',
   interiorDoneDate: '',
-  openDate: '2026-10-15',
+  openDate: '',
 };
 
 function loadState() {
@@ -39,9 +39,8 @@ function loadState() {
       };
     }
   } catch (e) {}
-  const initChecked = {};
-  [1, 2, 3, 4].forEach(n => { initChecked[`step:${n}`] = true; });
-  return { tab: 'home', viewMode: 'auto', checked: initChecked, openStep: null, config: DEFAULT_CONFIG, showSettings: false };
+  // 첫 실행이에요. 진행률은 0에서 시작하고, 지점 정보부터 입력받아요.
+  return { tab: 'home', viewMode: 'auto', checked: {}, openStep: null, config: DEFAULT_CONFIG, showSettings: true };
 }
 
 function saveState(state) {
@@ -75,8 +74,10 @@ export default function App() {
 
   // 'auto'(기본값)면 화면 폭에 따라 자동으로, 토글로 고정하면 그 값을 그대로 써요.
   const isWide = useIsWideViewport();
-  const isAuto = state.viewMode === 'auto';
-  const viewMode = isAuto ? (isWide ? 'desktop' : 'mobile') : state.viewMode;
+  // 배포 빌드에서는 목업 미리보기 토글이 없으니, 저장된 값과 무관하게 항상 자동이에요.
+  const storedMode = import.meta.env.DEV ? state.viewMode : 'auto';
+  const isAuto = storedMode === 'auto';
+  const viewMode = isAuto ? (isWide ? 'desktop' : 'mobile') : storedMode;
 
   const setTab = (tab) => setState(s => ({ ...s, tab, openStep: null, showSettings: false }));
   const openStep = (n) => setState(s => ({ ...s, openStep: n, showSettings: false }));
@@ -95,8 +96,8 @@ export default function App() {
     const daysToOpen = calcDaysToOpen(state.config.openDate) ?? 0;
     return {
       branch: '강남서초 · 광진성동지사',
-      district: state.config.branchName,
-      managerName: state.config.managerName,
+      district: state.config.branchName || '',
+      managerName: state.config.managerName || '원장',
       managerType: '신규 원장님',
       openDate: state.config.openDate,
       contractDate: state.config.contractDate,
@@ -206,7 +207,11 @@ export default function App() {
   );
 }
 
+// 목업 미리보기 토글은 개발용이에요. 배포 빌드(npm run build)에서는 나오지 않아요.
+const SHOW_PREVIEW_TOGGLE = import.meta.env.DEV;
+
 function ViewModeToggle({ mode, effective, onChange }) {
+  if (!SHOW_PREVIEW_TOGGLE) return null;
   return (
     <div className="viewmode-toggle">
       <button

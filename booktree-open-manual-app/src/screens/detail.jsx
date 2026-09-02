@@ -45,10 +45,6 @@ function DetailScreen({ step, meta, checked, onToggle, onBack, viewMode }) {
               <Icon.Back />
             </button>
             <div style={{ fontSize: 11, opacity: 0.8, letterSpacing: '0.1em', fontWeight: 700 }}>STEP {String(step.n).padStart(2, '0')} · {step.phase}</div>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-              <button style={{ color: 'white', padding: 6, opacity: 0.9 }}><Icon.Bookmark /></button>
-              <button style={{ color: 'white', padding: 6, opacity: 0.9 }}><Icon.Download /></button>
-            </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
