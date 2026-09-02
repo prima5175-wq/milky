@@ -1,31 +1,33 @@
-# GitHub Pages 배포.
+# 오픈 매뉴얼 앱을 빌드해서 docs/manual/ 에 커밋합니다.
 #
-# ⚠️ 이 저장소의 Pages 는 원래 docs/ 폴더를 서비스하고 있었습니다.
-#    지점 태블릿이 아래 두 주소를 실제로 쓰고 있으므로 절대 없어지면 안 됩니다.
-#      https://prima5175-wq.github.io/milky/              → 하원 현황 (docs/index.html)
-#      https://prima5175-wq.github.io/milky/checkin.html  → 출석 체크인 (docs/checkin.html)
-#    그래서 이 워크플로는 docs/ 를 루트에 그대로 올리고,
-#    오픈 매뉴얼 앱은 /manual/ 하위에 따로 올립니다.
+# ⚠️ 이 저장소의 GitHub Pages 는 "Deploy from a branch" (main / docs 폴더) 로
+#    설정되어 있습니다. 그래서 docs/ 안에 있는 파일이 그대로 서비스됩니다.
+#      https://prima5175-wq.github.io/milky/              → docs/index.html      (하원 현황)
+#      https://prima5175-wq.github.io/milky/checkin.html  → docs/checkin.html    (출석 체크인)
+#      https://prima5175-wq.github.io/milky/manual/       → docs/manual/         (오픈 매뉴얼 앱)
 #
-#    새 파일을 추가할 때 docs/ 를 덮어쓰지 않도록 주의하세요.
-name: Deploy Pages (하원현황 · 체크인 · 오픈매뉴얼)
+#    지점 태블릿이 앞의 두 주소를 실제로 쓰고 있으므로 docs/index.html 과
+#    docs/checkin.html 은 절대 건드리지 않습니다. 이 워크플로는 docs/manual/
+#    안에만 씁니다.
+#
+#    Pages 설정을 바꿀 필요가 없도록 일부러 이 방식을 씁니다.
+name: Build manual app into docs/
 
 on:
   push:
     branches: [main]
     paths:
-      - 'docs/**'
+      # docs/ 는 트리거에서 제외합니다. 이 워크플로가 docs/ 에 커밋하므로
+      # 포함하면 자기 자신을 무한히 다시 실행시킵니다.
       - 'booktree-open-manual-app/**'
       - '.github/workflows/deploy-manual-app.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: build-manual
   cancel-in-progress: false
 
 jobs:
@@ -40,40 +42,38 @@ jobs:
           cache: npm
           cache-dependency-path: booktree-open-manual-app/package-lock.json
 
-      - name: 오픈 매뉴얼 앱 빌드
+      - name: 앱 빌드
         working-directory: booktree-open-manual-app
         env:
+          # Pages 가 /레포이름/manual/ 하위에서 서비스하므로 base 를 맞춰줍니다.
           VITE_BASE: /${{ github.event.repository.name }}/manual/
         run: |
           npm ci
           npm run build
 
-      - name: 사이트 조립 (docs = 루트, 매뉴얼 앱 = /manual/)
+      - name: docs/manual/ 갱신
         run: |
-          mkdir -p site
-          cp -r docs/. site/                      # 하원 현황 · 체크인 (기존 주소 유지)
-          mkdir -p site/manual
-          cp -r booktree-open-manual-app/dist/. site/manual/
-          echo "--- 배포될 파일 ---"
-          find site -type f | sort
+          rm -rf docs/manual
+          mkdir -p docs/manual
+          cp -r booktree-open-manual-app/dist/. docs/manual/
 
-      - name: 기존 주소가 살아있는지 확인
+      - name: 지점 운영 화면이 그대로인지 확인
         run: |
-          test -f site/index.html   || { echo "❌ 하원 현황(index.html) 누락"; exit 1; }
-          test -f site/checkin.html || { echo "❌ 체크인(checkin.html) 누락"; exit 1; }
-          test -f site/manual/index.html || { echo "❌ 매뉴얼 앱 누락"; exit 1; }
+          test -f docs/index.html        || { echo "❌ 하원 현황(docs/index.html) 누락"; exit 1; }
+          test -f docs/checkin.html      || { echo "❌ 체크인(docs/checkin.html) 누락"; exit 1; }
+          test -f docs/manual/index.html || { echo "❌ 매뉴얼 앱 누락"; exit 1; }
+          git diff --quiet -- docs/index.html docs/checkin.html \
+            || { echo "❌ 지점 운영 화면이 변경되었습니다. 중단합니다."; exit 1; }
           echo "✅ 세 주소 모두 정상"
 
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: 커밋 & 푸시
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/manual
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋하지 않습니다."
+            exit 0
+          fi
+          git commit -m "빌드: 오픈 매뉴얼 앱 docs/manual/ 갱신 [skip ci]"
+          git push
