@@ -1,0 +1,68 @@
+# 책나무 오픈 매뉴얼 앱을 GitHub Pages 로 배포합니다.
+# main 브랜치의 booktree-open-manual-app/ 이 바뀔 때마다 자동으로 다시 배포돼요.
+#
+# 최초 1회만 설정이 필요합니다:
+#   저장소 Settings → Pages → Build and deployment → Source 를 "GitHub Actions" 로 변경
+#
+# 배포 주소: https://prima5175-wq.github.io/milky/
+name: Deploy manual app to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'booktree-open-manual-app/**'
+      - '.github/workflows/deploy-manual-app.yml'
+  workflow_dispatch:   # Actions 탭에서 수동 실행도 가능
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 한 번에 하나만. 진행 중인 것은 취소하지 않고 기다립니다.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: booktree-open-manual-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: booktree-open-manual-app/.nvmrc
+          cache: npm
+          cache-dependency-path: booktree-open-manual-app/package-lock.json
+
+      - run: npm ci
+
+      - name: Build
+        env:
+          # 레포 이름 하위 경로로 서비스되므로 base 를 넘겨줍니다.
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: npm run build
+
+      - name: SPA 404 fallback
+        # Pages 는 새로고침 시 실제 파일을 찾으므로, 없는 경로도 앱으로 가도록
+        # index.html 을 404.html 로 복사해 둡니다.
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: booktree-open-manual-app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
