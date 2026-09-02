@@ -166,7 +166,7 @@ function HomeScreen({ meta, steps, checked, onNavigate, onOpenStep, onOpenSettin
       {/* 오늘의 지침 (핵심 지사 지침 3개) */}
       <div style={{ padding: '20px 20px 32px' }}>
         <div className="section-heading">
-          <span style={{ color: '#7C4E00' }}>★ 강남서초·광진성동·중랑·동대문지사 핵심 지침</span>
+          <span style={{ color: '#7C4E00' }}>★ 우리 지사 핵심 지침</span>
         </div>
 
         <div className="branch-directive" style={{ margin: '0 0 8px' }}>
@@ -187,6 +187,32 @@ function HomeScreen({ meta, steps, checked, onNavigate, onOpenStep, onOpenSettin
           <div className="branch-directive-label">🎤 학부모 설명회 = 지사장 일정 우선</div>
           <div className="branch-directive-content">
             일정은 지사장님과 먼저 조율해 확정하고, 홍보는 반드시 예정일 1개월 전부터 시작해요.
+          </div>
+        </div>
+      </div>
+
+      {/* 지사 연락처 — 궁금한 게 생기면 바로 연락할 수 있게 홈에도 둡니다 */}
+      <div style={{ padding: '0 20px 32px' }}>
+        <div className="home-contact">
+          <div className="home-contact-head">
+            <div>
+              <div className="home-contact-label">지사 문의</div>
+              <div className="home-contact-name">{meta.supervisor}</div>
+            </div>
+          </div>
+          <div className="home-contact-actions">
+            {meta.supervisorPhone && (
+              <a className="contact-btn" href={`tel:${meta.supervisorPhone.replace(/-/g, '')}`}>
+                <Icon.Phone style={{ width: 14, height: 14 }} />
+                {meta.supervisorPhone}
+              </a>
+            )}
+            {meta.supervisorEmail && (
+              <a className="contact-btn" href={`mailto:${meta.supervisorEmail}`}>
+                <Icon.Mail style={{ width: 14, height: 14 }} />
+                메일 보내기
+              </a>
+            )}
           </div>
         </div>
       </div>

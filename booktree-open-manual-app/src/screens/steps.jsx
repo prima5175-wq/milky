@@ -43,7 +43,7 @@ function StepsScreen({ steps, meta, checked, onOpenStep, viewMode }) {
             <div style={{ fontSize: 11, color: 'var(--bt-green)', fontWeight: 800, letterSpacing: '0.1em' }}>Ⅲ · CORE</div>
             <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', marginTop: 4 }}>신규지점 오픈 진행 20단계</div>
             <div style={{ color: 'var(--bt-muted)', marginTop: 6, fontSize: 13 }}>
-              본사 절차에 강남서초·광진성동·중랑·동대문지사 운영 경험을 반영한 실무 순서입니다. ★는 반드시 지켜야 하는 지사 특별지침이에요.
+              본사 절차에 강남서초지사 / 광진성동중랑동대문지사 운영 경험을 반영한 실무 순서입니다. ★는 반드시 지켜야 하는 지사 특별지침이에요.
             </div>
           </div>
         )}

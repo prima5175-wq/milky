@@ -1206,3 +1206,20 @@ ul, ol { list-style: none; }
   white-space: nowrap;
 }
 .contact-btn:hover { background: rgba(255, 255, 255, 0.24); }
+
+/* ============ 홈 하단 지사 연락처 ============ */
+.home-contact {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--bt-green);
+  color: white;
+}
+.home-contact-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.home-contact-label {
+  font-size: 10px;
+  opacity: 0.7;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.home-contact-name { font-size: 14px; font-weight: 800; margin-top: 4px; }
+.home-contact-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
