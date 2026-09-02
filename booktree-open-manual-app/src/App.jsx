@@ -14,7 +14,7 @@ import { QuizScreen } from './screens/quiz.jsx';
 import { MyScreen } from './screens/my.jsx';
 import { SettingsScreen } from './screens/settings.jsx';
 
-const STORAGE_KEY = 'booktree-manual-v3';
+const STORAGE_KEY = 'booktree-manual-v4';
 
 const DEFAULT_CONFIG = {
   branchName: '평촌캠퍼스',
@@ -31,7 +31,7 @@ function loadState() {
       const parsed = JSON.parse(raw);
       return {
         tab: parsed.tab || 'home',
-        viewMode: parsed.viewMode || 'mobile',
+        viewMode: parsed.viewMode || 'auto',
         checked: parsed.checked || {},
         openStep: null,
         config: { ...DEFAULT_CONFIG, ...(parsed.config || {}) },
@@ -41,7 +41,7 @@ function loadState() {
   } catch (e) {}
   const initChecked = {};
   [1, 2, 3, 4].forEach(n => { initChecked[`step:${n}`] = true; });
-  return { tab: 'home', viewMode: 'mobile', checked: initChecked, openStep: null, config: DEFAULT_CONFIG, showSettings: false };
+  return { tab: 'home', viewMode: 'auto', checked: initChecked, openStep: null, config: DEFAULT_CONFIG, showSettings: false };
 }
 
 function saveState(state) {
@@ -52,9 +52,31 @@ function saveState(state) {
   } catch (e) {}
 }
 
+// 뷰포트 폭으로 데스크톱 여부를 판단해요. viewMode가 'auto'일 때만 쓰입니다.
+const DESKTOP_QUERY = '(min-width: 1024px)';
+
+function useIsWideViewport() {
+  const [isWide, setIsWide] = React.useState(
+    () => typeof window !== 'undefined' && window.matchMedia(DESKTOP_QUERY).matches
+  );
+  React.useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_QUERY);
+    const onChange = (e) => setIsWide(e.matches);
+    mq.addEventListener('change', onChange);
+    setIsWide(mq.matches);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return isWide;
+}
+
 export default function App() {
   const [state, setState] = React.useState(loadState);
   React.useEffect(() => { saveState(state); }, [state]);
+
+  // 'auto'(기본값)면 화면 폭에 따라 자동으로, 토글로 고정하면 그 값을 그대로 써요.
+  const isWide = useIsWideViewport();
+  const isAuto = state.viewMode === 'auto';
+  const viewMode = isAuto ? (isWide ? 'desktop' : 'mobile') : state.viewMode;
 
   const setTab = (tab) => setState(s => ({ ...s, tab, openStep: null, showSettings: false }));
   const openStep = (n) => setState(s => ({ ...s, openStep: n, showSettings: false }));
@@ -91,25 +113,25 @@ export default function App() {
 
   const renderScreen = () => {
     if (state.showSettings) {
-      return <SettingsScreen config={state.config} onSave={saveConfig} onBack={goBack} viewMode={state.viewMode} />;
+      return <SettingsScreen config={state.config} onSave={saveConfig} onBack={goBack} viewMode={viewMode} />;
     }
     if (activeStep) {
-      return <DetailScreen step={activeStep} meta={meta} checked={state.checked} onToggle={toggleStep} onBack={goBack} viewMode={state.viewMode} />;
+      return <DetailScreen step={activeStep} meta={meta} checked={state.checked} onToggle={toggleStep} onBack={goBack} viewMode={viewMode} />;
     }
     switch (state.tab) {
-      case 'home': return <HomeScreen meta={meta} steps={steps} checked={state.checked} onNavigate={setTab} onOpenStep={openStep} onOpenSettings={openSettings} viewMode={state.viewMode} />;
-      case 'steps': return <StepsScreen steps={steps} meta={meta} checked={state.checked} onOpenStep={openStep} viewMode={state.viewMode} />;
-      case 'marketing': return <MarketingScreen viewMode={state.viewMode} />;
-      case 'contract': return <ContractScreen viewMode={state.viewMode} />;
-      case 'books': return <BooksScreen viewMode={state.viewMode} />;
-      case 'faq': return <FaqScreen viewMode={state.viewMode} />;
-      case 'quiz': return <QuizScreen viewMode={state.viewMode} />;
-      case 'my': return <MyScreen meta={meta} steps={steps} checked={state.checked} onOpenSettings={openSettings} viewMode={state.viewMode} />;
-      default: return <HomeScreen meta={meta} steps={steps} checked={state.checked} onNavigate={setTab} onOpenStep={openStep} onOpenSettings={openSettings} viewMode={state.viewMode} />;
+      case 'home': return <HomeScreen meta={meta} steps={steps} checked={state.checked} onNavigate={setTab} onOpenStep={openStep} onOpenSettings={openSettings} viewMode={viewMode} />;
+      case 'steps': return <StepsScreen steps={steps} meta={meta} checked={state.checked} onOpenStep={openStep} viewMode={viewMode} />;
+      case 'marketing': return <MarketingScreen viewMode={viewMode} />;
+      case 'contract': return <ContractScreen viewMode={viewMode} />;
+      case 'books': return <BooksScreen viewMode={viewMode} />;
+      case 'faq': return <FaqScreen viewMode={viewMode} />;
+      case 'quiz': return <QuizScreen viewMode={viewMode} />;
+      case 'my': return <MyScreen meta={meta} steps={steps} checked={state.checked} onOpenSettings={openSettings} viewMode={viewMode} />;
+      default: return <HomeScreen meta={meta} steps={steps} checked={state.checked} onNavigate={setTab} onOpenStep={openStep} onOpenSettings={openSettings} viewMode={viewMode} />;
     }
   };
 
-  if (state.viewMode === 'desktop') {
+  if (viewMode === 'desktop') {
     const titleMap = {
       home: '대시보드', steps: 'Ⅲ 신규지점 오픈 진행 20단계', marketing: 'Ⅳ 오픈 마케팅 플랜',
       contract: 'Ⅰ·Ⅱ·Ⅴ 프랜차이즈·가맹', books: 'Ⅵ·Ⅶ 도서·필독서',
@@ -121,8 +143,8 @@ export default function App() {
 
     return (
       <>
-        <ViewModeToggle mode={state.viewMode} onChange={setViewMode} />
-        <div className="stage-desktop">
+        <ViewModeToggle mode={state.viewMode} effective={viewMode} onChange={setViewMode} />
+        <div className={`stage-desktop ${isAuto ? 'bleed' : ''}`}>
           <div className="desktop-frame">
             <div className="desktop-titlebar">
               <div className="dt-dot r" /><div className="dt-dot y" /><div className="dt-dot g" />
@@ -169,8 +191,8 @@ export default function App() {
   const showTabBar = !activeStep && !state.showSettings;
   return (
     <>
-      <ViewModeToggle mode={state.viewMode} onChange={setViewMode} />
-      <div className="stage-mobile mobile">
+      <ViewModeToggle mode={state.viewMode} effective={viewMode} onChange={setViewMode} />
+      <div className={`stage-mobile mobile ${isAuto ? 'bleed' : ''}`}>
         <div className="phone-frame">
           <div className="phone-screen">
             <div className="phone-content">
@@ -184,11 +206,18 @@ export default function App() {
   );
 }
 
-function ViewModeToggle({ mode, onChange }) {
+function ViewModeToggle({ mode, effective, onChange }) {
   return (
     <div className="viewmode-toggle">
-      <button className={mode === 'mobile' ? 'active' : ''} onClick={() => onChange('mobile')}>📱 모바일</button>
-      <button className={mode === 'desktop' ? 'active' : ''} onClick={() => onChange('desktop')}>🖥️ 데스크톱</button>
+      <button
+        className={mode === 'auto' ? 'active' : ''}
+        onClick={() => onChange('auto')}
+        title="화면 폭에 맞춰 자동 전환 (실제 사용 모드)"
+      >
+        ↔️ 자동{mode === 'auto' ? <span className="vm-hint">{effective === 'desktop' ? '데스크톱' : '모바일'}</span> : null}
+      </button>
+      <button className={mode === 'mobile' ? 'active' : ''} onClick={() => onChange('mobile')} title="모바일 목업으로 미리보기">📱 모바일</button>
+      <button className={mode === 'desktop' ? 'active' : ''} onClick={() => onChange('desktop')} title="데스크톱 목업으로 미리보기">🖥️ 데스크톱</button>
     </div>
   );
 }

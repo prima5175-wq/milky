@@ -25,7 +25,7 @@ Vite + React 18 SPA. 서버 없이 정적 사이트로 배포 가능.
 src/
 ├── data/manual.js      # 모든 매뉴얼 콘텐츠 (콘텐츠 수정은 대부분 여기)
 ├── utils/dates.js      # D-Day, 단계별 예상 날짜 계산
-├── components/         # 재사용 UI (icons, nav)
+├── components/         # 재사용 UI (icons, nav, media)
 ├── screens/            # 각 화면 (home, steps, detail, ...)
 ├── App.jsx             # 라우팅 + 전역 상태
 ├── main.jsx            # React 부트스트랩
@@ -37,7 +37,8 @@ src/
 ```
 App.jsx (useState)
   ├─ state.tab           # 활성 탭 ('home' | 'steps' | 'marketing' | ...)
-  ├─ state.viewMode      # 'mobile' | 'desktop'
+  ├─ state.viewMode      # 'auto'(기본) | 'mobile' | 'desktop'
+  │                      #  'auto' 면 matchMedia(min-width:1024px)로 자동 판정
   ├─ state.checked       # { 'step:1': true, 'step:2': true, ... }
   ├─ state.openStep      # 상세 페이지 활성 단계 번호 (null이면 리스트)
   ├─ state.showSettings  # 지점 설정 화면 표시 여부
@@ -46,7 +47,7 @@ App.jsx (useState)
                             └─→ 모든 화면에 meta prop 전달
 ```
 
-localStorage 키: `booktree-manual-v3` (스키마 변경 시 v4, v5로 올릴 것)
+localStorage 키: `booktree-manual-v4` (스키마 변경 시 v5, v6로 올릴 것)
 
 ## 브랜드 시스템 (반드시 지킬 것)
 
@@ -79,7 +80,13 @@ localStorage 키: `booktree-manual-v3` (스키마 변경 시 v4, v5로 올릴 �
 
 - **날짜 필드**: HTML `<input type="date">` 사용, 값은 ISO string (`YYYY-MM-DD`)
 - **stateful 화면 이동**: React Router 미사용. `state.tab`, `state.openStep`, `state.showSettings` 조합으로 처리
-- **모바일 프레임**: 개발용 프레임(390x844 iPhone). 실제 프로덕션 배포 시 프레임 제거하고 뷰포트 전체 사용 권장
+- **반응형**: `viewMode: 'auto'` 가 기본값이고, 이때는 목업 프레임 없이 뷰포트를 그대로
+  씁니다(`.stage-*.bleed`). 1024px 이상이면 데스크톱 레이아웃, 미만이면 모바일 레이아웃으로
+  자동 전환돼요. 토글에서 📱/🖥️ 를 고르면 목업 프레임이 있는 **미리보기 모드**로 고정되고,
+  760px 이하 실기기에서는 토글 자체가 숨겨집니다.
+- **미디어**: `src/data/manual.js` 의 `media` 배열 → `src/components/media.jsx` 가 렌더링.
+  파일은 `public/media/` 에 두고 `/media/파일명` 으로 참조해요. 유튜브·비메오 링크는
+  자동으로 embed 로 바뀌고, `src` 가 없으면 "준비 중" 슬롯이 나옵니다.
 - **`--bt-*` CSS 변수는 26개 이상 있음**. 새 컬러 추가 시 기존 팔레트와 조화 확인 필수
 
 ## 배포 옵션
@@ -105,5 +112,12 @@ localStorage 키: `booktree-manual-v3` (스키마 변경 시 v4, v5로 올릴 �
   tips?: string[],        // 실전 팁
   badge?: string,         // '★ 지사 특별 지침' (있으면 노란 강조)
   badgeContent?: string,  // 지사 지침 본문
+  media?: Array<{         // 이미지·동영상 (체크리스트 아래에 표시)
+    type: 'image' | 'video',
+    src?: string,         // 없으면 '준비 중' 슬롯. '/media/파일' 또는 유튜브·비메오 URL
+    caption?: string,
+    poster?: string,      // 직접 올린 video 의 표지 이미지
+    alt?: string,
+  }>,
 }
 ```

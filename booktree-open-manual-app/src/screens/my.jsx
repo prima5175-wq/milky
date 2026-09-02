@@ -187,7 +187,7 @@ function MyScreen({ meta, steps, checked, onOpenSettings, viewMode }) {
               <div style={{ fontSize: 13.5, fontWeight: 700 }}>지점 설정</div>
               <div style={{ fontSize: 11, color: 'var(--bt-muted)', marginTop: 2 }}>지점명 · 원장님 · 주요 날짜 수정</div>
             </div>
-            <Icon.Chevron style={{ color: 'var(--bt-mute-2)' }} />
+            <Icon.Chevron style={{ width: 18, height: 18, flexShrink: 0, color: 'var(--bt-mute-2)' }} />
           </button>
 
           {/* 지사 연락처 */}

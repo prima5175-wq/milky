@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from '../components/icons.jsx';
 import { StatusBar } from './home.jsx';
 import { formatStepDate } from '../utils/dates.js';
+import { MediaBlock } from '../components/media.jsx';
 
 // 단계 상세 페이지
 function DetailScreen({ step, meta, checked, onToggle, onBack, viewMode }) {
@@ -105,6 +106,9 @@ function DetailScreen({ step, meta, checked, onToggle, onBack, viewMode }) {
               ))}
             </div>
           </div>
+
+          {/* 이미지 · 동영상 (manual.js 의 media 배열) */}
+          <MediaBlock media={step.media} />
 
           {/* 필요 서류 */}
           {step.docs && (
