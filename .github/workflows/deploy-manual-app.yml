@@ -1,26 +1,29 @@
-# 책나무 오픈 매뉴얼 앱을 GitHub Pages 로 배포합니다.
-# main 브랜치의 booktree-open-manual-app/ 이 바뀔 때마다 자동으로 다시 배포돼요.
+# GitHub Pages 배포.
 #
-# 최초 1회만 설정이 필요합니다:
-#   저장소 Settings → Pages → Build and deployment → Source 를 "GitHub Actions" 로 변경
+# ⚠️ 이 저장소의 Pages 는 원래 docs/ 폴더를 서비스하고 있었습니다.
+#    지점 태블릿이 아래 두 주소를 실제로 쓰고 있으므로 절대 없어지면 안 됩니다.
+#      https://prima5175-wq.github.io/milky/              → 하원 현황 (docs/index.html)
+#      https://prima5175-wq.github.io/milky/checkin.html  → 출석 체크인 (docs/checkin.html)
+#    그래서 이 워크플로는 docs/ 를 루트에 그대로 올리고,
+#    오픈 매뉴얼 앱은 /manual/ 하위에 따로 올립니다.
 #
-# 배포 주소: https://prima5175-wq.github.io/milky/
-name: Deploy manual app to Pages
+#    새 파일을 추가할 때 docs/ 를 덮어쓰지 않도록 주의하세요.
+name: Deploy Pages (하원현황 · 체크인 · 오픈매뉴얼)
 
 on:
   push:
     branches: [main]
     paths:
+      - 'docs/**'
       - 'booktree-open-manual-app/**'
       - '.github/workflows/deploy-manual-app.yml'
-  workflow_dispatch:   # Actions 탭에서 수동 실행도 가능
+  workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# 배포는 한 번에 하나만. 진행 중인 것은 취소하지 않고 기다립니다.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -28,9 +31,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: booktree-open-manual-app
     steps:
       - uses: actions/checkout@v4
 
@@ -40,22 +40,33 @@ jobs:
           cache: npm
           cache-dependency-path: booktree-open-manual-app/package-lock.json
 
-      - run: npm ci
-
-      - name: Build
+      - name: 오픈 매뉴얼 앱 빌드
+        working-directory: booktree-open-manual-app
         env:
-          # 레포 이름 하위 경로로 서비스되므로 base 를 넘겨줍니다.
-          VITE_BASE: /${{ github.event.repository.name }}/
-        run: npm run build
+          VITE_BASE: /${{ github.event.repository.name }}/manual/
+        run: |
+          npm ci
+          npm run build
 
-      - name: SPA 404 fallback
-        # Pages 는 새로고침 시 실제 파일을 찾으므로, 없는 경로도 앱으로 가도록
-        # index.html 을 404.html 로 복사해 둡니다.
-        run: cp dist/index.html dist/404.html
+      - name: 사이트 조립 (docs = 루트, 매뉴얼 앱 = /manual/)
+        run: |
+          mkdir -p site
+          cp -r docs/. site/                      # 하원 현황 · 체크인 (기존 주소 유지)
+          mkdir -p site/manual
+          cp -r booktree-open-manual-app/dist/. site/manual/
+          echo "--- 배포될 파일 ---"
+          find site -type f | sort
+
+      - name: 기존 주소가 살아있는지 확인
+        run: |
+          test -f site/index.html   || { echo "❌ 하원 현황(index.html) 누락"; exit 1; }
+          test -f site/checkin.html || { echo "❌ 체크인(checkin.html) 누락"; exit 1; }
+          test -f site/manual/index.html || { echo "❌ 매뉴얼 앱 누락"; exit 1; }
+          echo "✅ 세 주소 모두 정상"
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: booktree-open-manual-app/dist
+          path: site
 
   deploy:
     needs: build
