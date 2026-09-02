@@ -131,7 +131,7 @@ export default function App() {
   const meta = React.useMemo(() => {
     const daysToOpen = calcDaysToOpen(state.config.openDate) ?? 0;
     return {
-      branch: '강남서초지사 · 광진성동중랑동대문지사',
+      branch: '강남 · 서초지사 / 광진 · 성동 · 중랑 · 동대문지사',
       district: state.config.branchName || '',
       managerName: state.config.managerName || '원장',
       managerType: '신규 원장님',
@@ -142,7 +142,7 @@ export default function App() {
       version: '2026.09',
       supervisorPhone: APP_META.supervisorPhone,
       supervisorEmail: APP_META.supervisorEmail,
-      supervisor: '윤혜림 지사장 (밀키)',
+      supervisor: '윤혜림 지사장',
       totalBranches: 647,
     };
   }, [state.config]);
@@ -188,7 +188,7 @@ export default function App() {
           <div className="desktop-frame">
             <div className="desktop-titlebar">
               <div className="dt-dot r" /><div className="dt-dot y" /><div className="dt-dot g" />
-              <div className="dt-url">app.booktreei.com/open-manual · 강남서초지사 / 광진성동중랑동대문지사</div>
+              <div className="dt-url">app.booktreei.com/open-manual · 강남 · 서초지사 / 광진 · 성동 · 중랑 · 동대문지사</div>
               <div style={{ width: 60 }} />
             </div>
             <div className="desktop-layout">

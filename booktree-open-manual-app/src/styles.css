@@ -429,11 +429,14 @@ ul, ol { list-style: none; }
   font-size: 12px;
   opacity: 0.85;
   margin-top: 8px;
-  display: inline-flex;
+  display: flex;              /* 지사명이 길어 한 줄을 넘길 수 있어요 */
   gap: 4px;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  line-height: 1.5;
   position: relative; z-index: 1;
 }
+.hero-branch svg { margin-top: 3px; }
 
 .dday-card {
   background: rgba(255,255,255,0.14);
