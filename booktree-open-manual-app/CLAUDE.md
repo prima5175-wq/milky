@@ -61,6 +61,11 @@ localStorage 키: `booktree-manual-v5` (스키마 변경 시 v6, v7로 올릴 �
 
 ## 자주 수정하는 것들
 
+### 지사 채널 링크 (인스타그램·블로그)
+→ `src/data/manual.js` 의 `BRANCH_LINKS` 에 주소 입력.
+빈 문자열이면 버튼을 렌더링하지 않아요 (`my.jsx` 의 `BranchLinks`).
+표시 순서는 인스타그램 → 블로그.
+
 ### 매뉴얼 문구·항목 수정
 → `src/data/manual.js` 편집. 앱 재시작 없이 HMR로 즉시 반영됨.
 

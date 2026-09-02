@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from '../components/icons.jsx';
+import { BRANCH_LINKS } from '../data/manual.js';
 import { StatusBar } from './home.jsx';
 import { BADGES, FINAL_CHECKLIST } from '../data/manual.js';
 
@@ -199,6 +200,7 @@ function MyScreen({ meta, steps, checked, onOpenSettings, viewMode }) {
             <div style={{ fontSize: 10, opacity: 0.7, letterSpacing: '0.08em', fontWeight: 700 }}>지사 문의</div>
             <div style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>{meta.supervisor}</div>
             <div style={{ fontSize: 11.5, opacity: 0.85, marginTop: 2 }}>{meta.branch}</div>
+            <BranchLinks />
           </div>
 
           <div style={{ textAlign: 'center', color: 'var(--bt-mute-2)', fontSize: 10.5, lineHeight: 1.7 }}>
@@ -208,6 +210,42 @@ function MyScreen({ meta, steps, checked, onOpenSettings, viewMode }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+
+// 지사 인스타그램·블로그 링크.
+// 주소는 src/data/manual.js 의 BRANCH_LINKS 에서 관리해요.
+// 주소가 비어 있는 항목은 버튼 자체가 나오지 않아요.
+function BranchLinks() {
+  const links = [
+    { key: 'instagram', label: '인스타그램', url: BRANCH_LINKS.instagram, Ico: Icon.Instagram },
+    { key: 'blog', label: '블로그', url: BRANCH_LINKS.blog, Ico: Icon.Blog },
+  ].filter(l => l.url && l.url.trim());
+
+  if (links.length === 0) return null;
+
+  return (
+    <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+      {links.map(({ key, label, url, Ico }) => (
+        <a
+          key={key}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'rgba(255,255,255,0.15)', color: 'white',
+            padding: '8px 14px', borderRadius: 8,
+            fontSize: 12, fontWeight: 700, textDecoration: 'none',
+          }}
+        >
+          <Ico style={{ width: 14, height: 14 }} />
+          {label}
+          <Icon.External style={{ width: 11, height: 11, opacity: 0.6 }} />
+        </a>
+      ))}
     </div>
   );
 }

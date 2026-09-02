@@ -139,6 +139,22 @@ booktree-open-manual-app/
 - **`src` 가 없는 항목은 화면에 나오지 않아요.** 원장님이 보는 앱에 "준비 중" 같은
   빈 자리가 뜨지 않도록 조용히 건너뜁니다. 자료가 준비되면 `src` 만 채우면 바로 나와요.
 
+### 예: 지사 인스타그램 · 블로그 주소 넣기
+
+`src/data/manual.js` 위쪽의 `BRANCH_LINKS` 에 주소만 채우면 돼요.
+
+```javascript
+export const BRANCH_LINKS = {
+  instagram: 'https://www.instagram.com/계정이름',
+  blog: 'https://blog.naver.com/계정이름',
+};
+```
+
+- **My 페이지의 "지사 문의" 카드**에 버튼으로 나와요. 순서는 인스타그램 → 블로그.
+- **주소를 비워두면 버튼이 아예 안 나와요.** 그래서 지금처럼 `''` 로 두었다가
+  나중에 채워 넣어도 되고, 인스타만 먼저 열었다면 인스타만 채우면 돼요.
+- 새 탭으로 열립니다.
+
 ### 예: 브랜드 컬러 변경
 
 `src/styles.css` 상단의 `:root` 블록에서 CSS 변수 수정:

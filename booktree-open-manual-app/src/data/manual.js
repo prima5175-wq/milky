@@ -14,6 +14,22 @@ export const APP_META = {
   totalBranches: 647, // 2026년 8월 기준 전국 가맹점
 };
 
+// ============ 지사 채널 링크 ============
+//
+// 📌 주소를 아직 안 정하셨으면 빈 문자열('') 그대로 두세요.
+//    빈 항목은 앱에 버튼이 아예 나오지 않아요 (눌리지 않는 버튼을 두지 않기 위해서예요).
+//    나중에 주소만 따옴표 안에 채워 넣고 다시 배포하면 바로 나옵니다.
+//
+//    예시)
+//      instagram: 'https://www.instagram.com/booktree_gangnam',
+//      blog: 'https://blog.naver.com/booktree_gangnam',
+//
+// 순서는 인스타그램 → 블로그 순으로 표시됩니다.
+export const BRANCH_LINKS = {
+  instagram: '',   // 지사 인스타그램
+  blog: '',        // 지사 블로그
+};
+
 // ============ Ⅲ 오픈 진행 20단계 (핵심 데이터) ============
 export const OPEN_STEPS = [
   { n: 1, title: '위치 선정', phase: 'D-60', items: [
