@@ -62,7 +62,7 @@ self.addEventListener("message", (e) => {
           const found = html.match(/(?:\/_next\/)?static\/(?:chunks|media)\/[^"'\s\\)]+\.(?:js|css|woff2?)/g) || [];
           const files = [...new Set(found.map((f) => (f.startsWith("/_next/") ? f : "/_next/" + f)))];
           for (const f of files) { if (!(await stat.match(f))) { try { const r = await fetch(f); if (r.ok) await stat.put(f, r); else console.warn("[sw] 정적 파일 저장 실패", f, r.status); } catch (err) { console.warn("[sw] 정적 파일 저장 실패", f, String(err)); } } }
-        } catch (err) { console.warn("[sw] 화면 저장 실패", u, String(err)); }
+        } catch (err) { console.debug("[sw] 화면 저장 실패(연결이 없을 수 있어요)", u, String(err)); }
       }
     })());
   }

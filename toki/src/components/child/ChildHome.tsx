@@ -3,13 +3,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Toki } from "./Toki";
 import { SettingsPanel } from "./SettingsPanel";
+import { useChildT } from "./useChildSettings";
 import { warmOffline } from "@/components/RegisterSW";
-import { useChildSettings } from "./useChildSettings";
 import { SUBTITLE_CLASS } from "@/lib/child/settings";
 import type { Scenario } from "@/lib/scenarios/schema";
 
 export function ChildHome({ scenarios, nickname, demo }: { scenarios: Pick<Scenario, "id" | "setting" | "partnerLine">[]; nickname: string; demo: boolean }) {
-  const [settings, setSettings] = useChildSettings();
+  const { t, settings, update } = useChildT();
   const [showSettings, setShowSettings] = useState(false);
   const [doneToday, setDone] = useState<string[]>([]);
   const [timeUp, setTimeUp] = useState(false);
@@ -18,32 +18,33 @@ export function ChildHome({ scenarios, nickname, demo }: { scenarios: Pick<Scena
   useEffect(() => { fetch("/api/progress").then((r) => r.json()).then((j) => setDone(j.doneToday ?? [])).catch(() => {}); }, []);
 
   return (
-    <div className={settings.lowStimulus ? "low-stim min-h-screen" : "min-h-screen"} style={{ background: "var(--bg)" }}>
+    <div className={settings.lowStimulus ? "low-stim min-h-screen" : "min-h-screen"} style={{ background: "var(--bg)" }} lang={settings.locale}>
       <main className="mx-auto max-w-2xl p-6">
-        {demo && <p className="mb-4 rounded bg-yellow-100 p-2 text-sm">화면 확인용: 감수 전 시나리오를 임시로 보여 주는 중이에요. 실제 운영에서는 승인된 것만 나와요.</p>}
+        {demo && <p className="mb-4 rounded bg-yellow-100 p-2 text-sm">{t.home.demo}</p>}
         <div className="flex items-center gap-4">
-          <Toki size={96} />
-          <p className={SUBTITLE_CLASS[settings.subtitleSize]}>안녕, {nickname}! 오늘도 친구 말을 같이 들어 볼까?</p>
+          <Toki size={96} label={t.mascot} />
+          <p className={SUBTITLE_CLASS[settings.subtitleSize]}>{t.home.hello(nickname)}</p>
         </div>
-        {timeUp && <p role="status" className="mt-6 rounded-2xl border-2 p-4 text-xl">오늘은 여기까지! 이제 진짜 친구에게 해 볼 시간이야.</p>}
-        <h1 className="mb-3 mt-8 text-2xl font-bold">오늘 연습</h1>
-        {scenarios.length === 0 ? <p className="text-lg">오늘 연습할 이야기가 아직 없어요. 선생님께 말해 주세요.</p> : (
+        {timeUp && <p role="status" className="mt-6 rounded-2xl border-2 p-4 text-xl">{t.home.timeUp}</p>}
+        <h1 className="mb-3 mt-8 text-2xl font-bold">{t.home.today}</h1>
+        {scenarios.length === 0 ? <p className="text-lg">{t.home.empty}</p> : (
           <ul className="space-y-3">
             {scenarios.map((s, i) => (
               <li key={s.id}>
                 <Link href={`/child/${s.id}`} aria-disabled={timeUp} tabIndex={timeUp ? -1 : 0} className={`flex items-center justify-between rounded-2xl border-2 p-5 text-xl ${timeUp ? "pointer-events-none opacity-40" : ""}`}>
-                  <span>{i + 1}. {s.setting}</span><span>{doneToday.includes(s.id) ? "✔ 했어요" : "시작 ▶"}</span>
+                  <span>{i + 1}. {s.setting}</span><span>{doneToday.includes(s.id) ? t.home.done : t.home.start}</span>
                 </Link>
               </li>
             ))}
           </ul>
         )}
         <div className="mt-8 flex gap-3">
-          <Link href="/child/stickers" className="rounded-2xl border-2 px-5 py-3 text-xl">스티커판</Link>
-          <button className="rounded-2xl border-2 px-5 py-3 text-xl" onClick={() => setShowSettings((v) => !v)} aria-expanded={showSettings}>화면 설정</button>
+          <Link href="/child/stickers" className="rounded-2xl border-2 px-5 py-3 text-xl">{t.home.stickers}</Link>
+          <button className="rounded-2xl border-2 px-5 py-3 text-xl" onClick={() => setShowSettings((v) => !v)} aria-expanded={showSettings}>{t.home.settings}</button>
         </div>
-        {showSettings && <div className="mt-4"><SettingsPanel value={settings} onChange={setSettings} /></div>}
-        <p className="mt-10 text-sm opacity-70">친구와 진짜로 이야기해 보는 게 제일 중요해요. 오늘은 짧게 하고, 진짜 친구에게 해 보자!</p>
+        {showSettings && <div className="mt-4"><SettingsPanel value={settings} onChange={update} /></div>}
+        <p className="mt-10 text-sm opacity-70">{t.home.note}</p>
+        {t.home.contentNote && <p className="mt-2 text-sm opacity-70">{t.home.contentNote}</p>}
       </main>
     </div>
   );

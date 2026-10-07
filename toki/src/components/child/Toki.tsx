@@ -1,7 +1,7 @@
 // 안내자 토키(임시 SVG). 귀가 큰 토끼 = 친구 말을 잘 듣는다. 정식 캐릭터는 나중에 교체한다.
-export function Toki({ size = 96, mood = "smile" }: { size?: number; mood?: "smile" | "listen" }) {
+export function Toki({ size = 96, mood = "smile", label = "Toki" }: { size?: number; mood?: "smile" | "listen"; label?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-label="토키">
+    <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-label={label}>
       <ellipse cx="34" cy="26" rx="9" ry="24" fill="#fff" stroke="#6c63ff" strokeWidth="3" />
       <ellipse cx="66" cy="26" rx="9" ry="24" fill="#fff" stroke="#6c63ff" strokeWidth="3" />
       <ellipse cx="34" cy="28" rx="4" ry="16" fill="#ffc9d9" /><ellipse cx="66" cy="28" rx="4" ry="16" fill="#ffc9d9" />
