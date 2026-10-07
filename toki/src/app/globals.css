@@ -1,3 +1,9 @@
 @import "tailwindcss";
 :root { --bg:#fffaf3; --fg:#2b2a33; --accent:#6c63ff; }
 body { background: var(--bg); color: var(--fg); font-family: system-ui, "Noto Sans KR", sans-serif; }
+@keyframes pop { 0% { transform: scale(.96); opacity: .5 } 100% { transform: scale(1); opacity: 1 } }
+.animate-pop { animation: pop .25s ease-out; }
+/* 저자극 모드: 애니메이션 제거, 차분한 색 */
+.low-stim { --bg:#f3f1ec; --accent:#5b6b8c; }
+.low-stim *, .low-stim *::before { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .animate-pop { animation: none; } }
