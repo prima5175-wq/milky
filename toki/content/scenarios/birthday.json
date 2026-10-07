@@ -1,0 +1,541 @@
+[
+  {
+    "id": "bday-001",
+    "setting": "생일파티",
+    "ageBand": "유아",
+    "domain": [
+      "의사소통 기능",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 1,
+    "situation": "친구 생일파티 집에 도착했더니 생일인 친구가 문 앞에서 반겨 준다.",
+    "partnerLine": "와, 왔네! 와 줘서 고마워!",
+    "partnerEmotion": "기쁨",
+    "awkwardExample": {
+      "line": "어, 케이크는 어디 있어?",
+      "whyAwkward": "친구는 반가워서 인사했는데 케이크만 물어보면, 내가 온 게 별로 안 반갑나 하고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "응, 안녕! 생일 축하해!"
+      ],
+      "2": [
+        "안녕! 오늘 뭐 하고 놀아?"
+      ],
+      "3": [
+        "나도 오고 싶었어. 어제부터 기다렸어!"
+      ],
+      "4": [
+        "너 엄청 기뻐 보여!"
+      ]
+    },
+    "choiceOptions": [
+      "어, 케이크는 어디 있어?",
+      "응, 안녕! 생일 축하해!",
+      "...",
+      "나 집에 갈래."
+    ],
+    "mission": "오늘 친구를 만나면 먼저 '안녕' 하고 인사해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-002",
+    "setting": "생일파티",
+    "ageBand": "유아",
+    "domain": [
+      "의사소통 기능",
+      "담화 관리"
+    ],
+    "targetLevel": 2,
+    "situation": "내가 준 선물을 생일인 친구가 열어 본다.",
+    "partnerLine": "우와, 자동차다! 나 이거 갖고 싶었어!",
+    "partnerEmotion": "기쁨",
+    "awkwardExample": {
+      "line": "나 목말라. 주스 줘.",
+      "whyAwkward": "친구는 선물 보고 신났는데 다른 말을 하면, 내 말을 안 들어 준다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "정말? 다행이다!"
+      ],
+      "2": [
+        "무슨 색 자동차가 제일 좋아?"
+      ],
+      "3": [
+        "나도 자동차 있어. 같이 굴려 보자!"
+      ],
+      "4": [
+        "너 진짜 신나 보인다!"
+      ]
+    },
+    "choiceOptions": [
+      "정말? 다행이다!",
+      "나 목말라. 주스 줘.",
+      "...",
+      "무슨 색 자동차가 제일 좋아?"
+    ],
+    "mission": "오늘 가족이나 친구에게 '이거 줄게' 하고 말하며 뭔가 건네 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-003",
+    "setting": "생일파티",
+    "ageBand": "유아",
+    "domain": [
+      "상황 맥락 조절",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 3,
+    "situation": "생일파티에서 친구가 들고 있던 풍선이 뻥 터졌다.",
+    "partnerLine": "으앙, 내 풍선 터졌어...",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "그게 뭐가 울 일이야.",
+      "whyAwkward": "친구는 속상한데 별일 아니라고 하면, 내 마음을 몰라준다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "어어, 터졌네!"
+      ],
+      "2": [
+        "안 다쳤어? 다른 풍선 같이 찾아볼까?"
+      ],
+      "3": [
+        "나도 풍선 터져서 울어 본 적 있어."
+      ],
+      "4": [
+        "풍선이 터져서 속상하구나."
+      ]
+    },
+    "choiceOptions": [
+      "풍선이 터져서 속상하구나.",
+      "그게 뭐가 울 일이야.",
+      "...",
+      "나도 풍선 터져서 울어 본 적 있어."
+    ],
+    "mission": "오늘 친구나 가족이 울상이면 '괜찮아?' 하고 물어보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-004",
+    "setting": "생일파티",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "의사소통 기능",
+      "담화 관리"
+    ],
+    "targetLevel": 4,
+    "situation": "의자 앉기 게임에서 친구가 또 먼저 탈락했다.",
+    "partnerLine": "아, 나 또 졌어. 이거 재미없어.",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "그러니까 빨리 앉았어야지.",
+      "whyAwkward": "친구는 져서 속상한데 잘못했다는 말처럼 들려서, 더 속상해질 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 아깝다!"
+      ],
+      "2": [
+        "다음 판엔 어떻게 해 보고 싶어?"
+      ],
+      "3": [
+        "나도 지난번에 졌을 때 속상했어."
+      ],
+      "4": [
+        "계속 져서 속상했구나."
+      ]
+    },
+    "choiceOptions": [
+      "계속 져서 속상했구나.",
+      "그러니까 빨리 앉았어야지.",
+      "나도 지난번에 졌을 때 속상했어.",
+      "나는 이겼는데!"
+    ],
+    "mission": "게임에서 친구가 지면 '아깝다' 하고 한마디 해 주기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-005",
+    "setting": "생일파티",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "비언어적 의사소통",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 1,
+    "situation": "케이크에 초를 꽂고 생일 노래를 부르려고 한다.",
+    "partnerLine": "이제 촛불 불 거야! 같이 노래해 줘!",
+    "partnerEmotion": "설렘",
+    "awkwardExample": {
+      "line": "나 노래 안 불러. 케이크만 줘.",
+      "whyAwkward": "친구는 같이 축하받고 싶어서 설레는데, 함께하지 않으면 혼자 남은 느낌이 들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "좋아, 같이 부르자!"
+      ],
+      "2": [
+        "무슨 소원 빌 거야?"
+      ],
+      "3": [
+        "나도 내 생일 때 소원 빌었어."
+      ],
+      "4": [
+        "너 엄청 설레 보인다!"
+      ]
+    },
+    "choiceOptions": [
+      "좋아, 같이 부르자!",
+      "...",
+      "나 노래 안 불러. 케이크만 줘.",
+      "무슨 소원 빌 거야?"
+    ],
+    "mission": "오늘 가족이나 친구에게 '축하해'나 '잘했어' 한 번 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-006",
+    "setting": "생일파티",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "담화 관리",
+      "의사소통 기능"
+    ],
+    "targetLevel": 2,
+    "situation": "다른 반 친구들이 많이 와서 한 친구가 구석에 서 있다.",
+    "partnerLine": "나 여기 아는 애가 너밖에 없어.",
+    "partnerEmotion": "걱정",
+    "awkwardExample": {
+      "line": "그럼 나는 저기 가서 놀게.",
+      "whyAwkward": "친구는 걱정돼서 말했는데 혼자 두고 가면, 외롭고 더 불안해질 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 그렇구나."
+      ],
+      "2": [
+        "같이 놀고 싶은 게임 있어?"
+      ],
+      "3": [
+        "나도 처음엔 모르는 애들 많아서 떨렸어."
+      ],
+      "4": [
+        "모르는 친구들이 많아서 걱정됐구나."
+      ]
+    },
+    "choiceOptions": [
+      "같이 놀고 싶은 게임 있어?",
+      "그럼 나는 저기 가서 놀게.",
+      "나 배고파. 케이크 언제 먹어?",
+      "..."
+    ],
+    "mission": "오늘 아직 안 친한 친구에게 '같이 놀래?' 하고 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-007",
+    "setting": "생일파티",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "상황 맥락 조절",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 3,
+    "situation": "음악이 쿵쿵 크게 나오는 방에서 친구가 큰 소리로 말한다.",
+    "partnerLine": "뭐라고? 음악 때문에 하나도 안 들려!",
+    "partnerEmotion": "놀람",
+    "awkwardExample": {
+      "line": "아니야, 아무것도.",
+      "whyAwkward": "친구는 말을 듣고 싶었는데 말을 그만두면, 대화가 끊겨서 답답할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "어, 안 들려? 잠깐만!"
+      ],
+      "2": [
+        "조용한 데로 갈까?"
+      ],
+      "3": [
+        "나도 시끄러울 땐 안 들려서 가까이 가서 말해."
+      ],
+      "4": [
+        "음악이 너무 커서 답답하지?"
+      ]
+    },
+    "choiceOptions": [
+      "조용한 데로 갈까?",
+      "아니야, 아무것도.",
+      "...",
+      "음악이 너무 커서 답답하지?"
+    ],
+    "mission": "시끄러운 곳에서는 친구 가까이 가서 말하거나 조용한 곳으로 가자고 해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-008",
+    "setting": "생일파티",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "상황 맥락 조절",
+      "의사소통 기능"
+    ],
+    "targetLevel": 4,
+    "situation": "내가 준 선물을 열어 본 생일 친구가 머뭇거린다.",
+    "partnerLine": "어... 이거 나 집에 있는데. 아, 미안, 말하면 안 되는데.",
+    "partnerEmotion": "미안함",
+    "awkwardExample": {
+      "line": "그럼 돌려줘. 다른 거 줄게.",
+      "whyAwkward": "친구는 미안해서 말했는데 화난 듯 들리면, 더 미안하고 어색해질 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "괜찮아, 솔직하게 말해 줘서 고마워."
+      ],
+      "2": [
+        "집에 있는 건 어떤 거야? 나도 보고 싶어."
+      ],
+      "3": [
+        "나도 같은 걸 받은 적 있는데 그래도 기분 좋았어."
+      ],
+      "4": [
+        "내가 속상할까 봐 미안했구나."
+      ]
+    },
+    "choiceOptions": [
+      "괜찮아, 솔직하게 말해 줘서 고마워.",
+      "그럼 돌려줘. 다른 거 줄게.",
+      "내가 속상할까 봐 미안했구나.",
+      "..."
+    ],
+    "mission": "오늘 누가 미안하다고 하면 '괜찮아'라고 먼저 말해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-009",
+    "setting": "생일파티",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "담화 관리"
+    ],
+    "targetLevel": 1,
+    "situation": "생일파티 보물찾기가 끝나고 친구가 찾은 쪽지를 보여 준다.",
+    "partnerLine": "나 보물 제일 많이 찾았다! 봐 봐!",
+    "partnerEmotion": "자랑스러움",
+    "awkwardExample": {
+      "line": "나는 하나밖에 못 찾았는데 뭐.",
+      "whyAwkward": "친구는 자랑하고 싶었는데 내 얘기로 넘어가면, 축하받지 못한 느낌이 들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "우와, 진짜 많이 찾았다!"
+      ],
+      "2": [
+        "어디에서 제일 많이 찾았어?"
+      ],
+      "3": [
+        "나는 소파 밑에서 한 개 찾았어. 너 대단하다!"
+      ],
+      "4": [
+        "열심히 찾아서 뿌듯하겠다!"
+      ]
+    },
+    "choiceOptions": [
+      "우와, 진짜 많이 찾았다!",
+      "나는 하나밖에 못 찾았는데 뭐.",
+      "그래서 뭐?",
+      "열심히 찾아서 뿌듯하겠다!"
+    ],
+    "mission": "오늘 친구가 뭔가 자랑하면 '우와' 하고 한 가지 물어보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-010",
+    "setting": "생일파티",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "의사소통 기능",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 2,
+    "situation": "친구들이 둘씩 모여 사진을 찍는데 한 친구만 끼지 못했다.",
+    "partnerLine": "다들 둘이서만 찍고... 나는 안 불렀어.",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "사진이 뭐가 중요해. 케이크나 먹자.",
+      "whyAwkward": "친구는 속상한 마음을 말했는데 가볍게 넘기면, 말해도 소용없다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 그랬구나."
+      ],
+      "2": [
+        "혹시 나랑 같이 찍고 싶었어?"
+      ],
+      "3": [
+        "나도 못 껴서 서운했던 적 있어."
+      ],
+      "4": [
+        "빠진 것 같아서 서운했겠다."
+      ]
+    },
+    "choiceOptions": [
+      "혹시 나랑 같이 찍고 싶었어?",
+      "사진이 뭐가 중요해. 케이크나 먹자.",
+      "빠진 것 같아서 서운했겠다.",
+      "..."
+    ],
+    "mission": "오늘 혼자 있는 친구에게 '같이 할래?' 하고 먼저 물어보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-011",
+    "setting": "생일파티",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "담화 관리",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 3,
+    "situation": "자리에 둔 주스가 없어지자 친구가 나를 의심한다.",
+    "partnerLine": "야, 내 주스 네가 마셨지? 컵이 비었어!",
+    "partnerEmotion": "화남",
+    "awkwardExample": {
+      "line": "아니거든! 너 진짜 짜증 나.",
+      "whyAwkward": "오해받아 속상할 수 있지만 화내며 말하면, 친구도 더 화가 나서 서로 말이 안 통한다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "어, 컵이 비었어? 나는 안 마셨는데."
+      ],
+      "2": [
+        "혹시 다른 컵이랑 헷갈린 건 아닐까? 같이 찾아볼까?"
+      ],
+      "3": [
+        "나도 내 컵 잃어버려서 한참 찾은 적 있어."
+      ],
+      "4": [
+        "주스가 없어져서 속상했겠다."
+      ]
+    },
+    "choiceOptions": [
+      "어, 컵이 비었어? 나는 안 마셨는데.",
+      "아니거든! 너 진짜 짜증 나.",
+      "주스가 없어져서 속상했겠다.",
+      "몰라. 나한테 묻지 마."
+    ],
+    "mission": "오늘 오해가 생기면 화내기 전에 '내 생각은 이래' 하고 차분히 말해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "bday-012",
+    "setting": "생일파티",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "의사소통 기능",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 4,
+    "situation": "파티가 끝나고 집에 가려는데 생일 친구가 배웅을 나온다.",
+    "partnerLine": "벌써 가? 와 줘서 진짜 고마워. 오늘 어땠어?",
+    "partnerEmotion": "기쁨",
+    "awkwardExample": {
+      "line": "별로 재미없었어. 갈게.",
+      "whyAwkward": "솔직한 마음일 수는 있지만, 준비한 친구는 애쓴 게 인정받지 못한 느낌이 들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "고마워! 케이크도 맛있고 재밌었어."
+      ],
+      "2": [
+        "너는 오늘 뭐가 제일 재밌었어?"
+      ],
+      "3": [
+        "나는 보물찾기가 제일 좋았어. 내 생일에도 해 보고 싶어."
+      ],
+      "4": [
+        "친구들이랑 잘 놀아서 너도 기쁘겠다."
+      ]
+    },
+    "choiceOptions": [
+      "고마워! 케이크도 맛있고 재밌었어.",
+      "별로 재미없었어. 갈게.",
+      "너는 오늘 뭐가 제일 재밌었어?",
+      "..."
+    ],
+    "mission": "오늘 누군가에게 '고마워'와 그 이유를 함께 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  }
+]
