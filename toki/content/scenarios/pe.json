@@ -1,0 +1,537 @@
+[
+  {
+    "id": "pe-001",
+    "setting": "운동·체육 시간",
+    "ageBand": "유아",
+    "domain": [
+      "의사소통 기능"
+    ],
+    "targetLevel": 1,
+    "situation": "체육 시간 준비운동 전에 친구가 짝을 찾고 있다.",
+    "partnerLine": "나랑 같이 준비운동 할래?",
+    "partnerEmotion": "설렘",
+    "awkwardExample": {
+      "line": "나 저기 갈래.",
+      "whyAwkward": "같이 하고 싶어서 물어봤는데 대답을 못 들어서, 친구가 싫다고 하는 것 같은 느낌을 받을 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "응, 같이 하자!"
+      ],
+      "2": [
+        "어떤 거 먼저 할까?"
+      ],
+      "3": [
+        "나도 짝이랑 하면 더 재밌더라."
+      ],
+      "4": [
+        "나랑 하고 싶었구나! 신나 보여."
+      ]
+    },
+    "choiceOptions": [
+      "응, 같이 하자!",
+      "나 저기 갈래.",
+      "...",
+      "어떤 거 먼저 할까?"
+    ],
+    "mission": "오늘 체육 시간에 친구에게 '같이 할래?' 하고 먼저 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-002",
+    "setting": "운동·체육 시간",
+    "ageBand": "유아",
+    "domain": [
+      "담화 관리"
+    ],
+    "targetLevel": 2,
+    "situation": "공 굴리기 놀이에서 줄을 서서 차례를 기다린다.",
+    "partnerLine": "내 차례 다음이지? 나 기다리고 있어.",
+    "partnerEmotion": "걱정",
+    "awkwardExample": {
+      "line": "빨리 해, 빨리!",
+      "whyAwkward": "차례를 기다리는 친구에게 재촉하는 말로 들려서, 마음이 급해지고 불편할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "응, 내 다음이 너야."
+      ],
+      "2": [
+        "너 공 굴리고 싶어?"
+      ],
+      "3": [
+        "나도 기다릴 때 두근두근했어."
+      ],
+      "4": [
+        "기다리느라 걱정됐구나. 조금만 기다려."
+      ]
+    },
+    "choiceOptions": [
+      "응, 내 다음이 너야.",
+      "빨리 해, 빨리!",
+      "...",
+      "나 배고파."
+    ],
+    "mission": "오늘 놀 때 차례를 기다리는 친구에게 '다음이 너야' 하고 말해 주기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-003",
+    "setting": "운동·체육 시간",
+    "ageBand": "유아",
+    "domain": [
+      "상황 맥락 조절",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 3,
+    "situation": "달리기 시합이 끝나고 친구가 신나서 달려온다.",
+    "partnerLine": "나 달리기 일등 했다!",
+    "partnerEmotion": "자랑스러움",
+    "awkwardExample": {
+      "line": "그래서 뭐.",
+      "whyAwkward": "기쁜 일을 알려 줬는데 시큰둥한 말을 들으면, 친구가 기쁜 마음을 나누지 못한 느낌이 들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "우와, 일등 했네!"
+      ],
+      "2": [
+        "달릴 때 안 힘들었어?"
+      ],
+      "3": [
+        "나도 달리기하면 바람이 시원해서 좋아."
+      ],
+      "4": [
+        "일등 해서 엄청 뿌듯하구나!"
+      ]
+    },
+    "choiceOptions": [
+      "우와, 일등 했네!",
+      "그래서 뭐.",
+      "...",
+      "나 일등 별로야."
+    ],
+    "mission": "오늘 친구가 잘한 일에 웃으면서 박수 쳐 주기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-004",
+    "setting": "운동·체육 시간",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "의사소통 기능",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 2,
+    "situation": "가위바위보로 팀을 나눴는데 단짝 친구와 다른 팀이 되었다.",
+    "partnerLine": "가위바위보로 팀 나눴는데, 나만 너랑 다른 팀 됐어.",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "어쩔 수 없잖아.",
+      "whyAwkward": "속상한 마음을 말했는데 그냥 넘어가면, 친구가 혼자 남은 것 같고 말해도 소용없다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 우리 다른 팀 됐네."
+      ],
+      "2": [
+        "나랑 같은 팀 하고 싶었어?"
+      ],
+      "3": [
+        "나도 친구랑 다른 팀 돼서 아쉬운 적 있어."
+      ],
+      "4": [
+        "같은 팀 하고 싶었는데 속상했겠다."
+      ]
+    },
+    "choiceOptions": [
+      "나랑 같은 팀 하고 싶었어?",
+      "어쩔 수 없잖아.",
+      "...",
+      "나 물 마시러 갈래."
+    ],
+    "mission": "팀이 갈려서 서운해하는 친구에게 '다음엔 같이 하자' 하고 말해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-005",
+    "setting": "운동·체육 시간",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "담화 관리",
+      "의사소통 기능"
+    ],
+    "targetLevel": 3,
+    "situation": "피구 경기에서 친구가 공을 놓쳐서 우리 팀 점수가 나지 않았다.",
+    "partnerLine": "내가 공 놓쳐서 점수 못 냈어. 미안해.",
+    "partnerEmotion": "미안함",
+    "awkwardExample": {
+      "line": "맞아, 너 때문이야.",
+      "whyAwkward": "잘못한 것 같아 미안해하는 친구가 탓하는 말을 들으면, 더 속상하고 위축될 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "괜찮아, 다음에 잡으면 돼."
+      ],
+      "2": [
+        "공이 어디로 튀었어?"
+      ],
+      "3": [
+        "나도 공 놓쳐서 미안했던 적 있어. 다시 하니까 잡았어."
+      ],
+      "4": [
+        "점수 못 내서 마음이 안 좋았구나."
+      ]
+    },
+    "choiceOptions": [
+      "괜찮아, 다음에 잡으면 돼.",
+      "맞아, 너 때문이야.",
+      "...",
+      "점수 지금 몇 대 몇이야?"
+    ],
+    "mission": "실수해서 미안해하는 친구에게 '괜찮아, 다음에 하자' 하고 말해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-006",
+    "setting": "운동·체육 시간",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "비언어적 의사소통",
+      "의사소통 기능"
+    ],
+    "targetLevel": 4,
+    "situation": "줄넘기 시간에 옆자리 친구가 줄에 계속 걸려서 어깨를 늘어뜨린다.",
+    "partnerLine": "줄이 자꾸 발에 걸려. 나 줄넘기 하기 싫어졌어.",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "그럼 하지 마.",
+      "whyAwkward": "속상해서 말했는데 포기하라는 말로 들리면, 친구가 이해받지 못한 느낌을 받을 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "줄이 자꾸 걸리는구나."
+      ],
+      "2": [
+        "줄 천천히 같이 해 볼까?"
+      ],
+      "3": [
+        "나도 줄넘기 처음엔 많이 걸렸어."
+      ],
+      "4": [
+        "계속 걸려서 속상하고 지쳤구나."
+      ]
+    },
+    "choiceOptions": [
+      "계속 걸려서 속상하고 지쳤구나.",
+      "그럼 하지 마.",
+      "...",
+      "줄 천천히 같이 해 볼까?"
+    ],
+    "mission": "힘들어하는 친구에게 '같이 해 볼까?' 하고 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-007",
+    "setting": "운동·체육 시간",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "상황 맥락 조절",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 4,
+    "situation": "우리 팀이 이겼고, 상대 팀 친구가 고개를 숙이고 걸어온다.",
+    "partnerLine": "한 점 차로 졌네. 거의 이길 뻔했는데.",
+    "partnerEmotion": "슬픔",
+    "awkwardExample": {
+      "line": "우린 이겼다! 만세!",
+      "whyAwkward": "아쉬워하는 친구 앞에서 내 기쁨만 말하면, 친구는 마음을 몰라준다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "진짜 한 점 차였어."
+      ],
+      "2": [
+        "마지막에 어떤 게 제일 아쉬웠어?"
+      ],
+      "3": [
+        "나도 지면 한동안 아쉬워. 그래도 너희 잘했어."
+      ],
+      "4": [
+        "거의 이길 뻔해서 더 아쉽겠다."
+      ]
+    },
+    "choiceOptions": [
+      "거의 이길 뻔해서 더 아쉽겠다.",
+      "우린 이겼다! 만세!",
+      "...",
+      "마지막에 어떤 게 제일 아쉬웠어?"
+    ],
+    "mission": "경기가 끝나면 이기든 지든 상대 팀 친구에게 '수고했어' 하고 말하기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-008",
+    "setting": "운동·체육 시간",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 1,
+    "situation": "친구들이 놀고 있을 때 선생님이 모이라고 하신 걸 한 친구가 먼저 들었다.",
+    "partnerLine": "선생님이 지금 운동장 가운데로 모이래!",
+    "partnerEmotion": "놀람",
+    "awkwardExample": {
+      "line": "그래서 뭐.",
+      "whyAwkward": "알려 주려고 급하게 왔는데 무시하는 말을 들으면, 친구가 도움이 안 된 것처럼 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "알려 줘서 고마워, 같이 가자!"
+      ],
+      "2": [
+        "어디로? 줄 서서 가야 해?"
+      ],
+      "3": [
+        "나도 선생님이 모이라고 하면 얼른 가려고 해."
+      ],
+      "4": [
+        "선생님 말씀 놓칠까 봐 마음이 급했구나."
+      ]
+    },
+    "choiceOptions": [
+      "알려 줘서 고마워, 같이 가자!",
+      "그래서 뭐.",
+      "...",
+      "나는 더 놀 거야."
+    ],
+    "mission": "선생님이 모이라고 하면 하던 걸 멈추고 친구와 함께 가기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-009",
+    "setting": "운동·체육 시간",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "담화 관리"
+    ],
+    "targetLevel": 2,
+    "situation": "피구를 하다가 친구가 내가 선을 밟았다고 말한다.",
+    "partnerLine": "너 방금 선 밟았어! 아웃이야!",
+    "partnerEmotion": "화남",
+    "awkwardExample": {
+      "line": "아니거든! 안 밟았거든!",
+      "whyAwkward": "친구가 본 것을 바로 아니라고 하면, 말을 믿어 주지 않는다고 느끼고 더 화가 날 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "선 밟았다고 봤구나."
+      ],
+      "2": [
+        "어디 선이야? 같이 다시 볼까?"
+      ],
+      "3": [
+        "나도 선이 헷갈린 적 있어. 선생님께 같이 물어보자."
+      ],
+      "4": [
+        "공정하게 하고 싶어서 화가 났구나."
+      ]
+    },
+    "choiceOptions": [
+      "어디 선이야? 같이 다시 볼까?",
+      "아니거든! 안 밟았거든!",
+      "...",
+      "피구 말고 딴 거 하자."
+    ],
+    "mission": "규칙이 헷갈릴 때 '선생님께 같이 물어볼까?' 하고 말해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-010",
+    "setting": "운동·체육 시간",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "담화 관리"
+    ],
+    "targetLevel": 1,
+    "situation": "체육 시간에 또 운동장을 도는 달리기를 하게 되었다.",
+    "partnerLine": "오늘도 달리기만 해? 좀 지루하다.",
+    "partnerEmotion": "지루함",
+    "awkwardExample": {
+      "line": "난 재밌는데. 너만 이상해.",
+      "whyAwkward": "생각이 다르다고 이상하다는 말을 들으면, 친구가 자기 마음을 말하기 어려워질 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "달리기만 하니까 좀 길게 느껴지지."
+      ],
+      "2": [
+        "너는 뭐 하면 재밌을 것 같아?"
+      ],
+      "3": [
+        "나도 같은 거 계속하면 지루해서 친구랑 얘기하면서 뛰어."
+      ],
+      "4": [
+        "계속 달려서 힘 빠지고 지루했구나."
+      ]
+    },
+    "choiceOptions": [
+      "달리기만 하니까 좀 길게 느껴지지.",
+      "너는 뭐 하면 재밌을 것 같아?",
+      "난 재밌는데. 너만 이상해.",
+      "..."
+    ],
+    "mission": "친구가 지루하다고 하면 '너는 뭐 하고 싶어?' 하고 물어보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-011",
+    "setting": "운동·체육 시간",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "비언어적 의사소통",
+      "의사소통 기능"
+    ],
+    "targetLevel": 3,
+    "situation": "릴레이 달리기 전에 마지막 주자인 친구가 손을 꼭 쥐고 서 있다.",
+    "partnerLine": "나 릴레이 마지막 주자야. 너무 떨려.",
+    "partnerEmotion": "걱정",
+    "awkwardExample": {
+      "line": "나는 안 떨리는데.",
+      "whyAwkward": "떨리는 마음을 말했는데 나는 아니라고만 하면, 친구가 혼자만 그런 것 같은 느낌이 들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "마지막 주자구나!"
+      ],
+      "2": [
+        "떨릴 때 어떻게 하면 좀 괜찮아져?"
+      ],
+      "3": [
+        "나도 발표할 때 떨리는데 숨 크게 쉬면 괜찮아져."
+      ],
+      "4": [
+        "중요한 순서라서 많이 부담되겠다."
+      ]
+    },
+    "choiceOptions": [
+      "나도 발표할 때 떨리는데 숨 크게 쉬면 괜찮아져.",
+      "나는 안 떨리는데.",
+      "...",
+      "중요한 순서라서 많이 부담되겠다."
+    ],
+    "mission": "떨려 하는 친구에게 눈을 맞추고 '파이팅' 하고 웃어 주기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "pe-012",
+    "setting": "운동·체육 시간",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "의사소통 기능",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 4,
+    "situation": "공놀이 중에 친구가 던진 공이 잘못 굴러와 내 쪽으로 왔다.",
+    "partnerLine": "아까 공이 네 쪽으로 잘못 굴러갔어. 일부러 아니야, 미안해.",
+    "partnerEmotion": "미안함",
+    "awkwardExample": {
+      "line": "알았으니까 말 시키지 마.",
+      "whyAwkward": "사과하러 왔는데 차갑게 들리면, 친구가 더 미안해하거나 내가 화났다고 오해할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "괜찮아, 일부러 아닌 거 알아."
+      ],
+      "2": [
+        "공은 다시 찾았어?"
+      ],
+      "3": [
+        "나도 공 잘못 보내서 미안했던 적 있어."
+      ],
+      "4": [
+        "내가 화났을까 봐 걱정됐구나."
+      ]
+    },
+    "choiceOptions": [
+      "괜찮아, 일부러 아닌 거 알아.",
+      "내가 화났을까 봐 걱정됐구나.",
+      "알았으니까 말 시키지 마.",
+      "..."
+    ],
+    "mission": "친구가 사과하면 '괜찮아' 하고 한 마디 더 덧붙여 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  }
+]

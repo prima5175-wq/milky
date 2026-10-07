@@ -1,0 +1,539 @@
+[
+  {
+    "id": "hom-001",
+    "setting": "집(가족)",
+    "ageBand": "유아",
+    "domain": [
+      "의사소통 기능",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 1,
+    "situation": "어린이집에서 집에 돌아오니 엄마가 반갑게 맞아 준다.",
+    "partnerLine": "우리 왔네! 오늘 어린이집 재밌었어?",
+    "partnerEmotion": "기쁨",
+    "awkwardExample": {
+      "line": "TV 볼래.",
+      "whyAwkward": "엄마가 반갑게 물어봤는데 대답이 없으면 엄마가 서운할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "응, 재밌었어!"
+      ],
+      "2": [
+        "엄마는 뭐 했어?"
+      ],
+      "3": [
+        "오늘 친구랑 블록 놀이했어."
+      ],
+      "4": [
+        "엄마 기분 좋아 보여!"
+      ]
+    },
+    "choiceOptions": [
+      "응, 재밌었어!",
+      "TV 볼래.",
+      "...",
+      "엄마는 뭐 했어?"
+    ],
+    "mission": "집에 오면 엄마나 아빠에게 오늘 있었던 일 한 가지 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-002",
+    "setting": "집(가족)",
+    "ageBand": "유아",
+    "domain": [
+      "의사소통 기능",
+      "담화 관리"
+    ],
+    "targetLevel": 2,
+    "situation": "저녁 식사 시간에 아빠가 직접 만든 반찬을 보여 준다.",
+    "partnerLine": "이거 아빠가 만든 계란말이야. 한번 먹어 봐!",
+    "partnerEmotion": "자랑스러움",
+    "awkwardExample": {
+      "line": "나 이거 안 먹어.",
+      "whyAwkward": "아빠가 열심히 만들었는데 바로 싫다고 하면 아빠가 속상할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "와, 계란말이다!"
+      ],
+      "2": [
+        "아빠가 만들었어? 어떻게 만들었어?"
+      ],
+      "3": [
+        "나도 계란말이 좋아해. 할머니가 해 준 것도 맛있어."
+      ],
+      "4": [
+        "아빠 만들어서 뿌듯해 보여!"
+      ]
+    },
+    "choiceOptions": [
+      "와, 계란말이다!",
+      "나 이거 안 먹어.",
+      "...",
+      "아빠가 만들었어? 어떻게 만들었어?"
+    ],
+    "mission": "저녁 먹을 때 가족이 만든 음식에 대해 '맛있어요' 또는 질문 한 가지 해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-003",
+    "setting": "집(가족)",
+    "ageBand": "유아",
+    "domain": [
+      "담화 관리"
+    ],
+    "targetLevel": 3,
+    "situation": "거실에서 동생이 블록으로 만든 탑을 보여 준다.",
+    "partnerLine": "나 블록 탑 만들었어! 봐 봐!",
+    "partnerEmotion": "자랑스러움",
+    "awkwardExample": {
+      "line": "나 지금 바빠.",
+      "whyAwkward": "동생이 보여 주고 싶었는데 바쁘다고 하면 동생이 서운할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "우와, 진짜 높다!"
+      ],
+      "2": [
+        "어떻게 안 쓰러져?"
+      ],
+      "3": [
+        "나도 어제 탑 만들었는데 쓰러졌어. 너 잘한다."
+      ],
+      "4": [
+        "너 만들어서 뿌듯하지?"
+      ]
+    },
+    "choiceOptions": [
+      "우와, 진짜 높다!",
+      "나 지금 바빠.",
+      "...",
+      "나도 어제 탑 만들었는데 쓰러졌어. 너 잘한다."
+    ],
+    "mission": "동생이나 가족이 만든 것을 보고 '우와' 하고 한 마디 더 말해 주기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-004",
+    "setting": "집(가족)",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "의사소통 기능",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 4,
+    "situation": "거실에서 할머니가 아끼던 컵이 깨져서 아쉬워하신다.",
+    "partnerLine": "할머니가 아끼던 컵이 깨졌어. 아쉽다.",
+    "partnerEmotion": "슬픔",
+    "awkwardExample": {
+      "line": "새로 사면 되죠, 뭐.",
+      "whyAwkward": "할머니에게 소중한 컵이었는데 쉽게 말하면 마음을 몰라준다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 깨졌어요?"
+      ],
+      "2": [
+        "할머니, 안 다치셨어요?"
+      ],
+      "3": [
+        "저도 아끼는 컵 깨뜨려서 속상했던 적 있어요."
+      ],
+      "4": [
+        "아끼던 거라 마음이 아프시죠?"
+      ]
+    },
+    "choiceOptions": [
+      "아, 깨졌어요?",
+      "새로 사면 되죠, 뭐.",
+      "...",
+      "아끼던 거라 마음이 아프시죠?"
+    ],
+    "mission": "속상해 보이는 가족에게 '괜찮아요?' 하고 물어보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-005",
+    "setting": "집(가족)",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "의사소통 기능"
+    ],
+    "targetLevel": 1,
+    "situation": "아빠가 퇴근하면서 딸기를 사 오셨다.",
+    "partnerLine": "자, 네가 좋아하는 딸기 사 왔어.",
+    "partnerEmotion": "기쁨",
+    "awkwardExample": {
+      "line": "딸기 말고 초콜릿 사 오지.",
+      "whyAwkward": "아빠가 생각해서 사 왔는데 다른 걸 말하면 아빠가 서운할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "와, 고마워요!"
+      ],
+      "2": [
+        "어디서 사 왔어요?"
+      ],
+      "3": [
+        "저 딸기 먹으면 기분 좋아져요. 급식에도 나왔어요."
+      ],
+      "4": [
+        "아빠도 신나 보여요. 저 주려고 샀죠?"
+      ]
+    },
+    "choiceOptions": [
+      "와, 고마워요!",
+      "딸기 말고 초콜릿 사 오지.",
+      "...",
+      "어디서 사 왔어요?"
+    ],
+    "mission": "오늘 가족이 해 준 일 한 가지에 '고마워요' 말하기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-006",
+    "setting": "집(가족)",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "상황 맥락 조절",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 2,
+    "situation": "동생이 방금 잠들었는데 엄마가 작은 목소리로 말한다.",
+    "partnerLine": "쉿, 동생 이제 막 잠들었어. 조용히 놀자.",
+    "partnerEmotion": "걱정",
+    "awkwardExample": {
+      "line": "엄마, 나 노래 부를래요! 아아아~",
+      "whyAwkward": "동생이 자고 있는데 큰 소리를 내면 엄마가 걱정할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "알았어요. 조용히 할게요."
+      ],
+      "2": [
+        "그럼 작은 소리로 말해도 돼요?"
+      ],
+      "3": [
+        "저도 잘 때 시끄러우면 깼어요. 그래서 조용히 할게요."
+      ],
+      "4": [
+        "엄마, 동생 깰까 봐 걱정되죠?"
+      ]
+    },
+    "choiceOptions": [
+      "알았어요. 조용히 할게요.",
+      "엄마, 나 노래 부를래요! 아아아~",
+      "...",
+      "그럼 작은 소리로 말해도 돼요?"
+    ],
+    "mission": "동생이나 가족이 쉬고 있을 때 작은 목소리로 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-007",
+    "setting": "집(가족)",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "의사소통 기능",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 3,
+    "situation": "누나가 말도 없이 자기 필통을 쓴 걸 발견했다.",
+    "partnerLine": "야, 내 필통 왜 마음대로 썼어? 말도 없이.",
+    "partnerEmotion": "화남",
+    "awkwardExample": {
+      "line": "뭐 어때, 필통 좀 쓴 걸 갖고.",
+      "whyAwkward": "누나에게 소중한 물건인데 별일 아니라고 하면 누나가 더 화날 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 누나 거 맞네. 미안해."
+      ],
+      "2": [
+        "누나, 다음엔 쓰기 전에 말해 달라는 거지?"
+      ],
+      "3": [
+        "나도 내 물건을 누가 말없이 쓰면 속상하더라. 다음엔 물어볼게."
+      ],
+      "4": [
+        "누나, 말도 없이 써서 화났구나."
+      ]
+    },
+    "choiceOptions": [
+      "아, 누나 거 맞네. 미안해.",
+      "뭐 어때, 필통 좀 쓴 걸 갖고.",
+      "...",
+      "누나, 말도 없이 써서 화났구나."
+    ],
+    "mission": "가족 물건을 쓰기 전에 '써도 돼?' 하고 먼저 물어보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-008",
+    "setting": "집(가족)",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "상황 맥락 조절",
+      "의사소통 기능"
+    ],
+    "targetLevel": 4,
+    "situation": "게임을 하다가 약속한 시간이 지나서 아빠가 말을 건다.",
+    "partnerLine": "약속한 30분이 지나서 아빠 좀 속상해. 이제 끄자.",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "아 진짜, 조금만 더 하면 되잖아요!",
+      "whyAwkward": "약속을 같이 정했는데 짜증 내면 아빠가 존중받지 못한다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "네, 끌게요."
+      ],
+      "2": [
+        "지금 저장하고 끄면 되는 거죠?"
+      ],
+      "3": [
+        "저도 재밌어서 시간 가는 줄 몰랐어요. 다음엔 알람 맞출게요."
+      ],
+      "4": [
+        "아빠, 제가 약속 안 지켜서 속상하셨죠?"
+      ]
+    },
+    "choiceOptions": [
+      "네, 끌게요.",
+      "아 진짜, 조금만 더 하면 되잖아요!",
+      "...",
+      "아빠, 제가 약속 안 지켜서 속상하셨죠?"
+    ],
+    "mission": "게임이나 영상 시간이 끝나면 '네' 하고 약속대로 멈춰 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-009",
+    "setting": "집(가족)",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "담화 관리",
+      "의사소통 기능"
+    ],
+    "targetLevel": 1,
+    "situation": "방금 다툰 동생이 먼저 와서 사과한다.",
+    "partnerLine": "형, 아까 소리 질러서 미안해.",
+    "partnerEmotion": "미안함",
+    "awkwardExample": {
+      "line": "됐어, 말 걸지 마.",
+      "whyAwkward": "용기 내서 사과했는데 밀어내면 동생이 더 속상할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "괜찮아, 이제 풀렸어."
+      ],
+      "2": [
+        "아까 왜 그렇게 화났었어?"
+      ],
+      "3": [
+        "나도 화나면 목소리가 커져. 그럴 때 있어."
+      ],
+      "4": [
+        "너도 마음이 불편했구나. 말해 줘서 고마워."
+      ]
+    },
+    "choiceOptions": [
+      "괜찮아, 이제 풀렸어.",
+      "됐어, 말 걸지 마.",
+      "...",
+      "아까 왜 그렇게 화났었어?"
+    ],
+    "mission": "가족이 미안하다고 하면 '괜찮아' 하고 대답해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-010",
+    "setting": "집(가족)",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "담화 관리"
+    ],
+    "targetLevel": 2,
+    "situation": "할머니가 주말 가족 모임 이야기를 해 주신다.",
+    "partnerLine": "이번 주말에 큰이모네 가서 사촌들 다 모일 거야.",
+    "partnerEmotion": "설렘",
+    "awkwardExample": {
+      "line": "나 그날 가기 싫은데.",
+      "whyAwkward": "할머니가 기대하며 말했는데 바로 싫다고 하면 할머니가 서운할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "와, 다 모이는구나!"
+      ],
+      "2": [
+        "몇 시에 가요? 누구누구 와요?"
+      ],
+      "3": [
+        "작년에 사촌이랑 마당에서 놀았던 거 재밌었어요."
+      ],
+      "4": [
+        "할머니, 다 모여서 신나 보여요."
+      ]
+    },
+    "choiceOptions": [
+      "와, 다 모이는구나!",
+      "나 그날 가기 싫은데.",
+      "...",
+      "몇 시에 가요? 누구누구 와요?"
+    ],
+    "mission": "가족 행사에 대해 궁금한 점 한 가지 물어보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-011",
+    "setting": "집(가족)",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "담화 관리",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 3,
+    "situation": "저녁에 아빠가 오늘 있었던 일을 신나게 이야기한다.",
+    "partnerLine": "아빠 오늘 처음으로 자전거 타고 출근했어. 힘들었는데 뿌듯하더라.",
+    "partnerEmotion": "자랑스러움",
+    "awkwardExample": {
+      "line": "근데 나 배고파. 밥 언제 먹어?",
+      "whyAwkward": "아빠가 이야기 중인데 화제를 바꾸면 아빠가 내 말을 안 듣는다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "오, 자전거 타고 가셨어요?"
+      ],
+      "2": [
+        "얼마나 걸렸어요? 다리는 안 아파요?"
+      ],
+      "3": [
+        "저도 자전거 처음 잘 탔을 때 힘들었는데 뿌듯했어요."
+      ],
+      "4": [
+        "아빠, 힘들어도 해내서 뿌듯하시죠?"
+      ]
+    },
+    "choiceOptions": [
+      "오, 자전거 타고 가셨어요?",
+      "근데 나 배고파. 밥 언제 먹어?",
+      "...",
+      "저도 자전거 처음 잘 탔을 때 힘들었는데 뿌듯했어요."
+    ],
+    "mission": "가족이 한 이야기를 듣고 비슷한 내 경험 한 가지 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "hom-012",
+    "setting": "집(가족)",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "비언어적 의사소통",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 4,
+    "situation": "방문을 세게 닫았는데 엄마가 화난 줄 알고 속상해했다.",
+    "partnerLine": "아까 네가 방문을 쾅 닫아서 엄마 좀 속상했어.",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "그냥 바람 때문에 닫힌 거예요. 별일 아니에요.",
+      "whyAwkward": "엄마가 속상하다고 말했는데 별일 아니라고 하면 마음을 몰라준다고 느낄 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 제가 세게 닫았네요. 죄송해요."
+      ],
+      "2": [
+        "엄마, 혹시 많이 놀라셨어요?"
+      ],
+      "3": [
+        "저도 누가 문을 세게 닫으면 화난 줄 알고 놀라요. 일부러 한 건 아니에요."
+      ],
+      "4": [
+        "엄마, 제가 화난 줄 알고 속상하셨죠?"
+      ]
+    },
+    "choiceOptions": [
+      "아, 제가 세게 닫았네요. 죄송해요.",
+      "그냥 바람 때문에 닫힌 거예요. 별일 아니에요.",
+      "...",
+      "엄마, 제가 화난 줄 알고 속상하셨죠?"
+    ],
+    "mission": "문을 닫을 때 살살 닫고, 화난 게 아니면 '화난 거 아니야' 하고 말해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  }
+]

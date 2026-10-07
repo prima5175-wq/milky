@@ -1,0 +1,537 @@
+[
+  {
+    "id": "rec-001",
+    "setting": "쉬는 시간",
+    "ageBand": "유아",
+    "domain": [
+      "담화 관리"
+    ],
+    "targetLevel": 1,
+    "situation": "화장실에 다녀온 친구가 손을 내밀며 말한다.",
+    "partnerLine": "나 손 씻고 왔어! 깨끗하지?",
+    "partnerEmotion": "자랑스러움",
+    "awkwardExample": {
+      "line": "나 목말라.",
+      "whyAwkward": "친구가 보여 준 손에는 관심이 없는 것 같아서 친구가 서운할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "우와, 깨끗하다!"
+      ],
+      "2": [
+        "비누로 씻었어?"
+      ],
+      "3": [
+        "나도 손 씻으면 뽀드득 소리 나서 좋아."
+      ],
+      "4": [
+        "너 씻고 와서 뿌듯하구나!"
+      ]
+    },
+    "choiceOptions": [
+      "우와, 깨끗하다!",
+      "나 목말라.",
+      "...",
+      "저기 가자."
+    ],
+    "mission": "쉬는 시간에 친구가 보여 주는 것에 '우와, 좋다!' 하고 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-002",
+    "setting": "쉬는 시간",
+    "ageBand": "유아",
+    "domain": [
+      "의사소통 기능"
+    ],
+    "targetLevel": 2,
+    "situation": "친구들이 블록으로 성을 만들고 있다. 한 친구가 나를 쳐다본다.",
+    "partnerLine": "우리 블록으로 성 만들어!",
+    "partnerEmotion": "기쁨",
+    "awkwardExample": {
+      "line": "비켜, 내가 할래.",
+      "whyAwkward": "같이 놀던 친구가 밀려난 것 같아서 속상할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "우와, 멋지다!"
+      ],
+      "2": [
+        "나도 같이 만들어도 돼?"
+      ],
+      "3": [
+        "나도 집에서 블록으로 성 만들어 봤어."
+      ],
+      "4": [
+        "너희 되게 재미있어 보인다!"
+      ]
+    },
+    "choiceOptions": [
+      "나도 같이 만들어도 돼?",
+      "비켜, 내가 할래.",
+      "...",
+      "나 그냥 갈래."
+    ],
+    "mission": "오늘 친구들이 노는 데에 '나도 같이 해도 돼?' 하고 물어보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-003",
+    "setting": "쉬는 시간",
+    "ageBand": "유아",
+    "domain": [
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 3,
+    "situation": "짝꿍이 가방을 뒤적이다가 작은 목소리로 말한다.",
+    "partnerLine": "나 과자 깜빡하고 안 가져왔어...",
+    "partnerEmotion": "걱정",
+    "awkwardExample": {
+      "line": "나는 많이 가져왔지롱.",
+      "whyAwkward": "친구가 걱정하는데 자랑을 들어서 마음이 더 안 좋을 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "어, 안 가져왔구나."
+      ],
+      "2": [
+        "오늘 간식 없어?"
+      ],
+      "3": [
+        "나도 전에 간식 두고 와서 속상했어. 나랑 나눠 먹자."
+      ],
+      "4": [
+        "배고플까 봐 걱정되지?"
+      ]
+    },
+    "choiceOptions": [
+      "나는 많이 가져왔지롱.",
+      "나도 전에 간식 두고 와서 속상했어. 나랑 나눠 먹자.",
+      "...",
+      "얼른 먹어."
+    ],
+    "mission": "간식이 없는 친구가 있으면 '같이 먹을래?' 하고 말해 보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-004",
+    "setting": "쉬는 시간",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "비언어적 의사소통",
+      "담화 관리"
+    ],
+    "targetLevel": 4,
+    "situation": "내 가방이 지나가다가 친구 필통을 쳐서 연필이 바닥에 쏟아졌다.",
+    "partnerLine": "야, 내 필통 떨어졌잖아!",
+    "partnerEmotion": "화남",
+    "awkwardExample": {
+      "line": "별거 아니잖아. 그냥 주워.",
+      "whyAwkward": "친구가 화난 마음을 무시당하는 것 같아서 더 화가 날 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "어, 떨어졌네."
+      ],
+      "2": [
+        "어디 부러졌어? 괜찮아?"
+      ],
+      "3": [
+        "나도 연필 쏟은 적 있어서 얼마나 놀라는지 알아."
+      ],
+      "4": [
+        "깜짝 놀라고 화났지? 미안해, 같이 주울게."
+      ]
+    },
+    "choiceOptions": [
+      "별거 아니잖아. 그냥 주워.",
+      "깜짝 놀라고 화났지? 미안해, 같이 주울게.",
+      "...",
+      "나 아니야."
+    ],
+    "mission": "실수로 친구 물건을 건드리면 '미안해, 괜찮아?' 하고 말해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-005",
+    "setting": "쉬는 시간",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 1,
+    "situation": "복도에서 옆 반 친구와 딱 마주쳤다. 친구가 눈이 커진다.",
+    "partnerLine": "앗, 깜짝이야! 너 여기 있었네!",
+    "partnerEmotion": "놀람",
+    "awkwardExample": {
+      "line": "응.",
+      "whyAwkward": "친구는 반가워서 말했는데 짧은 대답만 들으면 반갑지 않은가 싶을 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "ㅎㅎ 놀랐어? 안녕!"
+      ],
+      "2": [
+        "너 어디 가는 길이야?"
+      ],
+      "3": [
+        "나도 너 만나서 깜짝 놀랐어. 어제도 너 생각했거든."
+      ],
+      "4": [
+        "너 나 만나서 놀랐구나!"
+      ]
+    },
+    "choiceOptions": [
+      "응.",
+      "ㅎㅎ 놀랐어? 안녕!",
+      "...",
+      "나 바빠."
+    ],
+    "mission": "복도에서 아는 친구를 만나면 손을 흔들며 '안녕!' 하고 인사하기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-006",
+    "setting": "쉬는 시간",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "상황 맥락 조절",
+      "의사소통 기능"
+    ],
+    "targetLevel": 2,
+    "situation": "친구가 의자에 기대어 한숨을 쉰다. 오늘 쉬는 시간에 놀 게 없다.",
+    "partnerLine": "뭐 하고 놀지? 맨날 똑같은 건 재미없어.",
+    "partnerEmotion": "지루함",
+    "awkwardExample": {
+      "line": "나는 술래잡기만 할 거야.",
+      "whyAwkward": "친구 이야기는 듣지 않고 내 것만 정해서 친구가 무시당한 느낌이 들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "그러게, 좀 심심하다."
+      ],
+      "2": [
+        "그럼 우리 뭐 하고 놀까? 하고 싶은 거 있어?"
+      ],
+      "3": [
+        "나는 어제 종이접기 했는데 재미있었어."
+      ],
+      "4": [
+        "너 좀 심심하구나."
+      ]
+    },
+    "choiceOptions": [
+      "나는 술래잡기만 할 거야.",
+      "그럼 우리 뭐 하고 놀까? 하고 싶은 거 있어?",
+      "...",
+      "몰라."
+    ],
+    "mission": "친구랑 놀이를 고를 때 '넌 뭐 하고 싶어?' 하고 먼저 물어보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-007",
+    "setting": "쉬는 시간",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "담화 관리",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 3,
+    "situation": "옆자리 친구가 물을 마시다 내 공책에 물을 조금 흘렸다.",
+    "partnerLine": "어, 미안... 네 공책에 물이 조금 튀었어.",
+    "partnerEmotion": "미안함",
+    "awkwardExample": {
+      "line": "아 진짜, 조심 좀 해!",
+      "whyAwkward": "친구가 이미 미안해하는데 화를 내면 더 주눅 들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 물 튀었네."
+      ],
+      "2": [
+        "물 많이 묻었어? 휴지 있어?"
+      ],
+      "3": [
+        "나도 전에 물 쏟은 적 있어. 닦으면 돼."
+      ],
+      "4": [
+        "너 미안해서 마음 불편하지?"
+      ]
+    },
+    "choiceOptions": [
+      "아 진짜, 조심 좀 해!",
+      "나도 전에 물 쏟은 적 있어. 닦으면 돼.",
+      "...",
+      "몰라, 알아서 해."
+    ],
+    "mission": "친구가 실수했을 때 '괜찮아, 닦으면 돼' 하고 말해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-008",
+    "setting": "쉬는 시간",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "의사소통 기능",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 4,
+    "situation": "친구들과 카드 게임을 했는데 짝꿍이 계속 졌다. 짝꿍이 카드를 내려놓는다.",
+    "partnerLine": "또 졌어... 오늘 한 번도 못 이겼어.",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "내가 이겼다! 너 진짜 못한다.",
+      "whyAwkward": "친구가 속상한데 놀림처럼 들려서 마음이 더 상할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 또 졌구나."
+      ],
+      "2": [
+        "한 판 더 할래? 아니면 다른 거 할까?"
+      ],
+      "3": [
+        "나도 계속 지면 기분이 안 좋아서 그만하고 싶더라."
+      ],
+      "4": [
+        "계속 져서 많이 속상하겠다."
+      ]
+    },
+    "choiceOptions": [
+      "내가 이겼다! 너 진짜 못한다.",
+      "계속 져서 많이 속상하겠다.",
+      "...",
+      "그럼 하지 마."
+    ],
+    "mission": "게임에서 진 친구에게 '속상하겠다, 다음엔 같이 해 보자' 하고 말해 보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-009",
+    "setting": "쉬는 시간",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "담화 관리"
+    ],
+    "targetLevel": 1,
+    "situation": "책상 옆 친구가 신나서 몸을 내게 돌린다.",
+    "partnerLine": "나 이번 주말에 놀이공원 간다!",
+    "partnerEmotion": "설렘",
+    "awkwardExample": {
+      "line": "나 지금 바빠.",
+      "whyAwkward": "친구가 기분 좋아서 한 말인데 대화를 끊으면 서운할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "우와, 좋겠다!"
+      ],
+      "2": [
+        "누구랑 가는데?"
+      ],
+      "3": [
+        "나도 놀이공원 갔을 때 롤러코스터 탔어."
+      ],
+      "4": [
+        "너 엄청 기대되나 보다!"
+      ]
+    },
+    "choiceOptions": [
+      "우와, 좋겠다!",
+      "나 지금 바빠.",
+      "...",
+      "그래서?"
+    ],
+    "mission": "친구의 신나는 얘기를 들으면 '우와, 좋겠다!' 하고 한 마디 더하기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-010",
+    "setting": "쉬는 시간",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "의사소통 기능",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 2,
+    "situation": "다음 시간에 발표가 있다. 친구가 노트를 꼭 쥐고 말한다.",
+    "partnerLine": "다음 시간 발표인데 나 너무 떨려.",
+    "partnerEmotion": "걱정",
+    "awkwardExample": {
+      "line": "그냥 하면 되지, 뭐.",
+      "whyAwkward": "친구는 걱정을 말했는데 가볍게 넘어가면 이해받지 못한 느낌이 들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 발표 있구나."
+      ],
+      "2": [
+        "어느 부분이 제일 떨려?"
+      ],
+      "3": [
+        "나도 발표 전에는 손에 땀 나더라."
+      ],
+      "4": [
+        "많이 긴장되지?"
+      ]
+    },
+    "choiceOptions": [
+      "그냥 하면 되지, 뭐.",
+      "어느 부분이 제일 떨려?",
+      "...",
+      "나 화장실 갈래."
+    ],
+    "mission": "걱정하는 친구에게 '어떤 게 제일 걱정돼?' 하고 물어보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-011",
+    "setting": "쉬는 시간",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "담화 관리",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 3,
+    "situation": "내가 다가가자 친구들이 갑자기 이야기를 멈췄다. 그중 한 친구가 말한다.",
+    "partnerLine": "아, 너 얘기한 거 아니야... 그렇게 생각했어?",
+    "partnerEmotion": "슬픔",
+    "awkwardExample": {
+      "line": "그럼 왜 갑자기 조용해졌어?",
+      "whyAwkward": "친구가 걱정해서 한 말인데 따지는 말투로 들리면 마음이 상할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 아니구나."
+      ],
+      "2": [
+        "그럼 무슨 얘기 하고 있었어?"
+      ],
+      "3": [
+        "나도 전에 친구들이 갑자기 조용해져서 오해한 적 있어."
+      ],
+      "4": [
+        "내가 오해해서 속상했지? 미안해."
+      ]
+    },
+    "choiceOptions": [
+      "그럼 왜 갑자기 조용해졌어?",
+      "나도 전에 친구들이 갑자기 조용해져서 오해한 적 있어.",
+      "...",
+      "됐어."
+    ],
+    "mission": "오해가 생기면 바로 화내지 않고 '무슨 얘기였어?' 하고 물어보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "rec-012",
+    "setting": "쉬는 시간",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "의사소통 기능",
+      "상황 맥락 조절"
+    ],
+    "targetLevel": 4,
+    "situation": "달리기 기록이 줄어든 친구가 쉬는 시간에 쑥스러운 듯 웃는다.",
+    "partnerLine": "나 이번에 처음으로 기록이 줄었어. 티 내긴 좀 그렇지만...",
+    "partnerEmotion": "자랑스러움",
+    "awkwardExample": {
+      "line": "그게 뭐라고. 나는 더 빨라.",
+      "whyAwkward": "친구가 용기 내어 말했는데 비교당하면 기쁨이 줄어들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "오, 기록 줄었구나!"
+      ],
+      "2": [
+        "몇 초나 줄었어?"
+      ],
+      "3": [
+        "나도 줄넘기 기록 늘었을 때 몰래 좋았어."
+      ],
+      "4": [
+        "뿌듯한데 말하기는 쑥스러웠구나."
+      ]
+    },
+    "choiceOptions": [
+      "그게 뭐라고. 나는 더 빨라.",
+      "뿌듯한데 말하기는 쑥스러웠구나.",
+      "...",
+      "다음 시간 뭐지?"
+    ],
+    "mission": "친구가 잘한 일을 말하면 '축하해!' 하고 그 마음을 말로 읽어 주기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  }
+]

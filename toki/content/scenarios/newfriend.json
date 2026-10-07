@@ -1,0 +1,542 @@
+[
+  {
+    "id": "new-001",
+    "setting": "처음 만난 친구",
+    "ageBand": "유아",
+    "domain": [
+      "의사소통 기능"
+    ],
+    "targetLevel": 1,
+    "situation": "키즈카페에서 처음 본 친구가 다가와 이름을 말한다.",
+    "partnerLine": "나는 하준이야!",
+    "partnerEmotion": "기쁨",
+    "awkwardExample": {
+      "line": "저리 가.",
+      "whyAwkward": "친구가 반갑게 말했는데 밀어내는 것 같아서 슬플 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "안녕, 하준아!"
+      ],
+      "2": [
+        "하준아, 몇 살이야?"
+      ],
+      "3": [
+        "나는 지아야. 나도 여기 자주 와."
+      ],
+      "4": [
+        "하준이 신나 보여! 같이 놀고 싶구나."
+      ]
+    },
+    "choiceOptions": [
+      "저리 가.",
+      "나는 지아야. 나도 여기 자주 와.",
+      "...",
+      "안녕, 하준아!"
+    ],
+    "mission": "오늘 같은 반 친구에게 '안녕, 나는 ○○야' 하고 말해보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-002",
+    "setting": "처음 만난 친구",
+    "ageBand": "유아",
+    "domain": [
+      "상황 맥락 조절",
+      "의사소통 기능"
+    ],
+    "targetLevel": 2,
+    "situation": "동네 모임 놀이방에서 같이 블록 하자고 했더니 친구가 거절한다.",
+    "partnerLine": "싫어. 나 혼자 만들 거야.",
+    "partnerEmotion": "화남",
+    "awkwardExample": {
+      "line": "그럼 너 안 놀아!",
+      "whyAwkward": "친구가 화난 말로 들려서 더 속상하거나 무서울 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "응, 알겠어."
+      ],
+      "2": [
+        "그럼 나 옆에서 봐도 돼?"
+      ],
+      "3": [
+        "나도 혼자 만들 때 있어. 다 만들면 같이 하자."
+      ],
+      "4": [
+        "혼자 하고 싶었구나."
+      ]
+    },
+    "choiceOptions": [
+      "그럼 너 안 놀아!",
+      "응, 알겠어.",
+      "그럼 나 옆에서 봐도 돼?",
+      "..."
+    ],
+    "mission": "오늘 친구가 싫다고 하면 '알겠어, 이따 놀자' 하고 말해보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-003",
+    "setting": "처음 만난 친구",
+    "ageBand": "유아",
+    "domain": [
+      "상황 맥락 조절",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 4,
+    "situation": "어린이집 행사에서 처음 만난 친구가 보호자 옆에 붙어 서 있다.",
+    "partnerLine": "나... 여기 처음 와서 무서워.",
+    "partnerEmotion": "걱정",
+    "awkwardExample": {
+      "line": "왜 그래? 빨리 와!",
+      "whyAwkward": "친구가 서두르라는 말로 느껴서 더 무섭고 부담스러울 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "그렇구나."
+      ],
+      "2": [
+        "뭐가 제일 무서워?"
+      ],
+      "3": [
+        "나도 처음엔 무서웠어. 지금은 괜찮아."
+      ],
+      "4": [
+        "처음이라 떨리는구나. 걱정됐지?"
+      ]
+    },
+    "choiceOptions": [
+      "그렇구나.",
+      "왜 그래? 빨리 와!",
+      "처음이라 떨리는구나. 걱정됐지?",
+      "..."
+    ],
+    "mission": "같은 반 친구가 쭈뼛거리면 '같이 앉을래?' 하고 말해보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-004",
+    "setting": "처음 만난 친구",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "담화 관리",
+      "의사소통 기능"
+    ],
+    "targetLevel": 1,
+    "situation": "아침 교실에서 새로 온 짝꿍이 인사한다.",
+    "partnerLine": "안녕, 나 오늘 전학 왔어.",
+    "partnerEmotion": "설렘",
+    "awkwardExample": {
+      "line": "어. 그래.",
+      "whyAwkward": "인사했는데 반겨 주지 않는 것 같아서 쓸쓸할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "안녕! 만나서 반가워."
+      ],
+      "2": [
+        "전에는 어느 학교 다녔어?"
+      ],
+      "3": [
+        "나도 새 반 된 날 떨렸어."
+      ],
+      "4": [
+        "오늘 떨리지? 새 학교라 설레기도 하겠다."
+      ]
+    },
+    "choiceOptions": [
+      "어. 그래.",
+      "...",
+      "안녕! 만나서 반가워.",
+      "전에는 어느 학교 다녔어?"
+    ],
+    "mission": "같은 반 친구에게 이름을 묻고 '나는 ○○야' 하고 말해보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-005",
+    "setting": "처음 만난 친구",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "상황 맥락 조절",
+      "의사소통 기능"
+    ],
+    "targetLevel": 2,
+    "situation": "학원에서 처음 만난 친구의 이름을 잘못 불렀다.",
+    "partnerLine": "내 이름은 서윤이야. 지윤이 아니야.",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "그게 그거지, 뭐.",
+      "whyAwkward": "이름은 소중한데 가볍게 넘기는 것 같아서 서운할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 서윤이구나."
+      ],
+      "2": [
+        "서윤아, 맞아? 다시 알려 줄래?"
+      ],
+      "3": [
+        "나도 내 이름 틀리게 부르면 속상해."
+      ],
+      "4": [
+        "이름 틀려서 속상했지? 미안해."
+      ]
+    },
+    "choiceOptions": [
+      "아, 서윤이구나.",
+      "그게 그거지, 뭐.",
+      "...",
+      "서윤아, 맞아? 다시 알려 줄래?"
+    ],
+    "mission": "새로 만난 같은 반 친구 이름을 묻고 한 번 더 불러보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-006",
+    "setting": "처음 만난 친구",
+    "ageBand": "초등 저학년",
+    "domain": [
+      "담화 관리",
+      "의사소통 기능"
+    ],
+    "targetLevel": 3,
+    "situation": "학원 첫날 옆자리 친구가 말을 건다.",
+    "partnerLine": "나 오늘 처음 왔어. 여기 재밌어?",
+    "partnerEmotion": "설렘",
+    "awkwardExample": {
+      "line": "몰라.",
+      "whyAwkward": "궁금해서 물었는데 대화가 끊겨서 친구가 더 어색해질 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "응, 재밌어!"
+      ],
+      "2": [
+        "너는 뭐 배우러 왔어?"
+      ],
+      "3": [
+        "나도 처음엔 떨렸는데 선생님이 잘해 주셔."
+      ],
+      "4": [
+        "처음이라 궁금하고 떨리지?"
+      ]
+    },
+    "choiceOptions": [
+      "몰라.",
+      "응, 재밌어!",
+      "...",
+      "나도 처음엔 떨렸는데 선생님이 잘해 주셔."
+    ],
+    "mission": "학원에서 새로 온 친구에게 '같이 가자' 하고 말해보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-007",
+    "setting": "처음 만난 친구",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "상황 맥락 조절",
+      "의사소통 기능"
+    ],
+    "targetLevel": 2,
+    "situation": "전학 온 친구가 점심시간에 교실 앞에서 머뭇거린다.",
+    "partnerLine": "음... 급식실이 어디야? 나 아직 길을 잘 몰라서.",
+    "partnerEmotion": "걱정",
+    "awkwardExample": {
+      "line": "그것도 몰라?",
+      "whyAwkward": "모르는 게 당연한데 놀리는 것처럼 들려서 주눅 들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "응, 같이 가자."
+      ],
+      "2": [
+        "급식실 가려고? 나랑 같이 갈래?"
+      ],
+      "3": [
+        "나도 처음엔 길 헷갈렸어. 따라와."
+      ],
+      "4": [
+        "처음이라 어색하지? 걱정 마, 알려 줄게."
+      ]
+    },
+    "choiceOptions": [
+      "그것도 몰라?",
+      "응, 같이 가자.",
+      "...",
+      "급식실 가려고? 나랑 같이 갈래?"
+    ],
+    "mission": "오늘 같은 반 친구에게 '필요한 거 있으면 말해' 하고 말해보기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-008",
+    "setting": "처음 만난 친구",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "담화 관리",
+      "의사소통 기능"
+    ],
+    "targetLevel": 3,
+    "situation": "동네 축구 모임에서 처음 본 친구가 내 카드 가방을 본다.",
+    "partnerLine": "어, 너도 축구 카드 모아? 대박!",
+    "partnerEmotion": "놀람",
+    "awkwardExample": {
+      "line": "그냥 모아.",
+      "whyAwkward": "반가워서 말했는데 대화가 닫힌 것 같아서 머쓱할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "응, 맞아! 신기하지?"
+      ],
+      "2": [
+        "너는 누구 카드 제일 좋아해?"
+      ],
+      "3": [
+        "나는 작년부터 모았어. 어제 새 카드 뽑았어."
+      ],
+      "4": [
+        "너도 모은다니까 엄청 신나 보인다!"
+      ]
+    },
+    "choiceOptions": [
+      "그냥 모아.",
+      "응, 맞아! 신기하지?",
+      "오늘 점심 뭐 먹었어?",
+      "나는 작년부터 모았어. 어제 새 카드 뽑았어."
+    ],
+    "mission": "같은 모임 친구에게 좋아하는 것을 하나 물어보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-009",
+    "setting": "처음 만난 친구",
+    "ageBand": "초등 중학년",
+    "domain": [
+      "상황 맥락 조절",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 4,
+    "situation": "동네 모임이 끝나고 보호자가 데리러 와서 친구가 인사한다.",
+    "partnerLine": "벌써 엄마 왔네. 더 놀고 싶었는데...",
+    "partnerEmotion": "슬픔",
+    "awkwardExample": {
+      "line": "그럼 빨리 가.",
+      "whyAwkward": "아쉬운 마음을 말했는데 빨리 가라는 말로 들려서 서운할 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "그래, 잘 가!"
+      ],
+      "2": [
+        "다음에 또 올 수 있어?"
+      ],
+      "3": [
+        "나도 재밌어서 가기 싫을 때 있어. 다음에 또 하자."
+      ],
+      "4": [
+        "더 놀고 싶어서 아쉽구나."
+      ]
+    },
+    "choiceOptions": [
+      "그럼 빨리 가.",
+      "그래, 잘 가!",
+      "...",
+      "더 놀고 싶어서 아쉽구나."
+    ],
+    "mission": "헤어질 때 같은 모임 친구 이름을 부르며 '잘 가, 또 보자' 하고 말해보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-010",
+    "setting": "처음 만난 친구",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "담화 관리",
+      "의사소통 기능"
+    ],
+    "targetLevel": 1,
+    "situation": "방과 후 수업 첫날 옆자리 친구가 자기소개를 한다.",
+    "partnerLine": "안녕, 나는 도윤이야. 3반이고 로봇반 처음이야.",
+    "partnerEmotion": "설렘",
+    "awkwardExample": {
+      "line": "아, 응.",
+      "whyAwkward": "반갑게 소개했는데 관심 없어 보여서 쑥스러울 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "안녕, 도윤아! 나는 민서야."
+      ],
+      "2": [
+        "로봇반 왜 하고 싶었어?"
+      ],
+      "3": [
+        "나도 로봇 조립 좋아해서 왔어."
+      ],
+      "4": [
+        "처음이라 설레고 떨리지?"
+      ]
+    },
+    "choiceOptions": [
+      "아, 응.",
+      "안녕, 도윤아! 나는 민서야.",
+      "...",
+      "숙제 다 했어?"
+    ],
+    "mission": "방과 후 수업에서 옆자리 친구에게 이름과 반을 물어보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-011",
+    "setting": "처음 만난 친구",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "상황 맥락 조절",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 3,
+    "situation": "새로 만난 같은 반 친구가 복도에서 인사했는데 못 듣고 지나쳤다.",
+    "partnerLine": "아까 내가 인사했는데 그냥 지나갔잖아. 나 싫어?",
+    "partnerEmotion": "속상함",
+    "awkwardExample": {
+      "line": "아니거든? 왜 그렇게 생각해?",
+      "whyAwkward": "속상해서 말했는데 따지는 것처럼 들려서 더 말하기 어려울 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "아, 인사했었구나."
+      ],
+      "2": [
+        "언제 인사했어? 어디서?"
+      ],
+      "3": [
+        "나도 이어폰 끼고 있다가 친구 인사 못 들은 적 있어."
+      ],
+      "4": [
+        "내가 지나가서 속상했겠다. 미안해."
+      ]
+    },
+    "choiceOptions": [
+      "아니거든? 왜 그렇게 생각해?",
+      "아, 인사했었구나.",
+      "...",
+      "내가 지나가서 속상했겠다. 미안해."
+    ],
+    "mission": "오늘 복도에서 만난 같은 반 친구에게 먼저 눈 마주치고 인사하기",
+    "conflict": true,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  },
+  {
+    "id": "new-012",
+    "setting": "처음 만난 친구",
+    "ageBand": "초등 고학년",
+    "domain": [
+      "상황 맥락 조절",
+      "의사소통 기능",
+      "비언어적 의사소통"
+    ],
+    "targetLevel": 4,
+    "situation": "동네 보드게임 모임에서 처음 온 친구가 한쪽에 앉아 있다.",
+    "partnerLine": "나는 사람 많은 데가 좀 어색해서... 그냥 여기 있을게.",
+    "partnerEmotion": "걱정",
+    "awkwardExample": {
+      "line": "재미없게 왜 그래?",
+      "whyAwkward": "마음을 얘기했는데 재미없다고 하면 이상한 사람처럼 느껴져 움츠러들 수 있어."
+    },
+    "goodResponses": {
+      "1": [
+        "응, 알겠어. 괜찮아."
+      ],
+      "2": [
+        "그럼 우리 둘이 한 판 할래?"
+      ],
+      "3": [
+        "나도 처음 모임 갔을 땐 한참 구경만 했어."
+      ],
+      "4": [
+        "사람이 많아서 부담스러웠구나."
+      ]
+    },
+    "choiceOptions": [
+      "재미없게 왜 그래?",
+      "응, 알겠어. 괜찮아.",
+      "...",
+      "사람이 많아서 부담스러웠구나."
+    ],
+    "mission": "같은 모임 친구가 조용히 있으면 '여기 같이 앉아도 돼?' 하고 물어보기",
+    "conflict": false,
+    "media": {
+      "cartoon": null,
+      "videoAwkward": null,
+      "videoGood": null
+    },
+    "reviewStatus": "draft"
+  }
+]
