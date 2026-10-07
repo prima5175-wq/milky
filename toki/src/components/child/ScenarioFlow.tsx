@@ -10,21 +10,29 @@ import { browserTts } from "@/lib/speech/tts";
 import { browserStt, type SttSession } from "@/lib/speech/stt";
 import { buildChoices, shuffle } from "@/lib/practice/choices";
 import { MAX_TURNS, offlineEngine, type InputMode, type PracticeEngine, type PracticeOutput } from "@/lib/practice/engine";
+import { LimitReachedError, remoteEngine } from "@/lib/practice/remote";
+import { flushPendingSafety, queueSafety } from "@/lib/safety/pending";
+import { TimeUp } from "./TimeUp";
+import { useUsageHeartbeat } from "./useUsageHeartbeat";
 import { POINTS } from "@/lib/practice/rewards";
 import type { Level, Scenario } from "@/lib/scenarios/schema";
 
 type Step = "watch" | "question" | "practice" | "mission";
 interface Turn { text: string; out: PracticeOutput }
 
-export function ScenarioFlow({ scenario: s, targetLevel, engine = offlineEngine }: { scenario: Scenario; targetLevel: Level; engine?: PracticeEngine }) {
+export function ScenarioFlow({ scenario: s, targetLevel, engine = remoteEngine }: { scenario: Scenario; targetLevel: Level; engine?: PracticeEngine }) {
   const [settings] = useChildSettings();
   const cap = SUBTITLE_CLASS[settings.subtitleSize];
   const [step, setStep] = useState<Step>("watch");
+  const [timeUp, setTimeUp] = useState(false);
+  useUsageHeartbeat(() => setTimeUp(true));
+  useEffect(() => { flushPendingSafety(); }, []);
   const speak = (t: string) => { if (settings.readAloud) browserTts.speak(t, { rate: settings.speechRate }); };
   useEffect(() => () => browserTts.cancel(), []);
 
   const good = s.goodResponses[String(targetLevel) as "1"][0];
 
+  if (timeUp) return <TimeUp lowStimulus={settings.lowStimulus} />;
   return (
     <div className={settings.lowStimulus ? "low-stim min-h-screen" : "min-h-screen"} style={{ background: "var(--bg)" }}>
       <main className="mx-auto max-w-2xl p-6">
@@ -32,7 +40,7 @@ export function ScenarioFlow({ scenario: s, targetLevel, engine = offlineEngine 
           <span aria-label="진행 단계">{["watch", "question", "practice", "mission"].indexOf(step) + 1} / 4</span></nav>
         {step === "watch" && <Watch s={s} good={good} cap={cap} speak={speak} onNext={() => setStep("question")} />}
         {step === "question" && <Question s={s} good={good} cap={cap} speak={speak} onNext={() => setStep("practice")} />}
-        {step === "practice" && <Practice s={s} targetLevel={targetLevel} engine={engine} cap={cap} speak={speak} defaultMode={settings.inputMode} onDone={() => setStep("mission")} />}
+        {step === "practice" && <Practice s={s} targetLevel={targetLevel} engine={engine} cap={cap} speak={speak} defaultMode={settings.inputMode} onDone={() => setStep("mission")} onTimeUp={() => setTimeUp(true)} />}
         {step === "mission" && <Mission s={s} cap={cap} speak={speak} />}
       </main>
     </div>
@@ -84,7 +92,7 @@ function Question({ s, good, cap, speak, onNext }: { s: Scenario; good: string; 
   );
 }
 
-function Practice({ s, targetLevel, engine, cap, speak, defaultMode, onDone }: { s: Scenario; targetLevel: Level; engine: PracticeEngine; cap: string; speak: (t: string) => void; defaultMode: InputMode; onDone: () => void }) {
+function Practice({ s, targetLevel, engine, cap, speak, defaultMode, onDone, onTimeUp }: { s: Scenario; targetLevel: Level; engine: PracticeEngine; cap: string; speak: (t: string) => void; defaultMode: InputMode; onDone: () => void; onTimeUp: () => void }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [mode, setMode] = useState<InputMode>(defaultMode);
   const [text, setText] = useState("");
@@ -108,7 +116,12 @@ function Practice({ s, targetLevel, engine, cap, speak, defaultMode, onDone }: {
     setBusy(true);
     let out: PracticeOutput;
     try { out = await engine.respond({ scenario: s, targetLevel, turnNo, text: t, mode: m }); }
-    catch { out = await offlineEngine.respond({ scenario: s, targetLevel, turnNo, text: t, mode: m }); } // AI 연결이 끊겨도 계속한다
+    catch (e) {
+      if (e instanceof LimitReachedError) { setBusy(false); onTimeUp(); return; }
+      // AI·네트워크가 안 돼도 계속한다. 이때 감지된 안전 이벤트는 나중에 서버로 보낸다.
+      out = await offlineEngine.respond({ scenario: s, targetLevel, turnNo, text: t, mode: m });
+      if (out.safetyFlag) { queueSafety({ scenarioId: s.id, category: out.safetyCategory ?? "model_flagged", excerpt: t }); flushPendingSafety(); }
+    }
     setTurns((x) => [...x, { text: t, out }]); setText(""); setShowResult(true); setBusy(false);
     speak(out.safetyFlag ? out.feedback : `${out.friendReply} ${out.feedback}`);
   }

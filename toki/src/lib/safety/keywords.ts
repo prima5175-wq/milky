@@ -1,9 +1,9 @@
 // 안전 키워드 감지: 아동이 위험하거나 걱정되는 말을 하면 연습을 멈추고 어른에게 알리도록 안내한다.
 // ⚠ 이 목록은 임시 초안입니다. 전문가(아동 상담·보호 전문가) 검토 후 확정해야 합니다.
 // 놓치는 것보다 과하게 걸리는 쪽이 낫다: 오탐은 "어른에게 이야기해 줘" 안내가 한 번 나올 뿐이다.
-export type SafetyCategory = "self_harm" | "abuse" | "bullying" | "secrecy";
+export type SafetyCategory = "self_harm" | "abuse" | "bullying" | "secrecy" | "model_flagged";
 
-const RULES: Array<{ category: SafetyCategory; re: RegExp }> = [
+const RULES: Array<{ category: Exclude<SafetyCategory, "model_flagged">; re: RegExp }> = [
   { category: "self_harm", re: /죽고\s?싶|죽을\s?래|죽어\s?버리|사라지고\s?싶|자해|스스로\s?(다치|해치)|없어지고\s?싶/ },
   { category: "abuse", re: /(때렸|때려서|맞았|맞아서|때리면|발로\s?찼|목을\s?졸)|(몸을?|옷을?)\s?(만졌|만져|벗)|아빠가\s?때|엄마가\s?때|어른이\s?때/ },
   { category: "bullying", re: /괴롭[혀힘]|따돌|왕따|놀림\s?당|협박|돈을?\s?뺏/ },

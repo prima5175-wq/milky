@@ -12,6 +12,8 @@ export function ChildHome({ scenarios, nickname, demo }: { scenarios: Pick<Scena
   const [settings, setSettings] = useChildSettings();
   const [showSettings, setShowSettings] = useState(false);
   const [doneToday, setDone] = useState<string[]>([]);
+  const [timeUp, setTimeUp] = useState(false);
+  useEffect(() => { fetch("/api/usage").then((r) => r.json()).then((j) => setTimeUp(!!j.reached)).catch(() => {}); }, []);
   useEffect(() => setDone(loadMissions().filter((m) => m.date === new Date().toISOString().slice(0, 10)).map((m) => m.scenarioId)), []);
 
   return (
@@ -22,12 +24,13 @@ export function ChildHome({ scenarios, nickname, demo }: { scenarios: Pick<Scena
           <Toki size={96} />
           <p className={SUBTITLE_CLASS[settings.subtitleSize]}>안녕, {nickname}! 오늘도 친구 말을 같이 들어 볼까?</p>
         </div>
+        {timeUp && <p role="status" className="mt-6 rounded-2xl border-2 p-4 text-xl">오늘은 여기까지! 이제 진짜 친구에게 해 볼 시간이야.</p>}
         <h1 className="mb-3 mt-8 text-2xl font-bold">오늘 연습</h1>
         {scenarios.length === 0 ? <p className="text-lg">오늘 연습할 이야기가 아직 없어요. 선생님께 말해 주세요.</p> : (
           <ul className="space-y-3">
             {scenarios.map((s, i) => (
               <li key={s.id}>
-                <Link href={`/child/${s.id}`} className="flex items-center justify-between rounded-2xl border-2 p-5 text-xl">
+                <Link href={`/child/${s.id}`} aria-disabled={timeUp} tabIndex={timeUp ? -1 : 0} className={`flex items-center justify-between rounded-2xl border-2 p-5 text-xl ${timeUp ? "pointer-events-none opacity-40" : ""}`}>
                   <span>{i + 1}. {s.setting}</span><span>{doneToday.includes(s.id) ? "✔ 했어요" : "시작 ▶"}</span>
                 </Link>
               </li>
