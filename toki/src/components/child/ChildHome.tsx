@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Toki } from "./Toki";
 import { SettingsPanel } from "./SettingsPanel";
+import { warmOffline } from "@/components/RegisterSW";
 import { useChildSettings } from "./useChildSettings";
 import { SUBTITLE_CLASS } from "@/lib/child/settings";
 import type { Scenario } from "@/lib/scenarios/schema";
@@ -12,6 +13,7 @@ export function ChildHome({ scenarios, nickname, demo }: { scenarios: Pick<Scena
   const [showSettings, setShowSettings] = useState(false);
   const [doneToday, setDone] = useState<string[]>([]);
   const [timeUp, setTimeUp] = useState(false);
+  useEffect(() => { warmOffline(["/child", "/child/stickers", ...scenarios.map((s) => `/child/${s.id}`)]); }, [scenarios]);
   useEffect(() => { fetch("/api/usage").then((r) => r.json()).then((j) => setTimeUp(!!j.reached)).catch(() => {}); }, []);
   useEffect(() => { fetch("/api/progress").then((r) => r.json()).then((j) => setDone(j.doneToday ?? [])).catch(() => {}); }, []);
 
