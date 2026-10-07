@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { SafetyAlerts } from "@/components/SafetyAlerts";
+import { downloadReport } from "@/lib/report/download";
 
 const KEY = "toki.guardianPin";
 interface Overview {
@@ -81,6 +82,9 @@ function Dashboard({ pin, onLock }: { pin: string; onLock: () => void }) {
 
       <section className={sec} aria-label="주간 요약"><h2 className="mb-2 text-lg font-bold">이번 주 요약</h2>
         <ul className="list-inside list-disc space-y-1">{o.summary.lines.map((l) => <li key={l}>{l}</li>)}</ul></section>
+
+      <section className={sec} aria-label="진도 보고서"><h2 className="mb-2 text-lg font-bold">진도 보고서</h2><p className="mb-2 text-sm opacity-70">검사 결과 변화와 연습 요약을 PDF로 받아 상담에 쓰실 수 있어요.</p>
+        <button className="rounded-lg border px-3 py-2" onClick={async () => { const r = await downloadReport({ pin }); setMsg(r.ok ? "보고서를 내려받았어요" : r.error ?? ""); }}>보고서 PDF 받기</button></section>
 
       <section className={sec} aria-label="대화 팁"><h2 className="mb-2 text-lg font-bold">집에서 해 볼 수 있는 대화 팁</h2>
         <ul className="list-inside list-disc space-y-1">{o.tips.map((t) => <li key={t.text}>{t.text}</li>)}</ul></section>

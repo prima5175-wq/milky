@@ -7,6 +7,7 @@ import { retestInfo } from "@/lib/assessments/retest";
 import { buildTimeline, type NoteLike } from "@/lib/assessments/timeline";
 import { validateScores } from "@/lib/assessments/validate";
 import { TrendChart } from "./TrendChart";
+import { downloadReport } from "@/lib/report/download";
 
 const STATUS = { none: "", ok: "예정 여유", soon: "곧 재검 시기", overdue: "재검 시기 지남" } as const;
 const JUDGE = { better: "↑ 좋아짐", worse: "↓ 주의", neutral: "변화" } as const;
@@ -29,6 +30,7 @@ export function ChildAssessments(props: { childId: string; catalog: CatalogEntry
   const [phase, setPhase] = useState<AssessmentRecord["phase"]>("follow_up");
   const [note, setNote] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [reportMsg, setReportMsg] = useState("");
   // 비교 시점은 선택 전까지 '처음 → 최근'이 기본값 (null)
   const [pickA, setA] = useState<number | null>(null), [pickB, setB] = useState<number | null>(null);
   const last = Math.max(series.length - 1, 0);
@@ -50,6 +52,10 @@ export function ChildAssessments(props: { childId: string; catalog: CatalogEntry
   return (
     <div className="space-y-8">
       <section>
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <button className="rounded-xl border px-4 py-2 text-sm" onClick={async () => { setReportMsg("만드는 중…"); const r = await downloadReport({ records }); setReportMsg(r.ok ? "보고서를 내려받았어요" : r.error ?? ""); }}>보호자 상담용 보고서 (PDF)</button>
+          {reportMsg && <span role="status" className="text-sm">{reportMsg}</span>}
+        </div>
         <label className="block text-sm font-medium">검사 선택
           <select className="ml-2 rounded border p-1" value={catalogId} onChange={(e) => { setCatalogId(e.target.value); setFieldKey(""); setForm({}); setA(null); setB(null); }}>
             {props.catalog.map((c) => <option key={c.id} value={c.id}>{c.abbreviation ?? c.nameKo} · {c.category}</option>)}
