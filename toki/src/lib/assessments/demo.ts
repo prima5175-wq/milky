@@ -25,8 +25,8 @@ const records: AssessmentRecord[] = [
 ];
 
 export const demoRepository: AssessmentRepository = {
-  listChildren: async () => [{ id: "demo-1", nickname: "예시 아동", ageBand: "7-9" }],
-  getChild: async (id) => (id === "demo-1" ? { id, nickname: "예시 아동", ageBand: "7-9" } : null),
+  listChildren: async () => [{ id: "demo-1", nickname: "예시 아동", ageBand: "7-8" }],
+  getChild: async (id) => (id === "demo-1" ? { id, nickname: "예시 아동", ageBand: "7-8" } : null),
   listCatalog: async () => catalog,
   listRecords: async (childId) => records.filter((x) => x.childId === childId),
   listNotes: async () => [{ id: "n1", date: "2025-03-12", body: "(예시) 눈맞춤과 주고받기가 늘었다는 보호자 보고" }],
