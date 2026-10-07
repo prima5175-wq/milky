@@ -5,7 +5,7 @@ import { Toki } from "./Toki";
 import { VideoPlayer } from "./VideoPlayer";
 import { useChildSettings } from "./useChildSettings";
 import { SUBTITLE_CLASS } from "@/lib/child/settings";
-import { completePractice } from "@/lib/child/progress";
+import { completePractice, flushPendingProgress } from "@/lib/child/progress";
 import { browserTts } from "@/lib/speech/tts";
 import { browserStt, type SttSession } from "@/lib/speech/stt";
 import { buildChoices, shuffle } from "@/lib/practice/choices";
@@ -18,7 +18,7 @@ import { POINTS } from "@/lib/practice/rewards";
 import type { Level, Scenario } from "@/lib/scenarios/schema";
 
 type Step = "watch" | "question" | "practice" | "mission";
-interface Turn { text: string; out: PracticeOutput }
+interface Turn { text: string; out: PracticeOutput; mode: InputMode }
 
 export function ScenarioFlow({ scenario: s, targetLevel, engine = remoteEngine }: { scenario: Scenario; targetLevel: Level; engine?: PracticeEngine }) {
   const [settings] = useChildSettings();
@@ -26,7 +26,8 @@ export function ScenarioFlow({ scenario: s, targetLevel, engine = remoteEngine }
   const [step, setStep] = useState<Step>("watch");
   const [timeUp, setTimeUp] = useState(false);
   useUsageHeartbeat(() => setTimeUp(true));
-  useEffect(() => { flushPendingSafety(); }, []);
+  useEffect(() => { flushPendingSafety(); flushPendingProgress(); }, []);
+  const [record, setRecord] = useState<{ levels: Array<number | null>; modes: string[] }>({ levels: [], modes: [] });
   const speak = (t: string) => { if (settings.readAloud) browserTts.speak(t, { rate: settings.speechRate }); };
   useEffect(() => () => browserTts.cancel(), []);
 
@@ -40,8 +41,8 @@ export function ScenarioFlow({ scenario: s, targetLevel, engine = remoteEngine }
           <span aria-label="진행 단계">{["watch", "question", "practice", "mission"].indexOf(step) + 1} / 4</span></nav>
         {step === "watch" && <Watch s={s} good={good} cap={cap} speak={speak} onNext={() => setStep("question")} />}
         {step === "question" && <Question s={s} good={good} cap={cap} speak={speak} onNext={() => setStep("practice")} />}
-        {step === "practice" && <Practice s={s} targetLevel={targetLevel} engine={engine} cap={cap} speak={speak} defaultMode={settings.inputMode} onDone={() => setStep("mission")} onTimeUp={() => setTimeUp(true)} />}
-        {step === "mission" && <Mission s={s} cap={cap} speak={speak} />}
+        {step === "practice" && <Practice s={s} targetLevel={targetLevel} engine={engine} cap={cap} speak={speak} defaultMode={settings.inputMode} onDone={(r) => { setRecord(r); setStep("mission"); }} onTimeUp={() => setTimeUp(true)} />}
+        {step === "mission" && <Mission s={s} cap={cap} speak={speak} record={record} />}
       </main>
     </div>
   );
@@ -92,7 +93,7 @@ function Question({ s, good, cap, speak, onNext }: { s: Scenario; good: string; 
   );
 }
 
-function Practice({ s, targetLevel, engine, cap, speak, defaultMode, onDone, onTimeUp }: { s: Scenario; targetLevel: Level; engine: PracticeEngine; cap: string; speak: (t: string) => void; defaultMode: InputMode; onDone: () => void; onTimeUp: () => void }) {
+function Practice({ s, targetLevel, engine, cap, speak, defaultMode, onDone, onTimeUp }: { s: Scenario; targetLevel: Level; engine: PracticeEngine; cap: string; speak: (t: string) => void; defaultMode: InputMode; onDone: (r: { levels: Array<number | null>; modes: string[] }) => void; onTimeUp: () => void }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [mode, setMode] = useState<InputMode>(defaultMode);
   const [text, setText] = useState("");
@@ -122,7 +123,7 @@ function Practice({ s, targetLevel, engine, cap, speak, defaultMode, onDone, onT
       out = await offlineEngine.respond({ scenario: s, targetLevel, turnNo, text: t, mode: m });
       if (out.safetyFlag) { queueSafety({ scenarioId: s.id, category: out.safetyCategory ?? "model_flagged", excerpt: t }); flushPendingSafety(); }
     }
-    setTurns((x) => [...x, { text: t, out }]); setText(""); setShowResult(true); setBusy(false);
+    setTurns((x) => [...x, { text: t, out, mode: m }]); setText(""); setShowResult(true); setBusy(false);
     speak(out.safetyFlag ? out.feedback : `${out.friendReply} ${out.feedback}`);
   }
   function mic() {
@@ -167,14 +168,17 @@ function Practice({ s, targetLevel, engine, cap, speak, defaultMode, onDone, onT
 
       {awaitingNext && <Next onClick={() => { setShowResult(false); }}>한 번 더 말해 볼래요 ▶</Next>}
       {(awaitingNext || finished) && last !== undefined && (
-        <button className="w-full rounded-2xl border-2 p-4 text-xl" onClick={onDone}>{safety ? "어른에게 이야기하러 갈게요" : "이제 충분해요 ▶ 미션 보기"}</button>)}
+        <button className="w-full rounded-2xl border-2 p-4 text-xl" onClick={() => onDone({ levels: turns.map((t) => t.out.detectedLevel), modes: turns.map((t) => t.mode) })}>{safety ? "어른에게 이야기하러 갈게요" : "이제 충분해요 ▶ 미션 보기"}</button>)}
     </div>
   );
 }
 
-function Mission({ s, cap, speak }: { s: Scenario; cap: string; speak: (t: string) => void }) {
+function Mission({ s, cap, speak, record }: { s: Scenario; cap: string; speak: (t: string) => void; record: { levels: Array<number | null>; modes: string[] } }) {
   const [earned, setEarned] = useState<number | null>(null);
-  useEffect(() => { setEarned(completePractice(s.id, s.mission).earned); speak(`오늘의 미션이에요. ${s.mission}`); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    completePractice({ scenarioId: s.id, levels: record.levels, modes: record.modes }).then((r) => setEarned(r.earned));
+    speak(`오늘의 미션이에요. ${s.mission}`);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="animate-pop space-y-4 text-center">
       <Toki size={96} />

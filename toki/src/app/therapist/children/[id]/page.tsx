@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { demoRepository as repo } from "@/lib/assessments/demo";
 import { SafetyAlerts } from "@/components/SafetyAlerts";
+import { HtpPanel } from "@/components/htp/HtpPanel";
 import { ChildAssessments } from "@/components/assessments/ChildAssessments";
 
 export default async function ChildPage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,6 +17,7 @@ export default async function ChildPage({ params }: { params: Promise<{ id: stri
       <div className="mb-4"><SafetyAlerts role="therapist" /></div>
       <p className="mb-4"><Link className="underline" href={`/therapist/children/${id}/prescription`}>연습 설정(시간·개수·시나리오)</Link></p>
       <ChildAssessments childId={id} catalog={catalog} initialRecords={records} notes={notes} />
+      <div className="mt-8"><HtpPanel /></div>
     </main>
   );
 }

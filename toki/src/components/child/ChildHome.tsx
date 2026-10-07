@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Toki } from "./Toki";
 import { SettingsPanel } from "./SettingsPanel";
 import { useChildSettings } from "./useChildSettings";
-import { loadMissions } from "@/lib/child/progress";
 import { SUBTITLE_CLASS } from "@/lib/child/settings";
 import type { Scenario } from "@/lib/scenarios/schema";
 
@@ -14,7 +13,7 @@ export function ChildHome({ scenarios, nickname, demo }: { scenarios: Pick<Scena
   const [doneToday, setDone] = useState<string[]>([]);
   const [timeUp, setTimeUp] = useState(false);
   useEffect(() => { fetch("/api/usage").then((r) => r.json()).then((j) => setTimeUp(!!j.reached)).catch(() => {}); }, []);
-  useEffect(() => setDone(loadMissions().filter((m) => m.date === new Date().toISOString().slice(0, 10)).map((m) => m.scenarioId)), []);
+  useEffect(() => { fetch("/api/progress").then((r) => r.json()).then((j) => setDone(j.doneToday ?? [])).catch(() => {}); }, []);
 
   return (
     <div className={settings.lowStimulus ? "low-stim min-h-screen" : "min-h-screen"} style={{ background: "var(--bg)" }}>

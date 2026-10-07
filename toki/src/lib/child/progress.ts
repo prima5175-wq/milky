@@ -1,24 +1,23 @@
-// 데모용 진행 기록(브라우저 저장). DB 연결 후에는 서버 기록으로 대체된다.
-import { POINTS, practicePointsToday } from "../practice/rewards.ts";
+// 아동 화면의 진행 기록 전송. 점수는 서버가 정한다. 연결이 안 되면 브라우저에 보관했다가 나중에 보낸다.
+export interface CompletePayload { scenarioId: string; levels: Array<number | null>; modes: string[] }
+const KEY = "toki.pendingProgress.v1";
+const read = (): CompletePayload[] => { try { return JSON.parse(localStorage.getItem(KEY) ?? "[]"); } catch { return []; } };
+const write = (v: CompletePayload[]) => { try { v.length ? localStorage.setItem(KEY, JSON.stringify(v)) : localStorage.removeItem(KEY); } catch { /* 무시 */ } };
 
-export interface StickerEntry { id: string; reason: "practice" | "mission"; points: number; scenarioId: string; date: string }
-export interface PendingMission { scenarioId: string; text: string; date: string }
-const SK = "toki.stickers.v1", MK = "toki.missions.v1";
-const today = () => new Date().toISOString().slice(0, 10);
-
-function read<T>(key: string): T[] { try { return JSON.parse(localStorage.getItem(key) ?? "[]"); } catch { return []; } }
-function write(key: string, v: unknown) { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* 무시 */ } }
-
-export const loadStickers = () => read<StickerEntry>(SK);
-export const loadMissions = () => read<PendingMission>(MK);
-
-/** 연습을 마치면 작은 스티커 1개(하루 상한 있음), 미션은 보호자 확인 대기로 둔다. 미션 점수는 확인 후에만 준다. */
-export function completePractice(scenarioId: string, missionText: string) {
-  const stickers = loadStickers();
-  const already = stickers.filter((s) => s.reason === "practice" && s.date === today()).length * POINTS.practiceDone;
-  const pts = practicePointsToday(already);
-  if (pts > 0) write(SK, [...stickers, { id: `${Date.now()}`, reason: "practice", points: pts, scenarioId, date: today() }]);
-  const missions = loadMissions();
-  if (!missions.some((m) => m.scenarioId === scenarioId && m.date === today())) write(MK, [...missions, { scenarioId, text: missionText, date: today() }]);
-  return { earned: pts };
+async function send(p: CompletePayload): Promise<{ ok: boolean; earned: number }> {
+  try {
+    const r = await fetch("/api/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(p) });
+    if (!r.ok) return { ok: r.status >= 400 && r.status < 500, earned: 0 }; // 4xx 는 다시 보내도 소용없으니 버린다
+    const j = await r.json(); return { ok: true, earned: j.earned ?? 0 };
+  } catch { return { ok: false, earned: 0 }; }
+}
+export async function completePractice(p: CompletePayload): Promise<{ earned: number; queued: boolean }> {
+  const r = await send(p);
+  if (!r.ok) { write([...read(), p]); return { earned: 0, queued: true }; }
+  return { earned: r.earned, queued: false };
+}
+export async function flushPendingProgress() {
+  const rest: CompletePayload[] = [];
+  for (const p of read()) { const r = await send(p); if (!r.ok) rest.push(p); }
+  write(rest);
 }

@@ -3,14 +3,19 @@ import { useMemo, useState } from "react";
 import { DOMAINS, type Domain, type Level, type Scenario } from "@/lib/scenarios/schema";
 import { suggestScenarios, validatePrescription, MINUTES_PER_SCENARIO } from "@/lib/scenarios/prescription";
 
-export function PrescriptionForm({ ageBand, scenarios }: { ageBand: string; scenarios: Scenario[] }) {
-  const [minutes, setMinutes] = useState(15), [count, setCount] = useState(3), [level, setLevel] = useState<Level>(2);
-  const [domains, setDomains] = useState<Domain[]>([]);
+export function PrescriptionForm({ ageBand, scenarios, initial }: { ageBand: string; scenarios: Scenario[]; initial: { dailyMinutes: number; dailyScenarios: number; targetLevel: Level; targetDomains: Domain[] } }) {
+  const [minutes, setMinutes] = useState(initial.dailyMinutes), [count, setCount] = useState(initial.dailyScenarios), [level, setLevel] = useState<Level>(initial.targetLevel);
+  const [domains, setDomains] = useState<Domain[]>(initial.targetDomains);
+  const [serverErrors, setServerErrors] = useState<string[]>([]);
   const [assigned, setAssigned] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
 
   const check = validatePrescription({ dailyMinutes: minutes, dailyScenarios: count, targetLevel: level, targetDomains: domains });
   const suggestions = useMemo(() => suggestScenarios({ ageBand, targetLevel: level, targetDomains: domains }, scenarios, assigned).slice(0, 8), [ageBand, level, domains, scenarios, assigned]);
+  async function save() {
+    const r = await fetch("/api/child-config", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ dailyMinutes: minutes, dailyScenarios: count, targetLevel: level, targetDomains: domains }) });
+    const j = await r.json(); setServerErrors(r.ok ? [] : (j.errors ?? ["저장하지 못했어요"])); setSaved(r.ok);
+  }
   const toggle = (d: Domain) => setDomains((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d]));
   const num = (v: string) => (v === "" ? NaN : Number(v));
 
@@ -48,8 +53,9 @@ export function PrescriptionForm({ ageBand, scenarios }: { ageBand: string; scen
               </li>))}</ul>}
       </section>
 
-      <button disabled={check.errors.length > 0} className="rounded-xl bg-[var(--accent)] px-5 py-2 text-white disabled:opacity-40" onClick={() => setSaved(true)}>처방 저장</button>
-      {saved && <p className="text-sm text-green-700">저장했어요. (데모: 이 화면에서만 반영됩니다. 변경 이력은 DB 연결 시 기록됩니다.)</p>}
+      <button disabled={check.errors.length > 0} className="rounded-xl bg-[var(--accent)] px-5 py-2 text-white disabled:opacity-40" onClick={save}>저장</button>
+      {serverErrors.map((e) => <p key={e} role="alert" className="text-sm text-red-700">{e}</p>)}
+      {saved && <p role="status" className="text-sm text-green-700">저장했어요. 아이 화면의 하루 시간·개수·목표 단계에 바로 반영돼요. (시나리오 배정은 DB 연결 후 저장돼요.)</p>}
     </div>
   );
 }
