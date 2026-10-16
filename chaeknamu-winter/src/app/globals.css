@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-pine: #1e3a2f;
-  --color-pine-dark: #0f2219;
-  --color-gold: #e3b04b;
-  --color-snow: #f5f6f2;
-  --color-ink: #1b2a23;
-  --color-muted: #4a5a52;
-  --color-line: #d6dcd4;
+  --color-pine: #2f7a68;
+  --color-pine-dark: #25624f;
+  --color-gold: #f4bf57;
+  --color-snow: #f4faf7;
+  --color-ink: #22332d;
+  --color-muted: #5d7068;
+  --color-line: #dcebe4;
+
+  --color-mint: #e2f3ec;
+  --color-sky: #e6f2f8;
 
   --font-serif: var(--font-noto-serif), "Noto Serif KR", serif;
   --font-sans: var(--font-noto-sans), "Noto Sans KR", sans-serif;
@@ -48,6 +51,6 @@ h1, h2, h3 {
     @apply mb-1 block text-sm font-bold text-ink;
   }
   .chip {
-    @apply flex min-h-11 cursor-pointer items-center rounded-xl border border-line bg-white px-3 py-2 text-[15px] has-[:checked]:border-pine has-[:checked]:bg-pine/5 has-[:checked]:font-bold;
+    @apply flex min-h-11 cursor-pointer items-center rounded-xl border border-line bg-white px-3 py-2 text-[15px] has-[:checked]:border-pine has-[:checked]:bg-mint has-[:checked]:font-bold;
   }
 }

@@ -2,13 +2,12 @@ import Link from "next/link";
 import { BRANCHES } from "@/lib/mock";
 import { kDate } from "@/lib/format";
 import { LETTER } from "@/lib/texts";
+import Hero from "@/components/Hero";
 
 export default function Home() {
   return (
     <main className="mx-auto max-w-xl px-4 pb-16 pt-10">
-      <p className="text-sm text-muted">책나무 강남서초지사 · 2027 겨울방학특강</p>
-      <h1 className="mt-1 text-4xl font-black text-pine">몰입독서반</h1>
-      <div className="mt-3 h-0.5 w-12 bg-gold" />
+      <Hero kicker="책나무 강남서초지사 · 2027 겨울방학특강" title="몰입독서반" />
 
       <section className="card mt-6 space-y-3 text-[16px] leading-[1.85]">
         {LETTER.map((p) => (

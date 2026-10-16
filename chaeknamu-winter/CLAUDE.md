@@ -28,7 +28,7 @@
 허용 이메일 목록에 없으면 가입 자체 불가. 원장 이메일: [미정]
 
 ## 3. 브랜드와 톤
-토큰: pine `#1E3A2F`(메인) / pine-dark `#0F2219`(hover) / gold `#E3B04B`(강조, 흰 글씨 배경 금지) / snow `#F5F6F2`(배경) / ink `#1B2A23`(본문) / muted `#4A5A52`(보조) / line `#D6DCD4`(테두리).
+토큰: pine `#2F7A68`(메인) / pine-dark `#25624F`(hover) / gold `#F4BF57`(강조, 흰 글씨 배경 금지) / snow `#F4FAF7`(+mint `#E2F3EC`, sky `#E6F2F8` 보조 면)(배경) / ink `#22332D`(본문) / muted `#5D7068`(보조) / line `#DCEBE4`(테두리).
 - 제목 Noto Serif KR(700/900), 본문 Noto Sans KR(400/500/700), `next/font/google`.
 - 카드: 흰 배경, 1px 테두리, 모서리 16~20px. 그라데이션·이모지 장식·과한 그림자 금지. 다크모드 없음.
 - 터치 영역 최소 44px, 모바일 본문 16px 이상.

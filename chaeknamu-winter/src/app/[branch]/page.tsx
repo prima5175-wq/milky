@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import OpenGate from "@/components/OpenGate";
+import Hero from "@/components/Hero";
 import PolicyBox from "@/components/PolicyBox";
 import { CURRICULUM, getBranch } from "@/lib/mock";
 import { kDate, slotText, won } from "@/lib/format";
@@ -15,9 +16,7 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
   return (
     <main className="mx-auto max-w-xl px-4 pb-32 pt-8">
       <Link href="/" className="text-sm text-muted">← 처음으로</Link>
-      <p className="mt-3 text-sm text-muted">2027 겨울방학특강 · 몰입독서반</p>
-      <h1 className="mt-1 text-3xl font-black text-pine">{b.name}</h1>
-      <div className="mt-3 h-0.5 w-12 bg-gold" />
+      <div className="mt-3"><Hero kicker="2027 겨울방학특강 · 몰입독서반" title={b.name} /></div>
 
       <h2 className="mt-8 text-lg text-pine">일정과 수강료</h2>
       <div className="mt-2 space-y-3">
