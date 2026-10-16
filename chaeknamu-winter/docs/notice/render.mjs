@@ -1,0 +1,13 @@
+import { chromium } from "/tmp/claude-0/-home-user-milky/d595830c-ef0d-54a0-9a8f-f0600a65382e/scratchpad/dbtest/node_modules/playwright-core/index.mjs";
+const [, , html, dir] = process.argv;
+const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+const p = await br.newPage({ viewport: { width: 1080, height: 1200 } });
+await p.goto("file://" + html, { waitUntil: "networkidle" }); await p.evaluate(() => document.fonts.ready);
+await p.screenshot({ path: `${dir}/공지안내문_전체.png`, fullPage: true });
+const y = await p.evaluate(() => ["p2", "p3"].map((id) => Math.round(document.getElementById(id).getBoundingClientRect().top + scrollY) - 14));
+const H = await p.evaluate(() => document.documentElement.scrollHeight);
+const cuts = [0, y[0], y[1], H];
+const names = ["1_일정과수강료", "2_수업시간과신청방법", "3_꼭확인해주세요"];
+for (let i = 0; i < 3; i++) await p.screenshot({ path: `${dir}/공지안내문_${names[i]}.png`, fullPage: true, clip: { x: 0, y: cuts[i], width: 1080, height: cuts[i + 1] - cuts[i] } });
+console.log("분할 지점:", cuts.join(", "));
+await br.close();
