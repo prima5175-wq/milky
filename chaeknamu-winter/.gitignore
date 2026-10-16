@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+# 비밀값은 절대 커밋하지 않아요
+.env
+.env.local
+.env.*.local
+*.pem
+*-service-account*.json
+.vercel/
+next-env.d.ts
+*.tsbuildinfo

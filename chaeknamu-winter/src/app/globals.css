@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pine: #1e3a2f;
+  --color-pine-dark: #0f2219;
+  --color-gold: #e3b04b;
+  --color-snow: #f5f6f2;
+  --color-ink: #1b2a23;
+  --color-muted: #4a5a52;
+  --color-line: #d6dcd4;
+
+  --font-serif: var(--font-noto-serif), "Noto Serif KR", serif;
+  --font-sans: var(--font-noto-sans), "Noto Sans KR", sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-snow);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+}
+
+@layer components {
+  .card {
+    @apply rounded-[18px] border border-line bg-white p-5;
+  }
+  .btn {
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-pine px-5 font-bold text-white transition-colors hover:bg-pine-dark disabled:opacity-50;
+  }
+}
