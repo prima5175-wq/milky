@@ -156,6 +156,23 @@ create table lesson_books (
   sort_order int not null default 0
 );
 
+-- 보강 (학부모 요청 또는 문자로 받은 요청을 관리자가 등록)
+create table makeups (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references applications(id) on delete cascade,
+  lesson_date date not null,
+  time_note text not null default '',          -- 희망 시간 (예: 3부 12:30)
+  status text not null default '요청' check (status in ('요청', '확정', '거절', '취소')),
+  requested_by text not null default 'parent', -- 'parent' 또는 등록한 관리자 이메일
+  note text,
+  created_at timestamptz not null default now(),
+  decided_by text,
+  decided_at timestamptz
+);
+create index makeups_app_idx on makeups (application_id);
+create index makeups_date_idx on makeups (lesson_date);
+create unique index makeups_one_per_day on makeups (application_id, lesson_date) where status in ('요청', '확정');
+
 -- 지난 방학 이력 (관리자가 붙여 넣어 등록: 지난 여름방학 수강, 지난 방학 취소 등)
 create table past_records (
   id uuid primary key default gen_random_uuid(),
@@ -203,6 +220,7 @@ alter table curriculum enable row level security;
 alter table app_settings enable row level security;
 alter table form_fields enable row level security;
 alter table past_records enable row level security;
+alter table makeups enable row level security;
 alter table attendance enable row level security;
 alter table lesson_records enable row level security;
 alter table lesson_books enable row level security;
@@ -482,7 +500,7 @@ begin
       where status = '대기' and (slot1_id in (a.slot1_id, a.slot2_id) or slot2_id in (a.slot1_id, a.slot2_id));
   end if;
 
-  update applications set status = p_to,
+  update applications set status = p_to, sheet_synced_at = null,
     waitlist_order = case when p_to = '대기' then v_order else null end
     where id = a.id;
   insert into application_logs (application_id, changed_by, from_status, to_status, note)
@@ -496,3 +514,46 @@ revoke all on function check_rate(text, int, int), check_application(text, text,
   change_application_status(uuid, text, text, text, boolean) from public, anon, authenticated;
 grant execute on function check_rate(text, int, int), check_application(text, text, text),
   change_application_status(uuid, text, text, text, boolean) to service_role;
+
+-- ───────── 보강 등록 (규칙을 DB 안에서 한 번에 검사: 동시에 눌러도 횟수 한도가 지켜져요) ─────────
+-- 규칙: 확정 학생 / 평일 / 설 연휴 제외 / 신청한 차수 기간 안(1차만 신청하면 2차 기간 불가) /
+--       보강 시작일(지점 설정)부터 / 지점별 횟수 한도(요청+확정 합산) / 같은 날 중복 불가
+-- 반환 code: not_confirmed / not_lesson_day / out_of_window / limit / duplicate
+create function add_makeup(p_app uuid, p_date date, p_time text, p_by text, p_status text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare a applications; b branches; s1 sessions; s2 sessions; v_start date; v_end date; v_used int;
+begin
+  select * into a from applications where id = p_app for update;
+  if not found or a.status <> '확정' then return jsonb_build_object('ok', false, 'code', 'not_confirmed'); end if;
+  select * into b from branches where id = a.branch_id;
+  select * into s1 from sessions where branch_id = b.id and code = '1차';
+  select * into s2 from sessions where branch_id = b.id and code = '2차';
+
+  if extract(isodow from p_date) not between 1 and 5 or p_date between date '2027-02-06' and date '2027-02-09' then
+    return jsonb_build_object('ok', false, 'code', 'not_lesson_day');
+  end if;
+
+  if a.course = '2차' then v_start := s2.start_date; v_end := s2.end_date;
+  elsif a.course = '1차' then v_start := coalesce(b.makeup_start_date, s1.start_date); v_end := s1.end_date;
+  else v_start := coalesce(b.makeup_start_date, s1.start_date); v_end := s2.end_date; end if;
+  if p_date < v_start or p_date > v_end then return jsonb_build_object('ok', false, 'code', 'out_of_window'); end if;
+
+  if exists (select 1 from makeups where application_id = p_app and lesson_date = p_date and status in ('요청', '확정')) then
+    return jsonb_build_object('ok', false, 'code', 'duplicate');
+  end if;
+  select count(*) into v_used from makeups where application_id = p_app and status in ('요청', '확정');
+  if v_used >= b.makeup_limit then return jsonb_build_object('ok', false, 'code', 'limit'); end if;
+
+  insert into makeups (application_id, lesson_date, time_note, status, requested_by, decided_by, decided_at)
+    values (p_app, p_date, left(coalesce(p_time, ''), 60), p_status, p_by,
+            case when p_status = '확정' then p_by end, case when p_status = '확정' then now() end);
+  return jsonb_build_object('ok', true);
+exception when unique_violation then
+  return jsonb_build_object('ok', false, 'code', 'duplicate');
+end $$;
+
+revoke all on function add_makeup(uuid, date, text, text, text) from public, anon, authenticated;
+grant execute on function add_makeup(uuid, date, text, text, text) to service_role;
+
+-- 구글시트 동기화 잠금(동시에 여러 번 쓰지 않도록)
+insert into app_settings (key, value) values ('sheet_lock', '2000-01-01T00:00:00Z') on conflict do nothing;

@@ -10,7 +10,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const a = await requireAdmin();
   const nav = a.role === "teacher"
     ? [["/admin/attendance", "출석·수업 기록"], ["/admin/worksheets", "첨삭 확인"]]
-    : [["/admin", "현황"], ["/admin/applications", "신청 목록"], ["/admin/attendance", "출석·수업 기록"], ["/admin/worksheets", "첨삭 확인"], ...(a.role === "owner" ? [["/admin/history", "지난 방학 이력"], ["/admin/settings", "설정"]] : [])];
+    : [["/admin", "현황"], ["/admin/applications", "신청 목록"], ["/admin/attendance", "출석·수업 기록"], ["/admin/worksheets", "첨삭 확인"], ["/admin/makeups", "보강"], ...(a.role === "owner" ? [["/admin/history", "지난 방학 이력"], ["/admin/settings", "설정"]] : [])];
   return (
     <div>
       <header className="border-b border-line bg-white">

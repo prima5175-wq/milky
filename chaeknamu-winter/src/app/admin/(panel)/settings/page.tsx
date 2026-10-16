@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { query } from "@/lib/db";
-import { deleteCurriculum, deleteField, saveBranch, saveCurriculum, saveField } from "../../actions";
+import { deleteCurriculum, deleteField, saveBranch, saveCurriculum, saveField, sheetRebuild, sheetSyncNow } from "../../actions";
+import { sheetStatus } from "@/lib/sheets";
 
 type B = { id: string; name: string; open_at: string | null; close_at: string | null; refund_deadline: string; bundle_price: number; contact_url: string | null; notice: string | null; makeup_limit: number; partial_full_mode: string; makeup_start_date: string | null };
 type S = { id: string; branch_id: string; code: string; price: number; lesson_count: number };
@@ -9,6 +10,7 @@ type L = { id: string; session_id: string; label: string; capacity: number | nul
 export default async function Settings({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
   await requireAdmin(["owner"]);
   const { msg } = await searchParams;
+  const sheet = await sheetStatus();
   const kstv = (c: string) => `to_char(${c} at time zone 'Asia/Seoul', 'YYYY-MM-DD"T"HH24:MI')`;
   const [branches, sessions, slots, curriculum, fields, note] = await Promise.all([
     query<B>(`select id, name, ${kstv("open_at")} open_at, ${kstv("close_at")} close_at, ${kstv("refund_deadline")} refund_deadline, bundle_price, contact_url, notice, makeup_limit, partial_full_mode, to_char(makeup_start_date, 'YYYY-MM-DD') makeup_start_date from branches order by sort_order`),
@@ -87,6 +89,21 @@ export default async function Settings({ searchParams }: { searchParams: Promise
         ))}
       </section>
 
+      <section id="sheet" className="space-y-3">
+        <h2 className="text-xl text-pine">구글시트 연결</h2>
+        <div className="card space-y-2 text-[15px]">
+          <p>상태: <b className={sheet.configured ? "text-pine" : "text-alert"}>{sheet.configured ? "연결됨" : "연결 안 됨"}</b>
+            {sheet.url && <> · <a href={sheet.url} className="underline" target="_blank" rel="noreferrer">시트 열기</a></>}</p>
+          <p>아직 시트에 못 보낸 신청: <b>{sheet.pending}건</b> · 마지막 동기화: {sheet.last ?? "-"}</p>
+          {sheet.error && <p className="text-alert">마지막 오류: {sheet.error}</p>}
+          <p className="text-sm text-muted">시트는 보기용이에요. 시트에서 고친 내용은 앱에 반영되지 않아요. 시트 연결이 끊겨도 신청은 정상 접수되고, 연결이 돌아오면 밀린 건을 보내요.</p>
+          <div className="flex flex-wrap gap-2">
+            <form action={sheetSyncNow}><button className="btn" disabled={!sheet.configured}>밀린 건 지금 보내기</button></form>
+            <form action={sheetRebuild}><button className="btn !bg-ink" disabled={!sheet.configured}>지금 전체 다시 맞추기</button></form>
+          </div>
+        </div>
+      </section>
+
       <section id="curriculum" className="space-y-4">
         <h2 className="text-xl text-pine">학년별 수업 내용</h2>
         <form action={saveCurriculum} className="card space-y-4">
@@ -94,7 +111,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
             <div key={c.id} className="space-y-2">
               <div className="flex gap-2">
                 <input name={`group_${c.id}`} defaultValue={c.grade_group} className="input" />
-                <button formAction={deleteCurriculum} formNoValidate name="id" value={c.id} className="min-h-11 shrink-0 rounded-xl border border-line px-3 text-alert">지우기</button>
+                <button formAction={deleteCurriculum.bind(null, c.id)} formNoValidate className="min-h-11 shrink-0 rounded-xl border border-line px-3 text-alert">지우기</button>
               </div>
               <textarea name={`items_${c.id}`} defaultValue={c.items.join("\n")} className="input !min-h-24 py-2" />
             </div>

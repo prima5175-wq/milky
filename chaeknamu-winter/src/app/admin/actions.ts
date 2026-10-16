@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { query } from "@/lib/db";
 import { clearSession, devLoginEnabled, getAdmin, hasSupabase, isAllowedEmail, requireAdmin, setDevSession, supabaseServer } from "@/lib/auth";
 import { checkRate } from "@/lib/repo";
+import { triggerSheetSync } from "@/lib/sheet-trigger";
+import { rebuildAll, syncUnsynced } from "@/lib/sheets";
 
 export type LoginState = { message: string } | null;
 
@@ -43,7 +45,7 @@ export async function changeStatus(fd: FormData) {
   const own = await query<{ branch_id: string }>("select branch_id from applications where id = $1", [id]);
   if (!own[0] || (admin.role !== "owner" && own[0].branch_id !== admin.branch_id)) redirect("/admin");
   const r = (await query<{ r: { ok: boolean; code?: string } }>("select change_application_status($1, $2, $3, $4, $5) r", [id, to, admin.email, note, force]))[0].r;
-  if (r.ok) back(id, "msg=" + encodeURIComponent("상태를 바꿨어요."));
+  if (r.ok) { triggerSheetSync(); back(id, "msg=" + encodeURIComponent("상태를 바꿨어요.")); }
   back(id, `warn=${r.code}&to=${encodeURIComponent(to)}&note=${encodeURIComponent(note)}`);
 }
 
@@ -53,6 +55,7 @@ export async function saveNote(fd: FormData) {
   const own = await query<{ branch_id: string }>("select branch_id from applications where id = $1", [id]);
   if (!own[0] || (admin.role !== "owner" && own[0].branch_id !== admin.branch_id)) redirect("/admin");
   await query("update applications set admin_note = $2, pass_note = nullif($3, ''), pass_end_date = nullif($4, '')::date, sheet_synced_at = null where id = $1", [id, String(fd.get("admin_note") ?? ""), String(fd.get("pass_note") ?? "").trim(), String(fd.get("pass_end_date") ?? "")]);
+  triggerSheetSync();
   back(id, "msg=" + encodeURIComponent("저장했어요."));
 }
 
@@ -95,9 +98,9 @@ export async function saveCurriculum(fd: FormData) {
   redirect("/admin/settings?msg=" + encodeURIComponent("수업 내용을 저장했어요.") + "#curriculum");
 }
 
-export async function deleteCurriculum(fd: FormData) {
+export async function deleteCurriculum(id: string) {
   await requireAdmin(["owner"]);
-  await query("delete from curriculum where id = $1", [String(fd.get("id"))]);
+  await query("delete from curriculum where id = $1", [id]);
   redirect("/admin/settings#curriculum");
 }
 
@@ -147,4 +150,16 @@ export async function deleteHistoryTerm(fd: FormData) {
   await requireAdmin(["owner"]);
   await query("delete from past_records where term = $1", [String(fd.get("term"))]);
   redirect("/admin/history?msg=" + encodeURIComponent("지웠어요."));
+}
+
+export async function sheetRebuild() {
+  await requireAdmin(["owner"]);
+  const r = await rebuildAll();
+  redirect("/admin/settings?msg=" + encodeURIComponent(r.message) + "#sheet");
+}
+
+export async function sheetSyncNow() {
+  await requireAdmin(["owner"]);
+  const r = await syncUnsynced();
+  redirect("/admin/settings?msg=" + encodeURIComponent(r.message) + "#sheet");
 }

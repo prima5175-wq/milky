@@ -225,6 +225,7 @@ DB(예정): `attendance(application_id, date, slot_id, status, checked_by, check
 출석 현황(출석 n회/결석 n회), 잔여 보강, 보강 일정, (수업 기록은 공개하지 않음).
 
 ## 12. 작업 순서 (단계마다 멈추고 원장 확인)
+0. (진행 메모) 구현 상태: 1~7단계 중 DB·학부모 화면·신청 API·관리자·구글시트 미러·출석/수업 기록·주간 보강까지 구현·로컬 검증 완료. 남은 것: 실제 Supabase/Vercel 연결 확인, 실제 구글시트 연결 확인, 카카오톡 인앱 브라우저 확인, 리허설, 배포.
 0. (진행 메모) 신청 폼의 칸(질문)은 관리자 '칸 관리'에서 추가·수정·삭제 — `form_fields` 테이블, 답변은 `applications.extra`(jsonb).
 1. 프로젝트 세팅: Next.js+TS+Tailwind, 디자인 토큰·글꼴, `.gitignore`·`.env.example`, 원장이 준비할 계정 목록(13장) 안내. ✅ 완료
 2. DB: Supabase 마이그레이션 SQL(테이블, 인덱스, RLS, `submit_application`), 5장 시드.

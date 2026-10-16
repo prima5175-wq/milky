@@ -2,11 +2,18 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { dashboard } from "@/lib/admin-queries";
 import { COURSE_CHIP, SLOT_CHIP } from "@/lib/ui";
+import { triggerSheetSync } from "@/lib/sheet-trigger";
+import { query } from "@/lib/db";
+import Link from "next/link";
 
 export default async function Dashboard() {
   const a = await requireAdmin();
   if (a.role === "teacher") redirect("/admin/attendance");
+  triggerSheetSync(); // 시트에 못 보낸 건이 있으면 이 화면을 열 때 다시 보내요
   const rows = await dashboard(a);
+  const [mk] = await query<{ pending: number; week: number }>(
+    `select count(*) filter (where m.status = '요청')::int pending, count(*) filter (where m.status = '확정' and m.lesson_date >= date_trunc('week', now() at time zone 'Asia/Seoul')::date and m.lesson_date < date_trunc('week', now() at time zone 'Asia/Seoul')::date + 7)::int week
+     from makeups m join applications ap on ap.id = m.application_id where ($1::uuid is null or ap.branch_id = $1)`, [a.role === "owner" ? null : a.branch_id]);
   const byBranch = Map.groupBy(rows, (r) => r.branch_name);
   return (
     <div className="space-y-8">
@@ -14,6 +21,11 @@ export default async function Dashboard() {
         <h1 className="text-2xl font-black text-pine">신청 현황</h1>
         <p className="mt-1 text-[15px] text-muted">확정 / 정원 · 대기. 정원 숫자는 관리자에게만 보여요.</p>
       </div>
+      <Link href="/admin/makeups" className="card flex flex-wrap items-center gap-x-6 gap-y-1 !p-4 text-[15px]">
+        <span>이번 주 확정 보강 <b>{mk.week}건</b></span>
+        <span>승인 기다리는 보강 요청 <b className={mk.pending ? "text-alert" : ""}>{mk.pending}건</b></span>
+        <span className="ml-auto text-sm underline">보강 관리 →</span>
+      </Link>
       {[...byBranch].map(([name, list]) => (
         <section key={name}>
           <h2 className="text-lg text-pine">{name}</h2>

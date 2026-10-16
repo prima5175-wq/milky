@@ -4,6 +4,7 @@ import { query } from "@/lib/db";
 import { checkRate, getFormFields } from "@/lib/repo";
 import { clientIp } from "@/lib/ip";
 import { MSG, POLICY_VERSION } from "@/lib/texts";
+import { triggerSheetSync } from "@/lib/sheet-trigger";
 
 const body = z.object({
   branch_slug: z.string().min(1).max(30),
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
     );
     const r = rows[0].r;
     if (!r.ok) return NextResponse.json({ ok: false, message: ERR[r.code ?? "invalid"] ?? MSG.error }, { status: 409 });
+    triggerSheetSync();
     // 정원·대기 순번은 내려주지 않고 확정/대기 여부만 알려요
     const statuses = (r.applications ?? []).map((a) => a.status);
     return NextResponse.json({ ok: true, status: statuses.includes("대기") ? "대기" : "확정", split: statuses.length > 1 ? statuses : undefined });
