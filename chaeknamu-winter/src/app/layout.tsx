@@ -25,7 +25,14 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" className={`${serif.variable} ${sans.variable}`}>
-      <body>{children}</body>
+      <body>
+        {process.env.NEXT_PUBLIC_DEMO_MODE && (
+          <div className="bg-gold px-3 py-1.5 text-center text-sm font-bold text-ink">
+            체험용 화면이에요. 입력한 내용은 저장되지 않고 가끔 초기화돼요. 실제 이름·연락처는 넣지 마세요.
+          </div>
+        )}
+        {children}
+      </body>
     </html>
   );
 }

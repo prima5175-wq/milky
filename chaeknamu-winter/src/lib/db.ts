@@ -15,12 +15,12 @@ async function init(): Promise<Runner> {
     const pool = new Pool({ connectionString: url, max: 5, ssl: { rejectUnauthorized: false } });
     return async (sql, params) => (await pool.query(sql, params as unknown[])).rows;
   }
-  if (process.env.NODE_ENV === "production" && !process.env.ALLOW_LOCAL_DB) {
+  const demo = !!process.env.DEMO_MODE; // 체험용 주소: 메모리 임시 DB (저장되지 않고 때때로 초기화돼요)
+  if (process.env.NODE_ENV === "production" && !process.env.ALLOW_LOCAL_DB && !demo) {
     throw new Error("배포 환경에는 DATABASE_URL이 필요해요.");
   }
   const { PGlite } = await import("@electric-sql/pglite");
-  const dir = path.join(process.cwd(), ".local-db");
-  const db = new PGlite(dir);
+  const db = demo ? new PGlite() : new PGlite(path.join(process.cwd(), ".local-db"));
   await db.waitReady;
   const has = (await db.query<{ n: number }>("select count(*)::int n from information_schema.tables where table_name = 'branches'")).rows[0].n;
   if (!has) {

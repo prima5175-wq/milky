@@ -3,6 +3,26 @@
 > 개발을 몰라도 따라 할 수 있게 썼어요. 각 사이트의 화면은 가끔 바뀌어서 버튼 이름이 조금 다를 수 있어요. 그럴 때는 화면을 캡처해서 보내주시면 바로 맞춰서 안내드릴게요.
 > **가장 중요한 약속: 비밀번호·키·JSON 파일 내용은 채팅창에 절대 붙여 넣지 마세요.** 4장에 안전하게 전달하는 방법이 있어요.
 
+## 0. 먼저 체험용 주소 만들기 (Supabase 없이, Vercel만으로 15분)
+
+실제 운영 전에 화면을 직접 눌러 보고 싶을 때 쓰는 방법이에요. **Supabase 없이** 임시 DB로 돌아가서 입력한 내용은 저장되지 않고 가끔 초기화돼요. 실제 이름·연락처는 넣지 마세요. 화면 위에 노란 띠로 "체험용 화면이에요"가 표시돼요.
+
+1. `vercel.com` → **Sign Up → Continue with GitHub** (GitHub 계정이 없으면 먼저 `github.com`에서 가입하고, 저장소 `prima5175-wq/milky`를 볼 수 있는 계정으로 로그인).
+2. **Add New… → Project** → 저장소 `milky` 옆 **Import**.
+3. 설정 화면에서
+   - **Root Directory**: **Edit** → `chaeknamu-winter` 선택
+   - **Environment Variables**에 두 개 추가: `DEMO_MODE` = `1`, `NEXT_PUBLIC_DEMO_MODE` = `1`
+4. **Deploy**. (처음에는 저장소의 기본 브랜치(main)를 배포하려고 해서 실패하거나 빈 화면일 수 있어요. 그때는 다음 5번을 해 주세요.)
+5. 지금 코드는 `claude/wonderful-pascal-m2w2d5` 브랜치에 있어요. Vercel 프로젝트 **Settings → Git(또는 Environments → Production → Branch Tracking)**에서 **Production Branch**를 `claude/wonderful-pascal-m2w2d5`로 바꾸고 **Deployments → Redeploy**. 주소(`https://○○○.vercel.app`)가 나오면 완성이에요.
+6. 연습용 관리자 로그인: `/admin/login`에서 `owner@example.com`(원장), `daechi@example.com`(지점 관리자), `teacher@example.com`·`teacher2@example.com`(강사)를 입력하면 메일 없이 바로 들어가요.
+   - 신청 오픈: 대치점·도곡초점은 열려 있고, 구룡초점은 3일 뒤에 열리게 되어 있어요.
+   - 정원: 대치점 1차 1부만 3명이고 나머지는 10명이에요. (마감·대기 화면을 보시려면 대치점 1차 1부로 4번 신청해 보세요.)
+7. 이 주소는 **서버가 잠깐 쉬었다 깨어나면 데이터가 초기화**될 수 있어요. 연습·화면 확인용이에요.
+
+> 이 체험용 주소는 Vercel에서 처음 시도하는 설정이라, 배포 중 오류가 나면 배포 로그 화면(빨간 줄)을 캡처해서 보내주세요. 바로 고칠게요.
+
+---
+
 ## 전체 그림 (한눈에)
 
 | 순서 | 할 일 | 걸리는 시간 | 비용 | 언제까지 |
