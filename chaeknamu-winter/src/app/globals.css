@@ -39,3 +39,15 @@ h1, h2, h3 {
     @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-pine px-5 font-bold text-white transition-colors hover:bg-pine-dark disabled:opacity-50;
   }
 }
+
+@layer components {
+  .input {
+    @apply min-h-11 w-full rounded-xl border border-line bg-white px-3 text-base text-ink outline-none focus:border-pine;
+  }
+  .label {
+    @apply mb-1 block text-sm font-bold text-ink;
+  }
+  .chip {
+    @apply flex min-h-11 cursor-pointer items-center rounded-xl border border-line bg-white px-3 py-2 text-[15px] has-[:checked]:border-pine has-[:checked]:bg-pine/5 has-[:checked]:font-bold;
+  }
+}
