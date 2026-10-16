@@ -14,6 +14,11 @@ export type Branch = {
   open_at: string | null;
   close_at: string | null;
   is_open: boolean;
+  phase: "before" | "priority" | "paused" | "general" | "closed";
+  priority_end_at: string | null;
+  general_open_at: string | null;
+  final_deadline_at: string | null;
+  next_change_at: string | null;
   server_now: string;
   refund_deadline: string;
   contact_url: string | null;

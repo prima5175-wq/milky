@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { listBranches } from "@/lib/repo";
+import { getSetting, listBranches } from "@/lib/repo";
+import ScheduleCard from "@/components/ScheduleCard";
 import { kDate } from "@/lib/format";
 import { LETTER } from "@/lib/texts";
 import Hero from "@/components/Hero";
@@ -8,11 +9,14 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const BRANCHES = await listBranches();
+  const confirmNotice = await getSetting("confirm_notice");
   return (
     <main className="mx-auto max-w-xl px-4 pb-16 pt-10">
-      <Hero kicker="책나무 강남서초지사 · 2027 겨울방학특강" title="몰입독서반" />
+      <Hero kicker="책나무 강남서초지사 · 2027 겨울방학특강" title="몰입독서반" sub="방학의 오전을 책으로 함께 시작해요." />
 
-      <section className="card mt-6 space-y-3 text-[16px] leading-[1.85]">
+      {BRANCHES[0] && <div className="mt-4"><ScheduleCard b={BRANCHES[0]} confirmNotice={confirmNotice} /></div>}
+
+      <section className="card mt-4 space-y-3 text-[16px] leading-[1.85]">
         {LETTER.map((p) => (
           <p key={p}>{p}</p>
         ))}
@@ -22,7 +26,7 @@ export default async function Home() {
       <h2 className="mt-8 text-xl text-pine">지점을 골라 주세요</h2>
       <div className="mt-3 space-y-3">
         {BRANCHES.map((b) => (
-          <section key={b.slug} className="card">
+          <section key={b.slug} data-branch={b.slug} className="card border-l-[6px] border-l-pine">
             <h3 className="text-lg text-pine">{b.name}</h3>
             <ul className="mt-2 space-y-0.5 text-[15px] text-muted">
               {b.sessions.map((s) => (

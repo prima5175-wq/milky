@@ -11,12 +11,14 @@ export function kDate(d: string) {
 }
 
 export function kDateTime(iso: string) {
-  // ISO → '11월 1일(일) 오전 10시'
+  // ISO → '11월 1일(일) 오전 10시' / '오후 2시 30분'
   const date = new Date(iso);
   const md = new Intl.DateTimeFormat("ko-KR", { timeZone: KST, month: "long", day: "numeric" }).format(date);
   const wd = new Intl.DateTimeFormat("ko-KR", { timeZone: KST, weekday: "short" }).format(date);
-  const t = new Intl.DateTimeFormat("ko-KR", { timeZone: KST, hour: "numeric", minute: "2-digit", hour12: true }).format(date);
-  return `${md}(${wd}) ${t.replace(":00", "")}`;
+  const parts = new Intl.DateTimeFormat("ko-KR", { timeZone: KST, hour: "numeric", minute: "2-digit", hour12: true }).formatToParts(date);
+  const get = (t: string) => parts.find((x) => x.type === t)?.value ?? "";
+  const min = get("minute");
+  return `${md}(${wd}) ${get("dayPeriod")} ${get("hour")}시${min && min !== "00" ? ` ${Number(min)}분` : ""}`;
 }
 
 export const slotText = (s: { label: string; start_time: string; end_time: string }) =>

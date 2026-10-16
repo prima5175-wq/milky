@@ -1,14 +1,12 @@
-// 상단 소개 영역. 단색 면과 작은 도형만 써서 가볍게 꾸몄어요.
-export default function Hero({ kicker, title }: { kicker: string; title: string }) {
+// 상단 소개 영역. 단색 면과 작은 도형 두 개만 써서 담백하게 꾸몄어요. (관마다 포인트 색이 바뀌어요)
+export default function Hero({ kicker, title, sub }: { kicker: string; title: string; sub?: string }) {
   return (
-    <header className="relative overflow-hidden rounded-[24px] bg-mint px-5 pb-7 pt-6">
-      <span aria-hidden className="absolute -right-6 -top-6 size-24 rounded-full bg-gold/80" />
-      <span aria-hidden className="absolute right-16 top-14 size-3 rounded-full bg-white" />
-      <span aria-hidden className="absolute right-6 top-28 size-2 rounded-full bg-white" />
-      <span aria-hidden className="absolute -bottom-10 -left-8 size-28 rounded-full bg-sky" />
-      <p className="relative text-sm font-medium text-pine">{kicker}</p>
-      <h1 className="relative mt-1 text-4xl font-black leading-tight text-ink">{title}</h1>
-      <p className="relative mt-2 text-[15px] text-muted">아이를 바꾸는 건 &lsquo;많이&rsquo;가 아니라 &lsquo;매일&rsquo;이에요.</p>
+    <header className="relative overflow-hidden rounded-[28px] bg-mint px-6 pb-8 pt-7">
+      <span aria-hidden className="absolute -right-12 -top-12 size-44 rounded-full bg-white/70" />
+      <span aria-hidden className="absolute right-9 top-9 size-3 rounded-full bg-gold" />
+      <p className="relative text-sm font-bold text-pine">{kicker}</p>
+      <h1 className="relative mt-2 text-[34px] font-black leading-tight text-ink">{title}</h1>
+      {sub && <p className="relative mt-2 text-[15px] text-muted">{sub}</p>}
     </header>
   );
 }

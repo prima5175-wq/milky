@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { query } from "@/lib/db";
-import { checkRate, getFormFields } from "@/lib/repo";
+import { checkRate, getBranch, getFormFields } from "@/lib/repo";
+import { kDateTime } from "@/lib/format";
 import { clientIp } from "@/lib/ip";
 import { MSG, POLICY_VERSION } from "@/lib/texts";
 import { triggerSheetSync } from "@/lib/sheet-trigger";
@@ -29,6 +30,8 @@ const ERR: Record<string, string> = {
   closed: "신청 기간이 끝났어요.",
   duplicate: MSG.duplicate,
   invalid: "입력 내용을 다시 확인해 주세요.",
+  paused: "지금은 접수를 쉬는 기간이에요.",
+  priority_only: "지금은 재원생 우대 신청 기간이에요.",
 };
 
 export async function POST(req: Request) {
@@ -66,7 +69,14 @@ export async function POST(req: Request) {
       [JSON.stringify({ ...d, website: undefined, extra, policy_version: POLICY_VERSION })],
     );
     const r = rows[0].r;
-    if (!r.ok) return NextResponse.json({ ok: false, message: ERR[r.code ?? "invalid"] ?? MSG.error }, { status: 409 });
+    if (!r.ok) {
+      let message = ERR[r.code ?? "invalid"] ?? MSG.error;
+      if (r.code === "paused" || r.code === "priority_only") {
+        const b = await getBranch(d.branch_slug);
+        if (b?.general_open_at) message += ` 비재원생 신청은 ${kDateTime(b.general_open_at)}에 열려요.`;
+      }
+      return NextResponse.json({ ok: false, message }, { status: 409 });
+    }
     triggerSheetSync();
     // 정원·대기 순번은 내려주지 않고 확정/대기 여부만 알려요
     const statuses = (r.applications ?? []).map((a) => a.status);

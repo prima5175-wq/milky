@@ -3,7 +3,7 @@ import { useState } from "react";
 import { kDate } from "@/lib/format";
 
 type Row = {
-  id: string; course: string; slot1: string | null; slot2: string | null; status: string;
+  id: string; course: string; slot1: string | null; slot2: string | null; status: string; payment_status?: string;
   attendance?: { present: number; absent: number };
   makeup?: { limit: number; used: number; start: string; end: string; list: { d: string; time_note: string; status: string }[] };
 };
@@ -80,7 +80,7 @@ export default function CheckForm({ branches }: { branches: { slug: string; name
         <div key={r.id} className="card text-[15px]">
           <p className="font-bold">{r.course}</p>
           <p className="text-muted">{[r.slot1 && `1차 ${r.slot1}`, r.slot2 && `2차 ${r.slot2}`].filter(Boolean).join(" · ")}</p>
-          <p className="mt-1 font-bold text-pine">{r.status === "확정" ? "확정되었어요" : r.status === "대기" ? "대기로 접수되었어요" : r.status}</p>
+          <p className="mt-1 font-bold text-pine">{r.status === "확정" ? (r.payment_status === "결제완료" ? "확정되었어요" : "접수되었어요 · 입금·결제 확인 중이에요") : r.status === "대기" ? "대기로 접수되었어요" : r.status}</p>
           {r.attendance && <p className="mt-1">출석 {r.attendance.present}회 · 결석 {r.attendance.absent}회</p>}
           {r.makeup && r.makeup.start && <MakeupBox r={r} q={{ branch, name, last4 }} onDone={look} />}
         </div>

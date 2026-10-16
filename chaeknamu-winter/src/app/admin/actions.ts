@@ -71,10 +71,13 @@ export async function saveBranch(fd: FormData) {
        close_at = ($3::text)::timestamp at time zone 'Asia/Seoul',
        refund_deadline = ($4::text)::timestamp at time zone 'Asia/Seoul',
        bundle_price = $5, contact_url = nullif($6, ''), notice = nullif($7, ''), makeup_limit = $8, partial_full_mode = $9,
-       makeup_start_date = nullif($10, '')::date
+       makeup_start_date = nullif($10, '')::date,
+       priority_end_at = ($11::text)::timestamp at time zone 'Asia/Seoul',
+       general_open_at = ($12::text)::timestamp at time zone 'Asia/Seoul',
+       final_deadline_at = ($13::text)::timestamp at time zone 'Asia/Seoul'
      where id = $1`,
     [id, kst(fd.get("open_at")), kst(fd.get("close_at")), kst(fd.get("refund_deadline")), Number(fd.get("bundle_price")),
-     String(fd.get("contact_url") ?? "").trim(), String(fd.get("notice") ?? "").trim(), Number(fd.get("makeup_limit")), String(fd.get("partial_full_mode")), String(fd.get("makeup_start_date") ?? "")],
+     String(fd.get("contact_url") ?? "").trim(), String(fd.get("notice") ?? "").trim(), Number(fd.get("makeup_limit")), String(fd.get("partial_full_mode")), String(fd.get("makeup_start_date") ?? ""), kst(fd.get("priority_end_at")), kst(fd.get("general_open_at")), kst(fd.get("final_deadline_at"))],
   );
   for (const [k, v] of fd.entries()) {
     if (k.startsWith("cap_")) await query("update slots set capacity = $2 where id = $1", [k.slice(4), toNum(v)]);
@@ -162,4 +165,70 @@ export async function sheetSyncNow() {
   await requireAdmin(["owner"]);
   const r = await syncUnsynced();
   redirect("/admin/settings?msg=" + encodeURIComponent(r.message) + "#sheet");
+}
+
+const safeBack = (v: FormDataEntryValue | null, fallback: string) => {
+  const t = String(v ?? "");
+  return t.startsWith("/admin/") ? t : fallback;
+};
+
+// 입금·결제 확인 처리 (결제 완료자만 확정 문자를 보내요)
+export async function setPayment(fd: FormData) {
+  const admin = await requireAdmin(["owner", "branch_admin"]);
+  const id = String(fd.get("id"));
+  const paid = fd.get("paid") === "1";
+  const own = await query<{ branch_id: string; status: string }>("select branch_id, status from applications where id = $1", [id]);
+  if (!own[0] || (admin.role !== "owner" && own[0].branch_id !== admin.branch_id)) redirect("/admin");
+  await query(
+    `update applications set payment_status = $2, paid_at = case when $2 = '결제완료' then now() end, paid_by = case when $2 = '결제완료' then $3 end,
+       confirm_sms_sent_at = case when $2 = '결제완료' then confirm_sms_sent_at end, sheet_synced_at = null where id = $1`,
+    [id, paid ? "결제완료" : "미결제", admin.email]);
+  await query("insert into application_logs (application_id, changed_by, from_status, to_status, note) values ($1, $2, $3, $3, $4)",
+    [id, admin.email, own[0].status, paid ? "결제 완료 처리" : "결제 완료 취소"]);
+  triggerSheetSync();
+  redirect(safeBack(fd.get("back"), "/admin/payments"));
+}
+
+// 확정 문자를 보낸 뒤 '발송 완료'로 표시 (문자는 이 앱이 보내지 않아요)
+export async function markSmsSent(fd: FormData) {
+  const admin = await requireAdmin(["owner", "branch_admin"]);
+  const ids = String(fd.get("ids") ?? fd.get("id") ?? "").split(",").filter((x) => /^[0-9a-f-]{36}$/.test(x));
+  if (ids.length) {
+    await query(
+      `update applications set confirm_sms_sent_at = now(), sheet_synced_at = null where id = any($1::uuid[]) and payment_status = '결제완료'
+         and ($2::uuid is null or branch_id = $2)`,
+      [ids, admin.role === "owner" ? null : admin.branch_id]);
+    triggerSheetSync();
+  }
+  redirect(safeBack(fd.get("back"), "/admin/payments") + (ids.length > 1 ? `?msg=${encodeURIComponent(ids.length + "명을 발송 완료로 표시했어요.")}` : ""));
+}
+
+export async function saveTexts(fd: FormData) {
+  await requireAdmin(["owner"]);
+  for (const key of ["confirm_notice", "payment_info"]) {
+    await query("insert into app_settings (key, value) values ($1, $2) on conflict (key) do update set value = excluded.value", [key, String(fd.get(key) ?? "").trim()]);
+  }
+  redirect("/admin/settings?msg=" + encodeURIComponent("안내 문구를 저장했어요.") + "#texts");
+}
+
+// 재원생 명단: 한 줄에 `이름, 연락처`
+export async function importRegular(fd: FormData) {
+  await requireAdmin(["owner"]);
+  let ok = 0;
+  const bad: string[] = [];
+  for (const line of String(fd.get("text") ?? "").split("\n")) {
+    if (!line.trim()) continue;
+    const [name, phone] = line.split(/[,\t]/).map((x) => x.trim());
+    const digits = (phone ?? "").replace(/\D/g, "");
+    if (!name || !/^010\d{8}$/.test(digits)) { bad.push(line.trim()); continue; }
+    await query("insert into regular_students (student_name, guardian_phone) values ($1, $2)", [name, digits]);
+    ok++;
+  }
+  redirect("/admin/history?msg=" + encodeURIComponent(`재원생 ${ok}명을 등록했어요.` + (bad.length ? ` 형식이 맞지 않아 건너뛴 줄 ${bad.length}개` : "")) + "#regular");
+}
+
+export async function clearRegular() {
+  await requireAdmin(["owner"]);
+  await query("delete from regular_students");
+  redirect("/admin/history?msg=" + encodeURIComponent("재원생 명단을 지웠어요.") + "#regular");
 }

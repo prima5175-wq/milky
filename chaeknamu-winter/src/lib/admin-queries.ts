@@ -2,7 +2,7 @@ import "server-only";
 import { query } from "./db";
 import type { Admin } from "./auth";
 
-export type Filters = { branch?: string; course?: string; slot?: string; status?: string; grade?: string; q?: string };
+export type Filters = { branch?: string; course?: string; slot?: string; status?: string; grade?: string; q?: string; pay?: string };
 
 export type AppRow = {
   id: string; created_kst: string; branch_name: string; branch_slug: string; student_name: string; grade: number; school: string;
@@ -10,11 +10,13 @@ export type AppRow = {
   status: string; waitlist_order: number | null; memo: string | null; admin_note: string | null; extra: Record<string, string | boolean>;
   branch_id: string; policy_version: string; pass_note: string | null; pass_end: string | null;
   history: { term: string; outcome: string }[] | null;
+  payment_status: string; sms_sent: boolean; enroll_verified: boolean | null; paid_kst: string | null;
 };
 
 const SELECT = `select a.id, to_char(a.created_at at time zone 'Asia/Seoul', 'MM/DD HH24:MI') created_kst, b.name branch_name, b.slug branch_slug,
   a.student_name, a.grade, a.school, a.guardian_phone, a.enrollment_type, a.course, s1.label slot1, s2.label slot2, a.price, a.status,
-  a.waitlist_order, a.memo, a.admin_note, a.extra, a.branch_id, a.policy_version, a.pass_note, to_char(a.pass_end_date, 'YYYY-MM-DD') pass_end,
+  a.waitlist_order, a.payment_status, (a.confirm_sms_sent_at is not null) sms_sent, a.enroll_verified,
+  to_char(a.paid_at at time zone 'Asia/Seoul', 'MM/DD HH24:MI') paid_kst, a.memo, a.admin_note, a.extra, a.branch_id, a.policy_version, a.pass_note, to_char(a.pass_end_date, 'YYYY-MM-DD') pass_end,
   (select jsonb_agg(jsonb_build_object('term', p.term, 'outcome', p.outcome) order by p.term desc) from past_records p where p.guardian_phone = a.guardian_phone and p.student_name = a.student_name) history
   from applications a join branches b on b.id = a.branch_id
   left join slots s1 on s1.id = a.slot1_id left join slots s2 on s2.id = a.slot2_id`;
@@ -29,6 +31,7 @@ export async function listApplications(admin: Admin, f: Filters & { sort?: strin
   if (f.course === "2차") w.push("a.slot2_id is not null");
   if (f.slot) { p.push(f.slot); w.push(`(s1.label = $${p.length} or s2.label = $${p.length})`); }
   if (f.status) add("a.status = ?", f.status);
+  if (f.pay) add("a.payment_status = ?", f.pay);
   if (f.grade) add("a.grade = ?", Number(f.grade));
   if (f.q) {
     const digits = f.q.replace(/\D/g, "");
@@ -69,12 +72,13 @@ export async function getApplication(admin: Admin, id: string): Promise<AppRow |
   return r;
 }
 
-export type DashRow = { branch_name: string; branch_slug: string; code: string; label: string; start_time: string; capacity: number | null; confirmed: number; waiting: number };
+export type DashRow = { branch_name: string; branch_slug: string; code: string; label: string; start_time: string; capacity: number | null; confirmed: number; paid: number; waiting: number };
 
 export async function dashboard(admin: Admin): Promise<DashRow[]> {
   return query<DashRow>(
     `select b.name branch_name, b.slug branch_slug, s.code, sl.label, to_char(sl.start_time, 'HH24:MI') start_time, sl.capacity,
        (select count(*)::int from applications a where a.status = '확정' and (a.slot1_id = sl.id or a.slot2_id = sl.id)) confirmed,
+       (select count(*)::int from applications a where a.status = '확정' and a.payment_status = '결제완료' and (a.slot1_id = sl.id or a.slot2_id = sl.id)) paid,
        (select count(*)::int from applications a where a.status = '대기' and (a.slot1_id = sl.id or a.slot2_id = sl.id)) waiting
      from slots sl join sessions s on s.id = sl.session_id join branches b on b.id = s.branch_id
      where ($1::uuid is null or b.id = $1)

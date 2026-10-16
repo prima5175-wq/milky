@@ -42,7 +42,7 @@ export default async function Dashboard() {
                         <div className="flex items-baseline justify-between text-[15px]">
                           <span><span className={`rounded-md px-2 text-sm ${SLOT_CHIP[r.label]}`}>{r.label}</span> <span className="text-sm text-muted">{r.start_time}</span></span>
                           <span className="tabular-nums">
-                            <b>{r.confirmed}</b> / {r.capacity ?? "제한 없음"}
+                            <b>{r.confirmed}</b> / {r.capacity ?? "제한 없음"} <span className="text-sm text-muted">(결제 {r.paid})</span>
                             {r.waiting > 0 && <span className="ml-2 rounded-full bg-white px-2 text-sm text-alert ring-2 ring-alert">대기 {r.waiting}</span>}
                           </span>
                         </div>

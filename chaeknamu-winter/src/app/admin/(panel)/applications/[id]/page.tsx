@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { getApplication, logsFor } from "@/lib/admin-queries";
 import { query } from "@/lib/db";
-import { changeStatus, saveNote } from "../../../actions";
+import { changeStatus, markSmsSent, saveNote, setPayment } from "../../../actions";
 import MaskedPhone from "@/components/admin/MaskedPhone";
 import { won } from "@/lib/format";
 import { recordSummary } from "@/lib/lesson-queries";
@@ -93,6 +93,17 @@ export default async function Detail({ params, searchParams }: {
             <button className="btn w-full">바꾸기</button>
             <p className="text-sm text-muted">대기 → 확정은 대기 순번이 빠른 순서대로 눌러 주세요. 정원이 차 있으면 한 번 더 물어봐요.</p>
           </form>
+          {r.status === "확정" && (
+            <div className="card space-y-3">
+              <h2 className="text-lg text-pine">입금·결제 확인</h2>
+              <p className="text-[15px]">상태: <b className={r.payment_status === "결제완료" ? "text-pine" : "text-alert"}>{r.payment_status}</b>{r.paid_kst ? ` (${r.paid_kst})` : ""}{r.sms_sent ? " · 확정 문자 발송 완료" : ""}</p>
+              {r.enroll_verified === false && <p className="text-sm text-alert">재원생 명단과 일치하지 않아요. 확정 전에 확인해 주세요.</p>}
+              <div className="flex flex-wrap gap-2">
+                <form action={setPayment}><input type="hidden" name="id" value={r.id} /><input type="hidden" name="back" value={`/admin/applications/${r.id}`} /><input type="hidden" name="paid" value={r.payment_status === "결제완료" ? "0" : "1"} /><button className="btn !min-h-11">{r.payment_status === "결제완료" ? "결제 완료 취소" : "결제 완료로 표시"}</button></form>
+                {r.payment_status === "결제완료" && !r.sms_sent && <form action={markSmsSent}><input type="hidden" name="id" value={r.id} /><input type="hidden" name="back" value={`/admin/applications/${r.id}`} /><button className="min-h-11 rounded-xl border border-line px-4">확정 문자 발송 완료 표시</button></form>}
+              </div>
+            </div>
+          )}
           <form action={saveNote} className="card space-y-3">
             <h2 className="text-lg text-pine">기존 수강 확인·메모</h2>
             <input type="hidden" name="id" value={r.id} />

@@ -1,9 +1,9 @@
 import { requireAdmin } from "@/lib/auth";
 import { query } from "@/lib/db";
-import { deleteCurriculum, deleteField, saveBranch, saveCurriculum, saveField, sheetRebuild, sheetSyncNow } from "../../actions";
+import { deleteCurriculum, deleteField, saveBranch, saveTexts, saveCurriculum, saveField, sheetRebuild, sheetSyncNow } from "../../actions";
 import { sheetStatus } from "@/lib/sheets";
 
-type B = { id: string; name: string; open_at: string | null; close_at: string | null; refund_deadline: string; bundle_price: number; contact_url: string | null; notice: string | null; makeup_limit: number; partial_full_mode: string; makeup_start_date: string | null };
+type B = { id: string; name: string; open_at: string | null; close_at: string | null; refund_deadline: string; bundle_price: number; contact_url: string | null; notice: string | null; makeup_limit: number; partial_full_mode: string; makeup_start_date: string | null; priority_end_at: string | null; general_open_at: string | null; final_deadline_at: string | null };
 type S = { id: string; branch_id: string; code: string; price: number; lesson_count: number };
 type L = { id: string; session_id: string; label: string; capacity: number | null };
 
@@ -11,9 +11,10 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   await requireAdmin(["owner"]);
   const { msg } = await searchParams;
   const sheet = await sheetStatus();
+  const texts = Object.fromEntries((await query<{ key: string; value: string }>("select key, value from app_settings where key in ('confirm_notice', 'payment_info')")).map((r) => [r.key, r.value]));
   const kstv = (c: string) => `to_char(${c} at time zone 'Asia/Seoul', 'YYYY-MM-DD"T"HH24:MI')`;
   const [branches, sessions, slots, curriculum, fields, note] = await Promise.all([
-    query<B>(`select id, name, ${kstv("open_at")} open_at, ${kstv("close_at")} close_at, ${kstv("refund_deadline")} refund_deadline, bundle_price, contact_url, notice, makeup_limit, partial_full_mode, to_char(makeup_start_date, 'YYYY-MM-DD') makeup_start_date from branches order by sort_order`),
+    query<B>(`select id, name, ${kstv("open_at")} open_at, ${kstv("close_at")} close_at, ${kstv("refund_deadline")} refund_deadline, bundle_price, contact_url, notice, makeup_limit, partial_full_mode, to_char(makeup_start_date, 'YYYY-MM-DD') makeup_start_date, ${kstv("priority_end_at")} priority_end_at, ${kstv("general_open_at")} general_open_at, ${kstv("final_deadline_at")} final_deadline_at from branches order by sort_order`),
     query<S>("select id, branch_id, code, price, lesson_count from sessions order by code"),
     query<L>("select id, session_id, label, capacity from slots order by sort_order"),
     query<{ id: string; grade_group: string; items: string[] }>("select id, grade_group, items from curriculum order by sort_order"),
@@ -52,14 +53,17 @@ export default async function Settings({ searchParams }: { searchParams: Promise
 
       <section className="space-y-4">
         <h2 className="text-xl text-pine">지점 설정</h2>
-        <p className="text-sm text-muted">시간은 모두 한국 시각이에요. 신청 시작 시각을 비워 두면 신청이 열리지 않아요.</p>
+        <p className="text-sm text-muted">시간은 모두 한국 시각이에요. ①을 비우면 신청이 열리지 않아요. ②·③을 비우면 재원생 우대 없이 ①부터 모두에게 열려요. ②~③ 사이는 접수를 쉬는 기간(확정 문자 발송)이에요.</p>
         {branches.map((b) => (
           <form key={b.id} action={saveBranch} className="card space-y-4">
             <input type="hidden" name="id" value={b.id} />
             <h3 className="text-lg text-pine">{b.name}</h3>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div><label className="label">신청 시작</label><input type="datetime-local" name="open_at" defaultValue={b.open_at ?? ""} className="input" /></div>
-              <div><label className="label">신청 마감 (선택)</label><input type="datetime-local" name="close_at" defaultValue={b.close_at ?? ""} className="input" /></div>
+              <div><label className="label">① 신청 오픈 (재원생 우대 시작)</label><input type="datetime-local" name="open_at" defaultValue={b.open_at ?? ""} className="input" /></div>
+              <div><label className="label">② 재원생 우대 종료</label><input type="datetime-local" name="priority_end_at" defaultValue={b.priority_end_at ?? ""} className="input" /></div>
+              <div><label className="label">③ 비재원생 접수 시작</label><input type="datetime-local" name="general_open_at" defaultValue={b.general_open_at ?? ""} className="input" /></div>
+              <div><label className="label">④ 신청 접수 마감</label><input type="datetime-local" name="close_at" defaultValue={b.close_at ?? ""} className="input" /></div>
+              <div><label className="label">⑤ 방학특강 최종 마감 (결제 확인까지)</label><input type="datetime-local" name="final_deadline_at" defaultValue={b.final_deadline_at ?? ""} className="input" /></div>
               <div><label className="label">환불·변경 마감</label><input type="datetime-local" name="refund_deadline" defaultValue={b.refund_deadline} className="input" required /></div>
               <div><label className="label">1·2차 모두 금액</label><input type="number" name="bundle_price" defaultValue={b.bundle_price} className="input" required /></div>
               <div><label className="label">보강 가능 횟수</label><input type="number" name="makeup_limit" defaultValue={b.makeup_limit} className="input" required /></div>
@@ -87,6 +91,17 @@ export default async function Settings({ searchParams }: { searchParams: Promise
             <button className="btn">{b.name} 저장</button>
           </form>
         ))}
+      </section>
+
+      <section id="texts" className="space-y-3">
+        <h2 className="text-xl text-pine">확정·입금 안내 문구</h2>
+        <form action={saveTexts} className="card space-y-3">
+          <div><label className="label" htmlFor="cn">확정 안내 (신청 완료 화면·지점 안내에 표시)</label>
+            <textarea id="cn" name="confirm_notice" defaultValue={texts.confirm_notice ?? ""} className="input !min-h-20 py-2" /></div>
+          <div><label className="label" htmlFor="pi">입금 안내 (계좌 등, 비우면 &ldquo;입금 안내는 문자로 따로 드려요&rdquo;가 보여요)</label>
+            <textarea id="pi" name="payment_info" defaultValue={texts.payment_info ?? ""} className="input !min-h-24 py-2" placeholder={"예: ○○은행 000-0000-0000 (예금주 ○○○)\n입금자명은 학생 이름으로 해 주세요."} /></div>
+          <button className="btn">안내 문구 저장</button>
+        </form>
       </section>
 
       <section id="sheet" className="space-y-3">

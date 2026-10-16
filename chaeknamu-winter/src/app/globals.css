@@ -1,20 +1,27 @@
 @import "tailwindcss";
 
 @theme {
-  --color-pine: #2f7a68;
-  --color-pine-dark: #25624f;
-  --color-gold: #f4bf57;
-  --color-snow: #f4faf7;
-  --color-ink: #22332d;
-  --color-muted: #5d7068;
-  --color-line: #dcebe4;
-
-  --color-mint: #e2f3ec;
-  --color-sky: #e6f2f8;
+  --color-gold: #f2c14e;
+  --color-snow: #f8faf9;
+  --color-ink: #1c2a25;
+  --color-muted: #64736c;
+  --color-line: #e6ece8;
+  --color-sky: #eaf2fb;
+  --color-alert: #e0735f;
 
   --font-serif: var(--font-noto-serif), "Noto Serif KR", serif;
   --font-sans: var(--font-noto-sans), "Noto Sans KR", sans-serif;
 }
+
+/* 관마다 포인트 색이 달라요: 바깥(공통) 에메랄드, 대치점 에메랄드, 도곡초점 블루, 구룡초점 오렌지 */
+@theme inline {
+  --color-pine: var(--accent);
+  --color-pine-dark: var(--accent-d);
+  --color-mint: var(--accent-soft);
+}
+:root, [data-branch="daechi"] { --accent: #14806a; --accent-d: #0f6654; --accent-soft: #e8f5f1; }
+[data-branch="dogok"] { --accent: #2570c0; --accent-d: #1c5a9c; --accent-soft: #e9f1fb; }
+[data-branch="guryong"] { --accent: #d4600d; --accent-d: #a84a08; --accent-soft: #fdf0e6; }
 
 html {
   color-scheme: light;
@@ -36,7 +43,7 @@ h1, h2, h3 {
 
 @layer components {
   .card {
-    @apply rounded-[18px] border border-line bg-white p-5;
+    @apply rounded-[20px] border border-line bg-white p-5;
   }
   .btn {
     @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-pine px-5 font-bold text-white transition-colors hover:bg-pine-dark disabled:opacity-50;
@@ -55,6 +62,3 @@ h1, h2, h3 {
   }
 }
 
-@theme {
-  --color-alert: #e0735f;
-}

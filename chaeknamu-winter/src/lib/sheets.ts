@@ -15,7 +15,7 @@ export const sheetsConfigured = () => !!(email() && sheetId() && privateKey());
 const BRANCH_TAB: Record<string, string> = { daechi: "대치점", dogok: "도곡초점", guryong: "구룡초점" };
 const ALL_TAB = "전체";
 const NOTE = "이 시트는 보기용이에요. 시트에서 고친 내용은 앱에 반영되지 않아요. 수정은 관리자 화면에서 해 주세요.";
-const BASE_HEAD = ["신청일시(KST)", "지점", "학생 이름", "학년", "학교", "보호자 연락처", "재원 구분", "신청 과정", "1차 타임", "2차 타임", "수강료", "상태", "대기 순번", "요청사항", "관리자 메모", "신청 ID", "기존 수강권", "수강 종료일", "지난 방학 이력"];
+const BASE_HEAD = ["신청일시(KST)", "지점", "학생 이름", "학년", "학교", "보호자 연락처", "재원 구분", "신청 과정", "1차 타임", "2차 타임", "수강료", "상태", "대기 순번", "요청사항", "관리자 메모", "신청 ID", "기존 수강권", "수강 종료일", "지난 방학 이력", "결제 상태", "확정문자 발송", "재원생 확인"];
 const ID_COL = "P"; // 신청 ID 열
 
 let token: { v: string; exp: number } | null = null;
@@ -47,7 +47,7 @@ async function loadRows(onlyUnsynced: boolean, limit = 300): Promise<{ rows: Row
   const fields = await query<{ key: string; label: string }>("select key, label from form_fields order by sort_order, key");
   const data = await query<Record<string, unknown>>(
     `select a.id, b.slug branch_slug, to_char(a.created_at at time zone 'Asia/Seoul', 'YYYY-MM-DD HH24:MI:SS') at, b.name branch_name, a.student_name, a.grade, a.school, a.guardian_phone,
-       a.enrollment_type, a.course, s1.label slot1, s2.label slot2, a.price, a.status, a.waitlist_order, a.memo, a.admin_note, a.pass_note, to_char(a.pass_end_date, 'YYYY-MM-DD') pass_end, a.extra,
+       a.enrollment_type, a.course, s1.label slot1, s2.label slot2, a.price, a.status, a.waitlist_order, a.memo, a.admin_note, a.pass_note, to_char(a.pass_end_date, 'YYYY-MM-DD') pass_end, a.extra, a.payment_status, (a.confirm_sms_sent_at is not null) sms, a.enroll_verified,
        (select string_agg(p.term || ' ' || p.outcome, ', ') from past_records p where p.guardian_phone = a.guardian_phone and p.student_name = a.student_name) history
      from applications a join branches b on b.id = a.branch_id left join slots s1 on s1.id = a.slot1_id left join slots s2 on s2.id = a.slot2_id
      ${onlyUnsynced ? "where a.sheet_synced_at is null" : ""} order by a.created_at ${onlyUnsynced ? "limit " + limit : ""}`);
@@ -56,7 +56,7 @@ async function loadRows(onlyUnsynced: boolean, limit = 300): Promise<{ rows: Row
     const extra = (r.extra ?? {}) as Record<string, string | boolean>;
     return {
       id: String(r.id), branch_slug: String(r.branch_slug),
-      cells: [r.at, r.branch_name, r.student_name, r.grade, r.school, `${p.slice(0, 3)}-${p.slice(3, 7)}-${p.slice(7)}`, r.enrollment_type, r.course, r.slot1 ?? "", r.slot2 ?? "", r.price, r.status, r.waitlist_order ?? "", r.memo ?? "", r.admin_note ?? "", r.id, r.pass_note ?? "", r.pass_end ?? "", r.history ?? "",
+      cells: [r.at, r.branch_name, r.student_name, r.grade, r.school, `${p.slice(0, 3)}-${p.slice(3, 7)}-${p.slice(7)}`, r.enrollment_type, r.course, r.slot1 ?? "", r.slot2 ?? "", r.price, r.status, r.waitlist_order ?? "", r.memo ?? "", r.admin_note ?? "", r.id, r.pass_note ?? "", r.pass_end ?? "", r.history ?? "", r.payment_status, r.sms ? "발송" : "", r.enroll_verified === null ? "" : r.enroll_verified ? "일치" : "불일치",
         ...fields.map((f) => (extra[f.key] === true ? "예" : extra[f.key] ?? ""))] as (string | number)[],
     };
   });

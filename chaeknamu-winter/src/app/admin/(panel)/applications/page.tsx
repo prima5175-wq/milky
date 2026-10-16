@@ -33,6 +33,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
         <select name="course" defaultValue={f.course ?? ""} className={sel}><option value="">전체 차수</option><option>1차</option><option>2차</option></select>
         <select name="slot" defaultValue={f.slot ?? ""} className={sel}><option value="">전체 타임</option>{["1부", "2부", "3부", "4부", "5부"].map((s) => <option key={s}>{s}</option>)}</select>
         <select name="status" defaultValue={f.status ?? ""} className={sel}><option value="">전체 상태</option>{["확정", "대기", "취소", "환불"].map((s) => <option key={s}>{s}</option>)}</select>
+        <select name="pay" defaultValue={f.pay ?? ""} className={sel}><option value="">결제 전체</option><option>미결제</option><option>결제완료</option></select>
         <select name="grade" defaultValue={f.grade ?? ""} className={sel}><option value="">전체 학년</option>{[1, 2, 3, 4, 5, 6].map((g) => <option key={g} value={g}>{g}학년</option>)}</select>
         <select name="sort" defaultValue={f.sort ?? ""} className={sel}><option value="">학년 순 (형제 묶음)</option><option value="time">신청 순</option></select>
         <input name="q" defaultValue={f.q ?? ""} placeholder="이름 또는 연락처" className={`${sel} min-w-40 flex-1`} />
@@ -62,6 +63,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
                     <span className={`rounded-full px-2 text-sm font-bold ${GRADE_PILL[r.grade]}`}>{r.grade}학년</span>
                     <div className="text-sm text-muted">{r.school}</div>
                     <div className="mt-1 flex flex-wrap gap-1 text-xs">
+                      {r.enroll_verified === false && <span className="rounded bg-alert px-1.5 py-0.5 text-white">재원생 명단 불일치</span>}
                       {r.enrollment_type !== "신규" && <span className="rounded bg-white px-1.5 py-0.5 ring-1 ring-ink/30">{ENROLL_LABEL[r.enrollment_type]}</span>}
                       {sibs.size > 1 && <span className="rounded bg-ink px-1.5 py-0.5 text-white">형제·자매 {sibs.size}명</span>}
                       {r.history?.map((h) => (
@@ -82,6 +84,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
                   <td className="px-3 py-2">
                     <span className={`rounded-full px-2.5 py-0.5 text-sm font-bold ${STATUS_BADGE[r.status]}`}>{r.status}</span>
                     {r.waitlist_order && <span className="ml-1 text-sm text-muted">{r.waitlist_order}번</span>}
+                    {r.status === "확정" && <div className={`mt-1 text-xs font-bold ${r.payment_status === "결제완료" ? "text-pine" : "text-alert"}`}>{r.payment_status}{r.sms_sent ? " · 문자 발송" : ""}</div>}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-sm text-muted">{r.created_kst}</td>
                 </tr>

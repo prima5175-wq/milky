@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import OpenGate from "@/components/OpenGate";
 import Hero from "@/components/Hero";
+import ScheduleCard from "@/components/ScheduleCard";
 import PolicyBox from "@/components/PolicyBox";
 import { getBranch, getCurriculum, getSetting } from "@/lib/repo";
 import { kDate, slotText, won } from "@/lib/format";
@@ -14,13 +15,16 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
   if (!b) notFound();
   const CURRICULUM = await getCurriculum();
   const curriculumNote = await getSetting("curriculum_note");
+  const confirmNotice = await getSetting("confirm_notice");
   const [s1, s2] = b.sessions;
   const totalLessons = s1.lesson_count + s2.lesson_count;
 
   return (
     <main className="mx-auto max-w-xl px-4 pb-32 pt-8">
       <Link href="/" className="text-sm text-muted">← 처음으로</Link>
-      <div className="mt-3"><Hero kicker="2027 겨울방학특강 · 몰입독서반" title={b.name} /></div>
+      <div className="mt-3"><Hero kicker="2027 겨울방학특강 · 몰입독서반" title={b.name} sub="아이를 바꾸는 건 ‘많이’가 아니라 ‘매일’이에요." /></div>
+
+      <div className="mt-6"><ScheduleCard b={b} confirmNotice={confirmNotice} /></div>
 
       <h2 className="mt-8 text-lg text-pine">일정과 수강료</h2>
       <div className="mt-2 space-y-3">
@@ -83,7 +87,7 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
 
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white/95 p-3 backdrop-blur">
         <div className="mx-auto max-w-xl">
-          <OpenGate slug={b.slug} openAt={b.open_at} serverNow={b.server_now} isOpen={b.is_open} href={`/${b.slug}/apply`} />
+          <OpenGate slug={b.slug} href={`/${b.slug}/apply`} phase={b.phase} open_at={b.open_at} priority_end_at={b.priority_end_at} general_open_at={b.general_open_at} next_change_at={b.next_change_at} server_now={b.server_now} />
         </div>
       </div>
     </main>

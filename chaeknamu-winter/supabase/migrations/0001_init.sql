@@ -10,8 +10,11 @@ create table branches (
   name text not null,
   sort_order int not null default 0,
   refund_deadline timestamptz not null,
-  open_at timestamptz,                    -- null이면 신청을 열지 않음
-  close_at timestamptz,
+  open_at timestamptz,                    -- 신청 오픈 시각(재원생 우대 시작). null이면 열지 않음
+  priority_end_at timestamptz,            -- 재원생 우대 종료. 비우면 우대 기간 없이 모두에게 열림
+  general_open_at timestamptz,            -- 비재원생 접수 시작. 우대 종료~이 시각 사이는 접수를 쉬는 기간(확정 문자 발송)
+  close_at timestamptz,                   -- 신청 접수 마감
+  final_deadline_at timestamptz,          -- 결제 확인까지 끝나는 최종 마감(안내용)
   contact_url text,
   notice text,                            -- 지점별 운영 메모
   bundle_price int not null,              -- 1·2차 모두 금액
@@ -68,6 +71,11 @@ create table applications (
   idempotency_key text not null unique,
   sheet_synced_at timestamptz,
   extra jsonb not null default '{}'::jsonb, -- 관리자가 추가한 칸의 답변
+  payment_status text not null default '미결제' check (payment_status in ('미결제', '결제완료')),
+  paid_at timestamptz,
+  paid_by text,
+  confirm_sms_sent_at timestamptz,          -- 확정 문자를 보낸 시각 (결제 완료자에게만 보내요)
+  enroll_verified boolean,                  -- 재원생 명단과 일치했는지 (명단이 없으면 null)
   pass_note text,                           -- 기존 수강권 메모 (관리자 입력)
   pass_end_date date,                       -- 기존 수강 종료일 (관리자 입력)
   check (agree_policy and agree_privacy),
@@ -83,6 +91,7 @@ create unique index applications_no_duplicate
 create index applications_slot1_idx on applications (slot1_id) where status in ('확정', '대기');
 create index applications_slot2_idx on applications (slot2_id) where status in ('확정', '대기');
 create index applications_lookup_idx on applications (branch_id, student_name);
+create index applications_payment_idx on applications (payment_status) where status = '확정';
 create index applications_unsynced_idx on applications (created_at) where sheet_synced_at is null;
 
 create table admin_users (
@@ -173,6 +182,15 @@ create index makeups_app_idx on makeups (application_id);
 create index makeups_date_idx on makeups (lesson_date);
 create unique index makeups_one_per_day on makeups (application_id, lesson_date) where status in ('요청', '확정');
 
+-- 재원생 명단 (재원생 우대 기간에 신청자가 진짜 재원생인지 확인하는 용도)
+create table regular_students (
+  id uuid primary key default gen_random_uuid(),
+  student_name text not null,
+  guardian_phone text not null check (guardian_phone ~ '^010[0-9]{8}$'),
+  created_at timestamptz not null default now()
+);
+create index regular_students_lookup_idx on regular_students (guardian_phone, student_name);
+
 -- 지난 방학 이력 (관리자가 붙여 넣어 등록: 지난 여름방학 수강, 지난 방학 취소 등)
 create table past_records (
   id uuid primary key default gen_random_uuid(),
@@ -220,6 +238,7 @@ alter table curriculum enable row level security;
 alter table app_settings enable row level security;
 alter table form_fields enable row level security;
 alter table past_records enable row level security;
+alter table regular_students enable row level security;
 alter table makeups enable row level security;
 alter table attendance enable row level security;
 alter table lesson_records enable row level security;
@@ -254,6 +273,19 @@ create policy admin_read_self on admin_users for select to authenticated
 revoke all on all tables in schema public from anon, authenticated;
 grant select on branches, sessions, slots, applications, application_logs, admin_users to authenticated;
 
+-- ───────── 신청 단계 계산 ─────────
+-- before(오픈 전) / priority(재원생 우대) / paused(접수 쉬는 기간) / general(전체 접수) / closed(마감)
+create function branch_phase(b branches) returns text
+language sql stable as $$
+  select case
+    when b.open_at is null or now() < b.open_at then 'before'
+    when b.close_at is not null and now() >= b.close_at then 'closed'
+    when b.priority_end_at is not null and now() < b.priority_end_at then 'priority'
+    when b.general_open_at is not null and now() < b.general_open_at then 'paused'
+    else 'general'
+  end
+$$;
+
 -- ───────── 학부모용 타임 현황 (is_full만 반환) ─────────
 -- 정원·신청 수·남은 자리는 절대 반환하지 않는다.
 create function public_branch_status(p_slug text) returns jsonb
@@ -266,7 +298,11 @@ begin
     'slug', b.slug, 'name', b.name, 'open_at', b.open_at, 'close_at', b.close_at,
     'refund_deadline', b.refund_deadline, 'contact_url', b.contact_url, 'notice', b.notice,
     'bundle_price', b.bundle_price, 'makeup_limit', b.makeup_limit, 'makeup_start_date', b.makeup_start_date,
-    'is_open', (b.open_at is not null and now() >= b.open_at and (b.close_at is null or now() < b.close_at)),
+    'phase', branch_phase(b), 'priority_end_at', b.priority_end_at, 'general_open_at', b.general_open_at,
+    'final_deadline_at', b.final_deadline_at,
+    'next_change_at', case branch_phase(b) when 'before' then b.open_at when 'priority' then b.priority_end_at
+                       when 'paused' then b.general_open_at when 'general' then b.close_at end,
+    'is_open', branch_phase(b) in ('priority', 'general'),
     'server_now', now(),
     'sessions', coalesce((
       select jsonb_agg(jsonb_build_object(
@@ -301,7 +337,7 @@ declare
   v_full1 boolean := false; v_full2 boolean := false;
   v_existing jsonb;
   v_id uuid; v_id2 uuid;
-  v_order int; v_status text;
+  v_order int; v_status text; v_phase text; v_verified boolean := null;
 begin
   -- 1) 같은 키로 이미 접수됐으면 처음 결과를 그대로 돌려준다
   if v_key = '' then return jsonb_build_object('ok', false, 'code', 'invalid'); end if;
@@ -332,11 +368,15 @@ begin
   -- 3) 지점·오픈 시각 확인 (서버 시각 기준)
   select * into b from branches where slug = p ->> 'branch_slug' and is_active;
   if not found then return jsonb_build_object('ok', false, 'code', 'invalid'); end if;
-  if b.open_at is null or now() < b.open_at then
-    return jsonb_build_object('ok', false, 'code', 'not_open');
+  v_phase := branch_phase(b);
+  if v_phase = 'before' then return jsonb_build_object('ok', false, 'code', 'not_open'); end if;
+  if v_phase = 'closed' then return jsonb_build_object('ok', false, 'code', 'closed'); end if;
+  if v_phase = 'paused' then return jsonb_build_object('ok', false, 'code', 'paused'); end if;
+  if v_phase = 'priority' and (p ->> 'enrollment_type') <> '정규 재원생' then
+    return jsonb_build_object('ok', false, 'code', 'priority_only');
   end if;
-  if b.close_at is not null and now() >= b.close_at then
-    return jsonb_build_object('ok', false, 'code', 'closed');
+  if (p ->> 'enrollment_type') = '정규 재원생' and exists (select 1 from regular_students) then
+    v_verified := exists (select 1 from regular_students r where r.student_name = v_name and r.guardian_phone = v_phone);
   end if;
 
   select * into s1 from sessions where branch_id = b.id and code = '1차';
@@ -382,9 +422,9 @@ begin
     v_order := case when v_full1 then (select coalesce(max(waitlist_order), 0) + 1 from applications
                  where status = '대기' and (slot1_id = v_slot1 or slot2_id = v_slot1)) end;
     insert into applications (branch_id, student_name, grade, school, guardian_phone, enrollment_type, course,
-        slot1_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, extra, idempotency_key)
+        slot1_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, extra, enroll_verified, idempotency_key)
       values (b.id, v_name, (p ->> 'grade')::int, btrim(p ->> 'school'), v_phone, p ->> 'enrollment_type', '1차',
-        v_slot1, s1.price, v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), coalesce(p -> 'extra', '{}'::jsonb), v_key)
+        v_slot1, s1.price, v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), coalesce(p -> 'extra', '{}'::jsonb), v_verified, v_key)
       returning id into v_id;
     insert into application_logs (application_id, changed_by, from_status, to_status, note)
       values (v_id, 'system', null, v_status, '신청 접수');
@@ -393,9 +433,9 @@ begin
     v_order := case when v_full2 then (select coalesce(max(waitlist_order), 0) + 1 from applications
                  where status = '대기' and (slot1_id = v_slot2 or slot2_id = v_slot2)) end;
     insert into applications (branch_id, student_name, grade, school, guardian_phone, enrollment_type, course,
-        slot2_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, extra, idempotency_key)
+        slot2_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, extra, enroll_verified, idempotency_key)
       values (b.id, v_name, (p ->> 'grade')::int, btrim(p ->> 'school'), v_phone, p ->> 'enrollment_type', '2차',
-        v_slot2, s2.price, v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), coalesce(p -> 'extra', '{}'::jsonb), v_key || '#2')
+        v_slot2, s2.price, v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), coalesce(p -> 'extra', '{}'::jsonb), v_verified, v_key || '#2')
       returning id into v_id2;
     insert into application_logs (application_id, changed_by, from_status, to_status, note)
       values (v_id2, 'system', null, v_status, '신청 접수');
@@ -408,11 +448,11 @@ begin
           (v_full2 and (slot1_id = v_slot2 or slot2_id = v_slot2)));
     end if;
     insert into applications (branch_id, student_name, grade, school, guardian_phone, enrollment_type, course,
-        slot1_id, slot2_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, extra, idempotency_key)
+        slot1_id, slot2_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, extra, enroll_verified, idempotency_key)
       values (b.id, v_name, (p ->> 'grade')::int, btrim(p ->> 'school'), v_phone, p ->> 'enrollment_type', v_course,
         v_slot1, v_slot2,
         case v_course when '1차' then s1.price when '2차' then s2.price else b.bundle_price end,
-        v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), coalesce(p -> 'extra', '{}'::jsonb), v_key)
+        v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), coalesce(p -> 'extra', '{}'::jsonb), v_verified, v_key)
       returning id into v_id;
     insert into application_logs (application_id, changed_by, from_status, to_status, note)
       values (v_id, 'system', null, v_status, '신청 접수');

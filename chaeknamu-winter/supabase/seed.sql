@@ -9,6 +9,12 @@ insert into branches (slug, name, sort_order, refund_deadline, contact_url, noti
  ('guryong', '3관 대치구룡초점',     3, '2026-12-20 23:59:00+09', null,
   null, 980000);  -- 구룡 환불 마감 12/20은 [확인 필요], 오후 타임 [미정]
 
+-- 신청 일정 (한국 시각). 시간(오전 10시)은 임시값이에요 → 관리자 설정에서 바꾸세요.
+-- 재원생 우대 10/21~10/23 → 확정 문자 발송(~10/25) → 비재원생 10/26~10/28 → 결제 확인 후 10/30 최종 마감
+update branches set
+  open_at = '2026-10-21 10:00:00+09', priority_end_at = '2026-10-23 23:59:59+09',
+  general_open_at = '2026-10-26 10:00:00+09', close_at = '2026-10-28 23:59:59+09', final_deadline_at = '2026-10-30 23:59:59+09';
+
 update branches set makeup_start_date = '2027-01-04' where slug in ('daechi', 'dogok');  -- 보강은 1/4부터 미리 가능
 
 insert into sessions (branch_id, code, start_date, end_date, lesson_count, price)
@@ -37,6 +43,8 @@ insert into curriculum (grade_group, items, sort_order) values
  ('5~6학년', array['생기부 필독서 읽고 서평쓰기', '한국사·세계사 심화', '문학 작품 발문지'], 3);
 
 insert into app_settings (key, value) values
+ ('confirm_notice', '확정은 입금·결제가 완료된 분께 확정 문자로 안내해요. 확정 문자는 10월 25일(일)까지 모두 발송돼요.'),
+ ('payment_info', ''),
  ('curriculum_note', '모든 수업은 개인 진도와 상담에 따라 개별 시간표로 진행돼요.'),
  ('closed_days', '2027-02-06~2027-02-09 설 연휴 휴원 (월~금만 진행, 주말 수업 없음)');
 

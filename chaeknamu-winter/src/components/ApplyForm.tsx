@@ -2,13 +2,13 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import type { Branch, Course, FormField } from "@/lib/types";
-import { kDate, phoneFormat, slotText, won } from "@/lib/format";
+import { kDate, kDateTime, phoneFormat, slotText, won } from "@/lib/format";
 import { MSG, PRIVACY_ITEMS } from "@/lib/texts";
 import PolicyBox from "./PolicyBox";
 
 type Result = { status: "확정" | "대기" };
 
-export default function ApplyForm({ branch: b, fields }: { branch: Branch; fields: FormField[] }) {
+export default function ApplyForm({ branch: b, fields, confirmNotice, paymentInfo }: { branch: Branch; fields: FormField[]; confirmNotice: string; paymentInfo: string }) {
   const keyRef = useRef(typeof crypto !== "undefined" ? crypto.randomUUID() : String(Math.random()));
   const [extra, setExtra] = useState<Record<string, string | boolean>>({});
   const [s1, s2] = b.sessions;
@@ -20,7 +20,9 @@ export default function ApplyForm({ branch: b, fields }: { branch: Branch; field
   const [grade, setGrade] = useState("");
   const [school, setSchool] = useState("");
   const [phone, setPhone] = useState("");
-  const [enroll, setEnroll] = useState("신규");
+  const priority = b.phase === "priority";
+  const [enroll, setEnroll] = useState(priority ? "정규 재원생" : "신규");
+  const blockedByPriority = priority && enroll !== "정규 재원생";
   const [memo, setMemo] = useState("");
   const [agreeA, setAgreeA] = useState(false);
   const [agreeB, setAgreeB] = useState(false);
@@ -44,7 +46,7 @@ export default function ApplyForm({ branch: b, fields }: { branch: Branch; field
   const phoneOk = /^010-\d{4}-\d{4}$/.test(phone);
   const extraOk = fields.every((f) => !f.required || (extra[f.key] !== undefined && extra[f.key] !== "" && extra[f.key] !== false));
   const valid =
-    extraOk && name.trim() && grade && school.trim() && phoneOk && (!need1 || slot1) && (!need2 || effSlot2) && agreeA && agreeB;
+    !blockedByPriority && extraOk && name.trim() && grade && school.trim() && phoneOk && (!need1 || slot1) && (!need2 || effSlot2) && agreeA && agreeB;
 
   const courseCards = useMemo(
     () => [
@@ -99,7 +101,11 @@ export default function ApplyForm({ branch: b, fields }: { branch: Branch; field
         <h2 className="text-xl text-pine">{result.status === "확정" ? "신청이 접수되었어요." : "대기 신청으로 접수되었어요."}</h2>
         <Summary />
         {result.status === "확정" ? (
-          <p className="text-[15px]">확정 안내 문자는 지점에서 따로 보내드려요. 이 화면을 캡처해 두시면 편해요.</p>
+          <div className="space-y-2 text-[15px]">
+            <p className="rounded-xl bg-mint p-3"><b>입금·결제가 확인되면 확정이에요.</b> {confirmNotice}</p>
+            {paymentInfo ? <p className="whitespace-pre-line rounded-xl border border-line p-3">{paymentInfo}</p> : <p className="text-muted">입금 안내는 문자로 따로 드려요.</p>}
+            <p className="text-muted">이 화면을 캡처해 두시면 편해요.</p>
+          </div>
         ) : (
           <p className="text-[15px]">자리가 나면 신청 순서대로 연락드릴게요.</p>
         )}
@@ -221,6 +227,11 @@ export default function ApplyForm({ branch: b, fields }: { branch: Branch; field
           <label className="label" htmlFor="phone">보호자 연락처</label>
           <input id="phone" className="input" inputMode="numeric" placeholder="010-0000-0000" value={phone} onChange={(e) => setPhone(phoneFormat(e.target.value))} autoComplete="tel" />
         </div>
+        {priority && (
+          <p className="rounded-xl border border-gold bg-white p-3 text-[14px]">
+            지금은 <b>재원생 우대 신청 기간</b>이에요. 재원생만 신청할 수 있어요.{b.general_open_at ? ` 비재원생 신청은 ${kDateTime(b.general_open_at)}에 열려요.` : ""}
+          </p>
+        )}
         <fieldset>
           <legend className="label">재원 구분</legend>
           <div className="space-y-2">
@@ -288,6 +299,7 @@ export default function ApplyForm({ branch: b, fields }: { branch: Branch; field
         </label>
       </section>
 
+      {blockedByPriority && <p className="text-center text-sm text-alert">재원생 우대 기간에는 「정규 재원생」을 선택한 분만 신청할 수 있어요.</p>}
       <button type="submit" className="btn w-full" disabled={!valid}>신청 내용 확인하기</button>
     </form>
   );
