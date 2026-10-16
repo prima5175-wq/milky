@@ -38,5 +38,9 @@ insert into app_settings (key, value) values
  ('curriculum_note', '모든 수업은 개인 진도와 상담에 따라 개별 시간표로 진행돼요.'),
  ('closed_days', '2027-02-06~2027-02-09 설 연휴 휴원 (월~금만 진행, 주말 수업 없음)');
 
+insert into form_fields (key, label, type, options, required, help, sort_order, is_active) values
+ ('path', '알게 된 경로', 'select', array['지인 소개', '블로그·인터넷', '지나가다 봤어요', '기타'], false, '선택 사항이에요.', 1, false);
+-- 위 예시 칸은 꺼진 상태(is_active=false)로 들어가요. 관리자 '칸 관리'에서 켜거나 지우거나 새로 추가할 수 있어요.
+
 -- 관리자 등록 예시 (이메일 확정 후 실행):
 -- insert into admin_users (email, role) values ('원장@이메일', 'owner');

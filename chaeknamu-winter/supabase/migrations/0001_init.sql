@@ -66,6 +66,7 @@ create table applications (
   admin_note text,
   idempotency_key text not null unique,
   sheet_synced_at timestamptz,
+  extra jsonb not null default '{}'::jsonb, -- 관리자가 추가한 칸의 답변
   check (agree_policy and agree_privacy),
   check ((course = '1차' and slot1_id is not null and slot2_id is null)
       or (course = '2차' and slot1_id is null and slot2_id is not null)
@@ -83,7 +84,7 @@ create index applications_unsynced_idx on applications (created_at) where sheet_
 
 create table admin_users (
   email text primary key,
-  role text not null check (role in ('owner', 'branch_admin')),
+  role text not null check (role in ('owner', 'branch_admin', 'teacher')),
   branch_id uuid references branches(id),
   check (role = 'owner' or branch_id is not null)
 );
@@ -112,6 +113,27 @@ create table app_settings (
   value text not null
 );
 
+-- 신청 폼 칸 설정 (관리자가 추가·수정·삭제)
+create table form_fields (
+  id uuid primary key default gen_random_uuid(),
+  key text not null unique check (key ~ '^[a-z0-9_]{1,30}$'),
+  label text not null,
+  type text not null check (type in ('text', 'textarea', 'select', 'checkbox')),
+  options text[] not null default '{}',
+  required boolean not null default false,
+  help text,
+  sort_order int not null default 0,
+  is_active boolean not null default true
+);
+
+-- 요청 횟수 제한용 기록 (서버리스 환경에서도 동작하도록 DB에 저장)
+create table rate_events (
+  id bigint generated always as identity primary key,
+  key text not null,
+  created_at timestamptz not null default now()
+);
+create index rate_events_key_idx on rate_events (key, created_at);
+
 -- ───────── 보안 (RLS) ─────────
 -- 모든 테이블 RLS 켬. 익명 정책은 없음 → 익명은 아무것도 못 읽는다.
 -- 쓰기는 서버(service_role)에서만 한다. 관리자 로그인 사용자는 읽기만 허용(지점 관리자는 자기 지점만).
@@ -124,6 +146,8 @@ alter table admin_users enable row level security;
 alter table application_logs enable row level security;
 alter table curriculum enable row level security;
 alter table app_settings enable row level security;
+alter table form_fields enable row level security;
+alter table rate_events enable row level security;
 
 create function admin_role() returns text
 language sql stable security definer set search_path = public as $$
@@ -281,9 +305,9 @@ begin
     v_order := case when v_full1 then (select coalesce(max(waitlist_order), 0) + 1 from applications
                  where status = '대기' and (slot1_id = v_slot1 or slot2_id = v_slot1)) end;
     insert into applications (branch_id, student_name, grade, school, guardian_phone, enrollment_type, course,
-        slot1_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, idempotency_key)
+        slot1_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, extra, idempotency_key)
       values (b.id, v_name, (p ->> 'grade')::int, btrim(p ->> 'school'), v_phone, p ->> 'enrollment_type', '1차',
-        v_slot1, s1.price, v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), v_key)
+        v_slot1, s1.price, v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), coalesce(p -> 'extra', '{}'::jsonb), v_key)
       returning id into v_id;
     insert into application_logs (application_id, changed_by, from_status, to_status, note)
       values (v_id, 'system', null, v_status, '신청 접수');
@@ -292,9 +316,9 @@ begin
     v_order := case when v_full2 then (select coalesce(max(waitlist_order), 0) + 1 from applications
                  where status = '대기' and (slot1_id = v_slot2 or slot2_id = v_slot2)) end;
     insert into applications (branch_id, student_name, grade, school, guardian_phone, enrollment_type, course,
-        slot2_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, idempotency_key)
+        slot2_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, extra, idempotency_key)
       values (b.id, v_name, (p ->> 'grade')::int, btrim(p ->> 'school'), v_phone, p ->> 'enrollment_type', '2차',
-        v_slot2, s2.price, v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), v_key || '#2')
+        v_slot2, s2.price, v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), coalesce(p -> 'extra', '{}'::jsonb), v_key || '#2')
       returning id into v_id2;
     insert into application_logs (application_id, changed_by, from_status, to_status, note)
       values (v_id2, 'system', null, v_status, '신청 접수');
@@ -307,11 +331,11 @@ begin
           (v_full2 and (slot1_id = v_slot2 or slot2_id = v_slot2)));
     end if;
     insert into applications (branch_id, student_name, grade, school, guardian_phone, enrollment_type, course,
-        slot1_id, slot2_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, idempotency_key)
+        slot1_id, slot2_id, price, status, waitlist_order, agree_policy, agree_privacy, policy_version, agreed_at, memo, extra, idempotency_key)
       values (b.id, v_name, (p ->> 'grade')::int, btrim(p ->> 'school'), v_phone, p ->> 'enrollment_type', v_course,
         v_slot1, v_slot2,
         case v_course when '1차' then s1.price when '2차' then s2.price else b.bundle_price end,
-        v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), v_key)
+        v_status, v_order, true, true, coalesce(p ->> 'policy_version', ''), now(), nullif(p ->> 'memo', ''), coalesce(p -> 'extra', '{}'::jsonb), v_key)
       returning id into v_id;
     insert into application_logs (application_id, changed_by, from_status, to_status, note)
       values (v_id, 'system', null, v_status, '신청 접수');
@@ -335,3 +359,81 @@ end $$;
 -- 이 함수들은 서버(service_role)만 호출할 수 있다
 revoke all on function submit_application(jsonb), public_branch_status(text) from public, anon, authenticated;
 grant execute on function submit_application(jsonb), public_branch_status(text) to service_role;
+
+-- ───────── 요청 횟수 제한 ─────────
+create function check_rate(p_key text, p_window_sec int, p_max int) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare n int;
+begin
+  delete from rate_events where created_at < now() - interval '1 day' and random() < 0.01;
+  select count(*) into n from rate_events
+    where key = p_key and created_at > now() - make_interval(secs => p_window_sec);
+  if n >= p_max then return false; end if;
+  insert into rate_events (key) values (p_key);
+  return true;
+end $$;
+
+-- ───────── 학부모 신청 조회 (일치 여부만, 어느 항목이 틀렸는지 알려주지 않음) ─────────
+create function check_application(p_slug text, p_name text, p_last4 text) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'course', a.course,
+    'slot1', (select label from slots where id = a.slot1_id),
+    'slot2', (select label from slots where id = a.slot2_id),
+    'status', case a.status when '환불' then '취소' else a.status end
+  ) order by a.created_at), '[]'::jsonb)
+  from applications a join branches b on b.id = a.branch_id
+  where b.slug = p_slug and a.student_name = btrim(p_name)
+    and right(a.guardian_phone, 4) = p_last4
+$$;
+
+-- ───────── 관리자 상태 변경 (7-5 규칙) ─────────
+-- 반환 code: over_capacity(정원 초과 확인 필요) / after_deadline(환불 마감 후 확인 필요) / need_reason(사유 필요) / duplicate
+create function change_application_status(p_id uuid, p_to text, p_by text, p_note text, p_force boolean)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare a applications; b branches; sl slots; v_order int; v_slot uuid;
+begin
+  if p_to not in ('확정', '대기', '취소', '환불') then
+    return jsonb_build_object('ok', false, 'code', 'invalid');
+  end if;
+  select * into a from applications where id = p_id for update;
+  if not found then return jsonb_build_object('ok', false, 'code', 'not_found'); end if;
+  if a.status = p_to then return jsonb_build_object('ok', true, 'unchanged', true); end if;
+  select * into b from branches where id = a.branch_id;
+
+  if p_to = '확정' then
+    perform 1 from slots where id in (coalesce(a.slot1_id, a.slot2_id), coalesce(a.slot2_id, a.slot1_id)) order by id for update;
+    foreach v_slot in array array_remove(array[a.slot1_id, a.slot2_id], null) loop
+      select * into sl from slots where id = v_slot;
+      if sl.capacity is not null and (select count(*) from applications
+           where status = '확정' and id <> a.id and (slot1_id = v_slot or slot2_id = v_slot)) >= sl.capacity
+         and not p_force then
+        return jsonb_build_object('ok', false, 'code', 'over_capacity');
+      end if;
+    end loop;
+  end if;
+
+  if p_to in ('취소', '환불') and a.status = '확정' and now() > b.refund_deadline then
+    if btrim(coalesce(p_note, '')) = '' then return jsonb_build_object('ok', false, 'code', 'need_reason'); end if;
+    if not p_force then return jsonb_build_object('ok', false, 'code', 'after_deadline'); end if;
+  end if;
+
+  if p_to = '대기' then
+    select coalesce(max(waitlist_order), 0) + 1 into v_order from applications
+      where status = '대기' and (slot1_id in (a.slot1_id, a.slot2_id) or slot2_id in (a.slot1_id, a.slot2_id));
+  end if;
+
+  update applications set status = p_to,
+    waitlist_order = case when p_to = '대기' then v_order else null end
+    where id = a.id;
+  insert into application_logs (application_id, changed_by, from_status, to_status, note)
+    values (a.id, p_by, a.status, p_to, nullif(btrim(coalesce(p_note, '')), ''));
+  return jsonb_build_object('ok', true);
+exception when unique_violation then
+  return jsonb_build_object('ok', false, 'code', 'duplicate');
+end $$;
+
+revoke all on function check_rate(text, int, int), check_application(text, text, text),
+  change_application_status(uuid, text, text, text, boolean) from public, anon, authenticated;
+grant execute on function check_rate(text, int, int), check_application(text, text, text),
+  change_application_status(uuid, text, text, text, boolean) to service_role;

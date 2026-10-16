@@ -1,14 +1,16 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import type { Branch, Course } from "@/lib/types";
+import { useMemo, useRef, useState } from "react";
+import type { Branch, Course, FormField } from "@/lib/types";
 import { kDate, phoneFormat, slotText, won } from "@/lib/format";
 import { MSG, PRIVACY_ITEMS } from "@/lib/texts";
 import PolicyBox from "./PolicyBox";
 
 type Result = { status: "확정" | "대기" };
 
-export default function ApplyForm({ branch: b }: { branch: Branch }) {
+export default function ApplyForm({ branch: b, fields }: { branch: Branch; fields: FormField[] }) {
+  const keyRef = useRef(typeof crypto !== "undefined" ? crypto.randomUUID() : String(Math.random()));
+  const [extra, setExtra] = useState<Record<string, string | boolean>>({});
   const [s1, s2] = b.sessions;
   const [course, setCourse] = useState<Course>("1차");
   const [slot1, setSlot1] = useState("");
@@ -40,8 +42,9 @@ export default function ApplyForm({ branch: b }: { branch: Branch }) {
   const pick2 = s2.slots.find((t) => t.id === effSlot2);
   const anyFull = (need1 && pick1?.is_full) || (need2 && pick2?.is_full);
   const phoneOk = /^010-\d{4}-\d{4}$/.test(phone);
+  const extraOk = fields.every((f) => !f.required || (extra[f.key] !== undefined && extra[f.key] !== "" && extra[f.key] !== false));
   const valid =
-    name.trim() && grade && school.trim() && phoneOk && (!need1 || slot1) && (!need2 || effSlot2) && agreeA && agreeB;
+    extraOk && name.trim() && grade && school.trim() && phoneOk && (!need1 || slot1) && (!need2 || effSlot2) && agreeA && agreeB;
 
   const courseCards = useMemo(
     () => [
@@ -57,10 +60,30 @@ export default function ApplyForm({ branch: b }: { branch: Branch }) {
     setBusy(true);
     setError("");
     try {
-      // 3단계: 가짜 접수. 4단계에서 실제 API로 바꿔요.
-      await new Promise((r) => setTimeout(r, 700));
-      if (trap) throw new Error("spam");
-      setResult({ status: anyFull ? "대기" : "확정" });
+      const res = await fetch("/api/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branch_slug: b.slug,
+          course,
+          slot1_id: need1 ? slot1 : null,
+          slot2_id: need2 ? effSlot2 : null,
+          student_name: name.trim(),
+          grade: Number(grade),
+          school: school.trim(),
+          guardian_phone: phone,
+          enrollment_type: enroll.startsWith("정규") ? "정규 재원생" : "신규",
+          memo: memo || undefined,
+          agree_policy: true,
+          agree_privacy: true,
+          idempotency_key: keyRef.current,
+          extra,
+          website: trap,
+        }),
+      });
+      const j = await res.json();
+      if (!j.ok) { setError(j.message ?? MSG.error); return; }
+      setResult({ status: j.status });
       setStep("done");
       window.scrollTo({ top: 0 });
     } catch {
@@ -209,6 +232,26 @@ export default function ApplyForm({ branch: b }: { branch: Branch }) {
             ))}
           </div>
         </fieldset>
+        {fields.map((f) => (
+          <div key={f.id}>
+            <label className="label" htmlFor={`x-${f.key}`}>{f.label}{f.required ? "" : " (선택)"}</label>
+            {f.type === "text" && <input id={`x-${f.key}`} className="input" value={String(extra[f.key] ?? "")} onChange={(e) => setExtra({ ...extra, [f.key]: e.target.value })} />}
+            {f.type === "textarea" && <textarea id={`x-${f.key}`} className="input !min-h-24 py-2" maxLength={500} value={String(extra[f.key] ?? "")} onChange={(e) => setExtra({ ...extra, [f.key]: e.target.value })} />}
+            {f.type === "select" && (
+              <select id={`x-${f.key}`} className="input" value={String(extra[f.key] ?? "")} onChange={(e) => setExtra({ ...extra, [f.key]: e.target.value })}>
+                <option value="">선택해 주세요</option>
+                {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            )}
+            {f.type === "checkbox" && (
+              <label className="flex min-h-11 items-center gap-2 text-[15px]">
+                <input type="checkbox" className="size-5 accent-pine" checked={extra[f.key] === true} onChange={(e) => setExtra({ ...extra, [f.key]: e.target.checked })} />
+                {f.help ?? "확인했어요"}
+              </label>
+            )}
+            {f.help && f.type !== "checkbox" && <p className="mt-1 text-sm text-muted">{f.help}</p>}
+          </div>
+        ))}
         <div>
           <label className="label" htmlFor="memo">요청사항 (선택)</label>
           <textarea id="memo" className="input !min-h-24 py-2" maxLength={200} value={memo} onChange={(e) => setMemo(e.target.value)} />

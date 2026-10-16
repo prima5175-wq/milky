@@ -12,6 +12,9 @@ export type Branch = {
   slug: string;
   name: string;
   open_at: string | null;
+  close_at: string | null;
+  is_open: boolean;
+  server_now: string;
   refund_deadline: string;
   contact_url: string | null;
   notice: string | null;
@@ -20,3 +23,12 @@ export type Branch = {
   sessions: Session[];
 };
 export type Course = "1차" | "2차" | "1·2차";
+export type FormField = {
+  id: string;
+  key: string;
+  label: string;
+  type: "text" | "textarea" | "select" | "checkbox";
+  options: string[];
+  required: boolean;
+  help: string | null;
+};

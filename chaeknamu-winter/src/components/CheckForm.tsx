@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
-import { BRANCHES } from "@/lib/mock";
 
 type Row = { course: string; slots: string; status: string };
 
-export default function CheckForm() {
-  const [branch, setBranch] = useState(BRANCHES[0].slug);
+export default function CheckForm({ branches }: { branches: { slug: string; name: string }[] }) {
+  const [branch, setBranch] = useState(branches[0]?.slug ?? "");
+  const [msg, setMsg] = useState("");
   const [name, setName] = useState("");
   const [last4, setLast4] = useState("");
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -14,9 +14,17 @@ export default function CheckForm() {
   async function go(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    await new Promise((r) => setTimeout(r, 500));
-    // 3단계: 가짜 조회 (홍길동 / 1234 만 결과가 나와요)
-    setRows(name.trim() === "홍길동" && last4 === "1234" ? [{ course: "1·2차", slots: "1차 2부 · 2차 2부", status: "확정" }] : []);
+        setMsg("");
+    try {
+      const res = await fetch("/api/check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ branch, name, last4 }) });
+      const j = await res.json();
+      if (!j.ok) { setMsg(j.message); setRows(null); }
+      else setRows((j.rows as { course: string; slot1: string | null; slot2: string | null; status: string }[]).map((r) => ({
+        course: r.course,
+        slots: [r.slot1 && `1차 ${r.slot1}`, r.slot2 && `2차 ${r.slot2}`].filter(Boolean).join(" · "),
+        status: r.status,
+      })));
+    } catch { setMsg("잠시 후 다시 시도해 주세요."); }
     setBusy(false);
   }
 
@@ -26,7 +34,7 @@ export default function CheckForm() {
         <div>
           <label className="label" htmlFor="b">지점</label>
           <select id="b" className="input" value={branch} onChange={(e) => setBranch(e.target.value)}>
-            {BRANCHES.map((b) => <option key={b.slug} value={b.slug}>{b.name}</option>)}
+            {branches.map((b) => <option key={b.slug} value={b.slug}>{b.name}</option>)}
           </select>
         </div>
         <div>
@@ -39,6 +47,7 @@ export default function CheckForm() {
         </div>
         <button className="btn w-full" disabled={busy || !name.trim() || last4.length !== 4}>{busy ? "찾는 중이에요…" : "조회하기"}</button>
       </form>
+      {msg && <p role="alert" className="card text-[15px]">{msg}</p>}
       {rows && rows.length === 0 && <p className="card text-[15px]">일치하는 신청이 없어요.</p>}
       {rows?.map((r) => (
         <div key={r.course} className="card text-[15px]">

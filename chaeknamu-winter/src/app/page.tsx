@@ -1,10 +1,13 @@
 import Link from "next/link";
-import { BRANCHES } from "@/lib/mock";
+import { listBranches } from "@/lib/repo";
 import { kDate } from "@/lib/format";
 import { LETTER } from "@/lib/texts";
 import Hero from "@/components/Hero";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const BRANCHES = await listBranches();
   return (
     <main className="mx-auto max-w-xl px-4 pb-16 pt-10">
       <Hero kicker="책나무 강남서초지사 · 2027 겨울방학특강" title="몰입독서반" />

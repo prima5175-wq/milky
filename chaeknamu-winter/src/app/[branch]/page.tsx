@@ -3,13 +3,17 @@ import { notFound } from "next/navigation";
 import OpenGate from "@/components/OpenGate";
 import Hero from "@/components/Hero";
 import PolicyBox from "@/components/PolicyBox";
-import { CURRICULUM, getBranch } from "@/lib/mock";
+import { getBranch, getCurriculum, getSetting } from "@/lib/repo";
 import { kDate, slotText, won } from "@/lib/format";
+
+export const dynamic = "force-dynamic";
 
 export default async function BranchPage({ params }: { params: Promise<{ branch: string }> }) {
   const { branch: slug } = await params;
-  const b = getBranch(slug);
+  const b = await getBranch(slug);
   if (!b) notFound();
+  const CURRICULUM = await getCurriculum();
+  const curriculumNote = await getSetting("curriculum_note");
   const [s1, s2] = b.sessions;
   const totalLessons = s1.lesson_count + s2.lesson_count;
 
@@ -64,7 +68,7 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
           </div>
         ))}
       </div>
-      <p className="mt-3 text-[15px] text-muted">모든 수업은 개인 진도와 상담에 따라 개별 시간표로 진행돼요.</p>
+      <p className="mt-3 text-[15px] text-muted">{curriculumNote}</p>
 
       <h2 className="mt-8 text-lg text-pine">신청 전 꼭 확인해 주세요</h2>
       <div className="card mt-2 border-gold">
@@ -79,7 +83,7 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
 
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white/95 p-3 backdrop-blur">
         <div className="mx-auto max-w-xl">
-          <OpenGate openAt={b.open_at} href={`/${b.slug}/apply`} />
+          <OpenGate slug={b.slug} openAt={b.open_at} serverNow={b.server_now} isOpen={b.is_open} href={`/${b.slug}/apply`} />
         </div>
       </div>
     </main>
