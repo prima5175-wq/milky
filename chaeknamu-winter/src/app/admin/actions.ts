@@ -52,8 +52,8 @@ export async function saveNote(fd: FormData) {
   const id = String(fd.get("id"));
   const own = await query<{ branch_id: string }>("select branch_id from applications where id = $1", [id]);
   if (!own[0] || (admin.role !== "owner" && own[0].branch_id !== admin.branch_id)) redirect("/admin");
-  await query("update applications set admin_note = $2, sheet_synced_at = null where id = $1", [id, String(fd.get("admin_note") ?? "")]);
-  back(id, "msg=" + encodeURIComponent("메모를 저장했어요."));
+  await query("update applications set admin_note = $2, pass_note = nullif($3, ''), pass_end_date = nullif($4, '')::date, sheet_synced_at = null where id = $1", [id, String(fd.get("admin_note") ?? ""), String(fd.get("pass_note") ?? "").trim(), String(fd.get("pass_end_date") ?? "")]);
+  back(id, "msg=" + encodeURIComponent("저장했어요."));
 }
 
 const toNum = (v: FormDataEntryValue | null) => (v === null || String(v).trim() === "" ? null : Number(v));
@@ -67,10 +67,11 @@ export async function saveBranch(fd: FormData) {
        open_at = ($2::text)::timestamp at time zone 'Asia/Seoul',
        close_at = ($3::text)::timestamp at time zone 'Asia/Seoul',
        refund_deadline = ($4::text)::timestamp at time zone 'Asia/Seoul',
-       bundle_price = $5, contact_url = nullif($6, ''), notice = nullif($7, ''), makeup_limit = $8, partial_full_mode = $9
+       bundle_price = $5, contact_url = nullif($6, ''), notice = nullif($7, ''), makeup_limit = $8, partial_full_mode = $9,
+       makeup_start_date = nullif($10, '')::date
      where id = $1`,
     [id, kst(fd.get("open_at")), kst(fd.get("close_at")), kst(fd.get("refund_deadline")), Number(fd.get("bundle_price")),
-     String(fd.get("contact_url") ?? "").trim(), String(fd.get("notice") ?? "").trim(), Number(fd.get("makeup_limit")), String(fd.get("partial_full_mode"))],
+     String(fd.get("contact_url") ?? "").trim(), String(fd.get("notice") ?? "").trim(), Number(fd.get("makeup_limit")), String(fd.get("partial_full_mode")), String(fd.get("makeup_start_date") ?? "")],
   );
   for (const [k, v] of fd.entries()) {
     if (k.startsWith("cap_")) await query("update slots set capacity = $2 where id = $1", [k.slice(4), toNum(v)]);
@@ -123,4 +124,27 @@ export async function deleteField(fd: FormData) {
 
 export async function whoami() {
   return getAdmin();
+}
+
+// 지난 방학 이력 붙여 넣기: 한 줄에 `이름,연락처,시즌,결과(수강/취소),메모(선택)` (쉼표 또는 탭)
+export async function importHistory(fd: FormData) {
+  await requireAdmin(["owner"]);
+  let ok = 0;
+  const bad: string[] = [];
+  for (const line of String(fd.get("text") ?? "").split("\n")) {
+    if (!line.trim()) continue;
+    const [name, phone, term, outcome, note] = line.split(/[,\t]/).map((x) => x.trim());
+    const digits = (phone ?? "").replace(/\D/g, "");
+    if (!name || !/^010\d{8}$/.test(digits) || !term || !["수강", "취소"].includes(outcome)) { bad.push(line.trim()); continue; }
+    await query("insert into past_records (student_name, guardian_phone, term, outcome, note) values ($1,$2,$3,$4,$5)", [name, digits, term, outcome, note || null]);
+    ok++;
+  }
+  const msg = `${ok}건을 등록했어요.` + (bad.length ? ` 형식이 맞지 않아 건너뛴 줄 ${bad.length}개: ${bad.slice(0, 3).join(" / ")}` : "");
+  redirect("/admin/history?msg=" + encodeURIComponent(msg));
+}
+
+export async function deleteHistoryTerm(fd: FormData) {
+  await requireAdmin(["owner"]);
+  await query("delete from past_records where term = $1", [String(fd.get("term"))]);
+  redirect("/admin/history?msg=" + encodeURIComponent("지웠어요."));
 }

@@ -72,7 +72,7 @@ export default function ApplyForm({ branch: b, fields }: { branch: Branch; field
           grade: Number(grade),
           school: school.trim(),
           guardian_phone: phone,
-          enrollment_type: enroll.startsWith("정규") ? "정규 재원생" : "신규",
+          enrollment_type: enroll,
           memo: memo || undefined,
           agree_policy: true,
           agree_privacy: true,
@@ -223,11 +223,16 @@ export default function ApplyForm({ branch: b, fields }: { branch: Branch; field
         </div>
         <fieldset>
           <legend className="label">재원 구분</legend>
-          <div className="grid grid-cols-2 gap-2">
-            {(b.slug === "dogok" ? ["신규", "정규 재원생(타임 신청만)"] : ["신규", "정규 재원생"]).map((v) => (
+          <div className="space-y-2">
+            {[
+              ["신규", "신규"],
+              ["정규 재원생", b.slug === "dogok" ? "정규 재원생 (타임 신청만)" : "정규 재원생"],
+              ["휴원생", "휴원생 (예전에 다닌 적 있어요)"],
+              ["타 지점 수강생", "타 지점 수강생"],
+            ].map(([v, l]) => (
               <label key={v} className="chip">
                 <input type="radio" name="enroll" className="mr-2 size-4 accent-pine" checked={enroll === v} onChange={() => setEnroll(v)} />
-                {v}
+                {l}
               </label>
             ))}
           </div>
@@ -267,7 +272,7 @@ export default function ApplyForm({ branch: b, fields }: { branch: Branch; field
         <h2 className="text-lg text-pine">4. 동의</h2>
         <details className="card !p-4">
           <summary className="cursor-pointer text-[15px] font-bold">[필수] 방학특강 운영 규정 보기</summary>
-          <div className="mt-3"><PolicyBox refundDeadline={b.refund_deadline} makeupLimit={b.makeup_limit} /></div>
+          <div className="mt-3"><PolicyBox refundDeadline={b.refund_deadline} makeupLimit={b.makeup_limit} makeupStart={b.makeup_start_date} /></div>
         </details>
         <label className="flex min-h-11 items-center gap-2 text-[15px]">
           <input type="checkbox" className="size-5 accent-pine" checked={agreeA} onChange={(e) => setAgreeA(e.target.checked)} />

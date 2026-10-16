@@ -1,4 +1,4 @@
-import { kDateOnly } from "./format";
+import { kDate, kDateOnly } from "./format";
 
 export const LETTER = [
   "방학이 되면 아이의 하루는 생각보다 쉽게 흐트러져요. 학원과 숙제 사이에서 정작 '혼자 깊이 생각하는 시간'이 가장 먼저 사라지곤 하죠.",
@@ -7,15 +7,15 @@ export const LETTER = [
   "그래서 이번 겨울도 방학의 오전을 책으로 함께 시작하려 해요.",
 ];
 
-export const POLICY_VERSION = "2027W-v1";
+export const POLICY_VERSION = "2027W-v2";
 
 export const refundText = kDateOnly;
 
-export function policyItems(refundDeadlineIso: string, makeupLimit: number) {
+export function policyItems(refundDeadlineIso: string, makeupLimit: number, makeupStart?: string | null) {
   return [
     `환불·변경: ${refundText(refundDeadlineIso)}까지만 가능해요. 그 다음 날부터는 환불과 변경이 모두 불가해요.`,
-    `보강: 특강 기간 중 평일 정규시간에 ${makeupLimit}회까지 가능해요. 주말 보강은 없어요.`,
-    "특강 종료 후에는 보강이 불가해요.",
+    `보강: 특강 기간 중 평일 정규시간에 ${makeupLimit}회까지 가능해요. 주말 보강은 없어요.${makeupStart ? ` ${kDate(makeupStart)}부터 미리 보강을 신청하실 수 있어요.` : ""}`,
+    "보강은 신청하신 차수의 기간 안에서만 가능해요. 예를 들어 1차만 신청하시면 2차 기간에는 보강이 안 돼요. 방학특강이 끝난 뒤에는 보강이 불가해요.",
     "보강 신청: 희망 날짜와 시간을 반드시 문자로 남겨주셔야 확인과 진행이 가능해요.",
     "등하원: 특강 기간에는 등하원 체크 문자가 발송되지 않아요. 수업 시작 후 30분이 지나도록 등원하지 않으면 결석으로 처리되고 결석 안내 문자가 발송돼요. 미리 말씀해 주신 결석도 문자는 동일하게 발송돼요.",
     "방학특강은 월~금만 진행하며, 2/6(토)~2/9(화)는 설 연휴로 휴원해요.",

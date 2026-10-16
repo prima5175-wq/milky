@@ -14,7 +14,7 @@ const body = z.object({
   grade: z.number().int().min(1).max(6),
   school: z.string().trim().min(1).max(50),
   guardian_phone: z.string().min(10).max(20),
-  enrollment_type: z.enum(["신규", "정규 재원생"]),
+  enrollment_type: z.enum(["신규", "정규 재원생", "휴원생", "타 지점 수강생"]),
   memo: z.string().max(200).optional(),
   agree_policy: z.literal(true),
   agree_privacy: z.literal(true),

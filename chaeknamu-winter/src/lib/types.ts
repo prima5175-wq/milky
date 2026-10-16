@@ -20,6 +20,7 @@ export type Branch = {
   notice: string | null;
   bundle_price: number;
   makeup_limit: number;
+  makeup_start_date: string | null;
   sessions: Session[];
 };
 export type Course = "1차" | "2차" | "1·2차";

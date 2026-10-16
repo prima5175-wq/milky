@@ -9,6 +9,8 @@ insert into branches (slug, name, sort_order, refund_deadline, contact_url, noti
  ('guryong', '3관 대치구룡초점',     3, '2026-12-20 23:59:00+09', null,
   null, 980000);  -- 구룡 환불 마감 12/20은 [확인 필요], 오후 타임 [미정]
 
+update branches set makeup_start_date = '2027-01-04' where slug in ('daechi', 'dogok');  -- 보강은 1/4부터 미리 가능
+
 insert into sessions (branch_id, code, start_date, end_date, lesson_count, price)
 select b.id, v.code, v.s::date, v.e::date, v.n, v.price
 from branches b join (values

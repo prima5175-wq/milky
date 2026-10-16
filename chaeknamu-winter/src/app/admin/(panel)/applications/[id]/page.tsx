@@ -6,6 +6,7 @@ import { query } from "@/lib/db";
 import { changeStatus, saveNote } from "../../../actions";
 import MaskedPhone from "@/components/admin/MaskedPhone";
 import { won } from "@/lib/format";
+import { COURSE_CHIP, GRADE_PILL, SLOT_CHIP } from "@/lib/ui";
 
 const WARN: Record<string, string> = {
   over_capacity: "이 타임은 정원이 이미 찼어요. 그래도 확정할까요?",
@@ -23,9 +24,10 @@ export default async function Detail({ params, searchParams }: {
   const sp = await searchParams;
   const r = await getApplication(admin, id);
   if (!r) notFound();
-  const [logs, fields] = await Promise.all([
+  const [logs, fields, siblings] = await Promise.all([
     logsFor(id),
     query<{ key: string; label: string }>("select key, label from form_fields"),
+    query<{ id: string; student_name: string; grade: number }>("select distinct on (student_name) id, student_name, grade from applications where guardian_phone = $1 and student_name <> $2 order by student_name, created_at desc", [r.guardian_phone, r.student_name]),
   ]);
   const label = (k: string) => fields.find((f) => f.key === k)?.label ?? k;
   const options = ["확정", "대기", "취소", "환불"].filter((s) => s !== r.status);
@@ -34,7 +36,13 @@ export default async function Detail({ params, searchParams }: {
   return (
     <div className="space-y-6">
       <Link href="/admin/applications" className="text-sm text-muted">← 신청 목록</Link>
-      <h1 className="text-2xl font-black text-pine">{r.student_name} <span className="text-base font-normal text-muted">{r.grade}학년 · {r.school}</span></h1>
+      <h1 className="text-2xl font-black text-pine">{r.student_name} <span className={`rounded-full px-2 text-base ${GRADE_PILL[r.grade]}`}>{r.grade}학년</span> <span className="text-base font-normal text-muted">{r.school}</span></h1>
+      {(r.history?.length || siblings.length > 0) && (
+        <div className="flex flex-wrap gap-2 text-sm">
+          {r.history?.map((h) => <span key={h.term + h.outcome} className={`rounded px-2 py-0.5 ${h.outcome === "취소" ? "bg-alert text-white" : "bg-pine text-white"}`}>{h.term} {h.outcome}</span>)}
+          {siblings.map((x) => <Link key={x.id} href={`/admin/applications/${x.id}`} className="rounded bg-ink px-2 py-0.5 text-white">형제·자매 {x.student_name} ({x.grade}학년)</Link>)}
+        </div>
+      )}
       {sp.msg && <p role="status" className="rounded-xl bg-mint p-3 text-[15px]">{sp.msg}</p>}
 
       {sp.warn && (
@@ -61,8 +69,8 @@ export default async function Detail({ params, searchParams }: {
             {row("상태", <b>{r.status}{r.waitlist_order ? ` · 대기 ${r.waitlist_order}번` : ""}</b>)}
             {row("지점", r.branch_name)}
             {row("과정", r.course)}
-            {r.slot1 && row("1차 타임", r.slot1)}
-            {r.slot2 && row("2차 타임", r.slot2)}
+            {r.slot1 && row("1차", <span className="flex gap-1"><span className={`rounded-md px-2 font-bold ${COURSE_CHIP["1차"]}`}>1차</span><span className={`rounded-md px-2 ${SLOT_CHIP[r.slot1]}`}>{r.slot1}</span></span>)}
+            {r.slot2 && row("2차", <span className="flex gap-1"><span className={`rounded-md px-2 font-bold ${COURSE_CHIP["2차"]}`}>2차</span><span className={`rounded-md px-2 ${SLOT_CHIP[r.slot2]}`}>{r.slot2}</span></span>)}
             {row("수강료", won(r.price))}
             {row("연락처", <MaskedPhone phone={r.guardian_phone} />)}
             {row("재원 구분", r.enrollment_type)}
@@ -83,10 +91,13 @@ export default async function Detail({ params, searchParams }: {
             <p className="text-sm text-muted">대기 → 확정은 대기 순번이 빠른 순서대로 눌러 주세요. 정원이 차 있으면 한 번 더 물어봐요.</p>
           </form>
           <form action={saveNote} className="card space-y-3">
-            <h2 className="text-lg text-pine">관리자 메모</h2>
+            <h2 className="text-lg text-pine">기존 수강 확인·메모</h2>
             <input type="hidden" name="id" value={r.id} />
-            <textarea name="admin_note" defaultValue={r.admin_note ?? ""} className="input !min-h-24 py-2" />
-            <button className="btn w-full">메모 저장</button>
+            <div><label className="label" htmlFor="pass_note">기존 수강권 (예: 정규 12회권, 휴원 중)</label><input id="pass_note" name="pass_note" defaultValue={r.pass_note ?? ""} className="input" /></div>
+            <div><label className="label" htmlFor="pass_end_date">수강 종료일 (남은 기간 확인용)</label><input id="pass_end_date" type="date" name="pass_end_date" defaultValue={r.pass_end ?? ""} className="input" /></div>
+            <label className="label" htmlFor="admin_note">관리자 메모</label>
+            <textarea id="admin_note" name="admin_note" defaultValue={r.admin_note ?? ""} className="input !min-h-24 py-2" />
+            <button className="btn w-full">저장</button>
           </form>
         </section>
       </div>

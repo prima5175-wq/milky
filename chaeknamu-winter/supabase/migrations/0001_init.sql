@@ -16,6 +16,7 @@ create table branches (
   notice text,                            -- 지점별 운영 메모
   bundle_price int not null,              -- 1·2차 모두 금액
   makeup_limit int not null default 3,    -- 보강 가능 횟수(지점별 설정)
+  makeup_start_date date,                 -- 보강을 미리 신청할 수 있는 시작일 (null이면 차수 시작일부터)
   partial_full_mode text not null default 'all_wait'
     check (partial_full_mode in ('all_wait', 'split')), -- 1·2차 중 한쪽만 마감일 때 처리
   is_active boolean not null default true
@@ -51,7 +52,7 @@ create table applications (
   grade int not null check (grade between 1 and 6),
   school text not null,
   guardian_phone text not null check (guardian_phone ~ '^010[0-9]{8}$'),
-  enrollment_type text not null check (enrollment_type in ('신규', '정규 재원생')),
+  enrollment_type text not null check (enrollment_type in ('신규', '정규 재원생', '휴원생', '타 지점 수강생')),
   course text not null check (course in ('1차', '2차', '1·2차')),
   slot1_id uuid references slots(id),
   slot2_id uuid references slots(id),
@@ -67,6 +68,8 @@ create table applications (
   idempotency_key text not null unique,
   sheet_synced_at timestamptz,
   extra jsonb not null default '{}'::jsonb, -- 관리자가 추가한 칸의 답변
+  pass_note text,                           -- 기존 수강권 메모 (관리자 입력)
+  pass_end_date date,                       -- 기존 수강 종료일 (관리자 입력)
   check (agree_policy and agree_privacy),
   check ((course = '1차' and slot1_id is not null and slot2_id is null)
       or (course = '2차' and slot1_id is null and slot2_id is not null)
@@ -113,6 +116,18 @@ create table app_settings (
   value text not null
 );
 
+-- 지난 방학 이력 (관리자가 붙여 넣어 등록: 지난 여름방학 수강, 지난 방학 취소 등)
+create table past_records (
+  id uuid primary key default gen_random_uuid(),
+  student_name text not null,
+  guardian_phone text not null check (guardian_phone ~ '^010[0-9]{8}$'),
+  term text not null,                       -- 예: '2026 여름'
+  outcome text not null check (outcome in ('수강', '취소')),
+  note text,
+  created_at timestamptz not null default now()
+);
+create index past_records_lookup_idx on past_records (guardian_phone, student_name);
+
 -- 신청 폼 칸 설정 (관리자가 추가·수정·삭제)
 create table form_fields (
   id uuid primary key default gen_random_uuid(),
@@ -147,6 +162,7 @@ alter table application_logs enable row level security;
 alter table curriculum enable row level security;
 alter table app_settings enable row level security;
 alter table form_fields enable row level security;
+alter table past_records enable row level security;
 alter table rate_events enable row level security;
 
 create function admin_role() returns text
@@ -188,7 +204,7 @@ begin
   select jsonb_build_object(
     'slug', b.slug, 'name', b.name, 'open_at', b.open_at, 'close_at', b.close_at,
     'refund_deadline', b.refund_deadline, 'contact_url', b.contact_url, 'notice', b.notice,
-    'bundle_price', b.bundle_price, 'makeup_limit', b.makeup_limit,
+    'bundle_price', b.bundle_price, 'makeup_limit', b.makeup_limit, 'makeup_start_date', b.makeup_start_date,
     'is_open', (b.open_at is not null and now() >= b.open_at and (b.close_at is null or now() < b.close_at)),
     'server_now', now(),
     'sessions', coalesce((
@@ -241,7 +257,7 @@ begin
      or v_phone !~ '^010[0-9]{8}$'
      or coalesce((p ->> 'grade')::int, 0) not between 1 and 6
      or btrim(coalesce(p ->> 'school', '')) = ''
-     or (p ->> 'enrollment_type') not in ('신규', '정규 재원생')
+     or (p ->> 'enrollment_type') not in ('신규', '정규 재원생', '휴원생', '타 지점 수강생')
      or v_course not in ('1차', '2차', '1·2차')
      or coalesce((p ->> 'agree_policy')::boolean, false) is not true
      or coalesce((p ->> 'agree_privacy')::boolean, false) is not true

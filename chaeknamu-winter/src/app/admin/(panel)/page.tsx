@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { dashboard } from "@/lib/admin-queries";
+import { COURSE_CHIP, SLOT_CHIP } from "@/lib/ui";
 
 export default async function Dashboard() {
   const a = await requireAdmin();
@@ -19,7 +20,7 @@ export default async function Dashboard() {
           <div className="mt-2 grid gap-3 md:grid-cols-2">
             {["1차", "2차"].map((code) => (
               <div key={code} className="card !p-4">
-                <p className="font-bold">{code}</p>
+                <p><span className={`rounded-md px-3 py-0.5 font-bold ${COURSE_CHIP[code]}`}>{code}</span></p>
                 <ul className="mt-2 space-y-3">
                   {list.filter((r) => r.code === code).map((r) => {
                     const ratio = r.capacity ? r.confirmed / r.capacity : 0;
@@ -27,10 +28,10 @@ export default async function Dashboard() {
                     return (
                       <li key={r.label}>
                         <div className="flex items-baseline justify-between text-[15px]">
-                          <span>{r.label} <span className="text-sm text-muted">{r.start_time}</span></span>
+                          <span><span className={`rounded-md px-2 text-sm ${SLOT_CHIP[r.label]}`}>{r.label}</span> <span className="text-sm text-muted">{r.start_time}</span></span>
                           <span className="tabular-nums">
                             <b>{r.confirmed}</b> / {r.capacity ?? "제한 없음"}
-                            {r.waiting > 0 && <span className="ml-2 rounded-full bg-gold/30 px-2 text-sm">대기 {r.waiting}</span>}
+                            {r.waiting > 0 && <span className="ml-2 rounded-full bg-white px-2 text-sm text-alert ring-2 ring-alert">대기 {r.waiting}</span>}
                           </span>
                         </div>
                         <div className="mt-1 h-2 overflow-hidden rounded-full bg-mint">

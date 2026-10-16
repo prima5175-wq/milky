@@ -8,16 +8,18 @@ export type AppRow = {
   id: string; created_kst: string; branch_name: string; branch_slug: string; student_name: string; grade: number; school: string;
   guardian_phone: string; enrollment_type: string; course: string; slot1: string | null; slot2: string | null; price: number;
   status: string; waitlist_order: number | null; memo: string | null; admin_note: string | null; extra: Record<string, string | boolean>;
-  branch_id: string; policy_version: string;
+  branch_id: string; policy_version: string; pass_note: string | null; pass_end: string | null;
+  history: { term: string; outcome: string }[] | null;
 };
 
 const SELECT = `select a.id, to_char(a.created_at at time zone 'Asia/Seoul', 'MM/DD HH24:MI') created_kst, b.name branch_name, b.slug branch_slug,
   a.student_name, a.grade, a.school, a.guardian_phone, a.enrollment_type, a.course, s1.label slot1, s2.label slot2, a.price, a.status,
-  a.waitlist_order, a.memo, a.admin_note, a.extra, a.branch_id, a.policy_version
+  a.waitlist_order, a.memo, a.admin_note, a.extra, a.branch_id, a.policy_version, a.pass_note, to_char(a.pass_end_date, 'YYYY-MM-DD') pass_end,
+  (select jsonb_agg(jsonb_build_object('term', p.term, 'outcome', p.outcome) order by p.term desc) from past_records p where p.guardian_phone = a.guardian_phone and p.student_name = a.student_name) history
   from applications a join branches b on b.id = a.branch_id
   left join slots s1 on s1.id = a.slot1_id left join slots s2 on s2.id = a.slot2_id`;
 
-export async function listApplications(admin: Admin, f: Filters, limit = 500): Promise<AppRow[]> {
+export async function listApplications(admin: Admin, f: Filters & { sort?: string }, limit = 500): Promise<AppRow[]> {
   const w: string[] = [];
   const p: unknown[] = [];
   const add = (sql: string, v: unknown) => { p.push(v); w.push(sql.replace("?", `$${p.length}`)); };
@@ -36,7 +38,27 @@ export async function listApplications(admin: Admin, f: Filters, limit = 500): P
     else w.push(`a.student_name ilike $${nameIdx}`);
   }
   p.push(limit);
-  return query<AppRow>(`${SELECT} ${w.length ? "where " + w.join(" and ") : ""} order by a.created_at desc limit $${p.length}`, p);
+  const rows = await query<AppRow>(`${SELECT} ${w.length ? "where " + w.join(" and ") : ""} order by a.created_at desc limit $${p.length}`, p);
+  return f.sort === "time" ? rows : sortByGrade(rows);
+}
+
+// 학년 낮은 순. 같은 보호자 연락처(형제·자매)는 학년과 상관없이 한 묶음으로, 묶음 안에서는 낮은 학년 순.
+// 묶음의 위치는 묶음에서 가장 낮은 학년을 기준으로 해요.
+export function sortByGrade<T extends { guardian_phone: string; grade: number; created_kst: string; student_name: string }>(rows: T[]): T[] {
+  const minGrade = new Map<string, number>();
+  for (const r of rows) minGrade.set(r.guardian_phone, Math.min(minGrade.get(r.guardian_phone) ?? 9, r.grade));
+  return [...rows].sort((a, b) =>
+    minGrade.get(a.guardian_phone)! - minGrade.get(b.guardian_phone)! ||
+    a.guardian_phone.localeCompare(b.guardian_phone) ||
+    a.grade - b.grade ||
+    a.student_name.localeCompare(b.student_name, "ko"));
+}
+
+// 같은 보호자 연락처로 서로 다른 학생이 있으면 형제·자매 묶음으로 봐요
+export function siblingMap(rows: { guardian_phone: string; student_name: string }[]) {
+  const m = new Map<string, Set<string>>();
+  for (const r of rows) (m.get(r.guardian_phone) ?? m.set(r.guardian_phone, new Set()).get(r.guardian_phone)!).add(r.student_name);
+  return m;
 }
 
 export async function getApplication(admin: Admin, id: string): Promise<AppRow | null> {

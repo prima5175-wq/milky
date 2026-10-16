@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { deleteCurriculum, deleteField, saveBranch, saveCurriculum, saveField } from "../../actions";
 
-type B = { id: string; name: string; open_at: string | null; close_at: string | null; refund_deadline: string; bundle_price: number; contact_url: string | null; notice: string | null; makeup_limit: number; partial_full_mode: string };
+type B = { id: string; name: string; open_at: string | null; close_at: string | null; refund_deadline: string; bundle_price: number; contact_url: string | null; notice: string | null; makeup_limit: number; partial_full_mode: string; makeup_start_date: string | null };
 type S = { id: string; branch_id: string; code: string; price: number; lesson_count: number };
 type L = { id: string; session_id: string; label: string; capacity: number | null };
 
@@ -11,7 +11,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   const { msg } = await searchParams;
   const kstv = (c: string) => `to_char(${c} at time zone 'Asia/Seoul', 'YYYY-MM-DD"T"HH24:MI')`;
   const [branches, sessions, slots, curriculum, fields, note] = await Promise.all([
-    query<B>(`select id, name, ${kstv("open_at")} open_at, ${kstv("close_at")} close_at, ${kstv("refund_deadline")} refund_deadline, bundle_price, contact_url, notice, makeup_limit, partial_full_mode from branches order by sort_order`),
+    query<B>(`select id, name, ${kstv("open_at")} open_at, ${kstv("close_at")} close_at, ${kstv("refund_deadline")} refund_deadline, bundle_price, contact_url, notice, makeup_limit, partial_full_mode, to_char(makeup_start_date, 'YYYY-MM-DD') makeup_start_date from branches order by sort_order`),
     query<S>("select id, branch_id, code, price, lesson_count from sessions order by code"),
     query<L>("select id, session_id, label, capacity from slots order by sort_order"),
     query<{ id: string; grade_group: string; items: string[] }>("select id, grade_group, items from curriculum order by sort_order"),
@@ -61,6 +61,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <div><label className="label">환불·변경 마감</label><input type="datetime-local" name="refund_deadline" defaultValue={b.refund_deadline} className="input" required /></div>
               <div><label className="label">1·2차 모두 금액</label><input type="number" name="bundle_price" defaultValue={b.bundle_price} className="input" required /></div>
               <div><label className="label">보강 가능 횟수</label><input type="number" name="makeup_limit" defaultValue={b.makeup_limit} className="input" required /></div>
+              <div><label className="label">보강 미리 신청 가능 시작일</label><input type="date" name="makeup_start_date" defaultValue={b.makeup_start_date ?? ""} className="input" /></div>
               <div><label className="label">1·2차 중 한쪽만 마감일 때</label>
                 <select name="partial_full_mode" defaultValue={b.partial_full_mode} className="input"><option value="all_wait">전체 대기로 접수</option><option value="split">차수별로 나눠 접수</option></select></div>
             </div>

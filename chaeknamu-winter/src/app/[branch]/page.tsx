@@ -72,7 +72,7 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
 
       <h2 className="mt-8 text-lg text-pine">신청 전 꼭 확인해 주세요</h2>
       <div className="card mt-2 border-gold">
-        <PolicyBox refundDeadline={b.refund_deadline} makeupLimit={b.makeup_limit} />
+        <PolicyBox refundDeadline={b.refund_deadline} makeupLimit={b.makeup_limit} makeupStart={b.makeup_start_date} />
       </div>
 
       {b.contact_url && (
