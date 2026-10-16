@@ -88,6 +88,7 @@ create index applications_unsynced_idx on applications (created_at) where sheet_
 create table admin_users (
   email text primary key,
   role text not null check (role in ('owner', 'branch_admin', 'teacher')),
+  display_name text,                        -- 화면에 보일 이름 (예: 김선생)
   branch_id uuid references branches(id),
   check (role = 'owner' or branch_id is not null)
 );
@@ -114,6 +115,45 @@ create table curriculum (
 create table app_settings (
   key text primary key,
   value text not null
+);
+
+-- 출석 (학생·날짜별 1건)
+create table attendance (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references applications(id) on delete cascade,
+  lesson_date date not null,
+  slot_id uuid not null references slots(id),
+  status text not null check (status in ('출석', '지각', '결석')),
+  checked_by text not null,
+  checked_at timestamptz not null default now(),
+  unique (application_id, lesson_date)
+);
+
+-- 수업 기록 (학생·날짜별 1건). 관리자 화면에서만 보여요. 학부모에게는 공개하지 않아요.
+create table lesson_records (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references applications(id) on delete cascade,
+  lesson_date date not null,
+  activity text not null default '',          -- 당일 활동
+  comment text not null default '',           -- 선생님 코멘트
+  worksheet_count int not null default 0 check (worksheet_count >= 0),
+  taught_by text,                             -- 그날 수업한 강사(이메일)
+  worksheet_graded boolean not null default false,
+  graded_by text,
+  graded_at timestamptz,
+  recorded_by text not null,
+  updated_at timestamptz not null default now(),
+  unique (application_id, lesson_date)
+);
+create index lesson_records_ungraded_idx on lesson_records (lesson_date) where worksheet_count > 0 and not worksheet_graded;
+
+-- 읽은 책 (하루에 여러 권)
+create table lesson_books (
+  id uuid primary key default gen_random_uuid(),
+  record_id uuid not null references lesson_records(id) on delete cascade,
+  title text not null,
+  volumes int not null default 1 check (volumes >= 1),
+  sort_order int not null default 0
 );
 
 -- 지난 방학 이력 (관리자가 붙여 넣어 등록: 지난 여름방학 수강, 지난 방학 취소 등)
@@ -163,6 +203,9 @@ alter table curriculum enable row level security;
 alter table app_settings enable row level security;
 alter table form_fields enable row level security;
 alter table past_records enable row level security;
+alter table attendance enable row level security;
+alter table lesson_records enable row level security;
+alter table lesson_books enable row level security;
 alter table rate_events enable row level security;
 
 create function admin_role() returns text

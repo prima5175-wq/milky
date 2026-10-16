@@ -9,8 +9,8 @@ const ROLE = { owner: "원장", branch_admin: "지점 관리자", teacher: "강�
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const a = await requireAdmin();
   const nav = a.role === "teacher"
-    ? [["/admin/attendance", "출석"]]
-    : [["/admin", "현황"], ["/admin/applications", "신청 목록"], ...(a.role === "owner" ? [["/admin/history", "지난 방학 이력"], ["/admin/settings", "설정"]] : [])];
+    ? [["/admin/attendance", "출석·수업 기록"], ["/admin/worksheets", "첨삭 확인"]]
+    : [["/admin", "현황"], ["/admin/applications", "신청 목록"], ["/admin/attendance", "출석·수업 기록"], ["/admin/worksheets", "첨삭 확인"], ...(a.role === "owner" ? [["/admin/history", "지난 방학 이력"], ["/admin/settings", "설정"]] : [])];
   return (
     <div>
       <header className="border-b border-line bg-white">

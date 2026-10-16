@@ -6,6 +6,7 @@ import { query } from "@/lib/db";
 import { changeStatus, saveNote } from "../../../actions";
 import MaskedPhone from "@/components/admin/MaskedPhone";
 import { won } from "@/lib/format";
+import { recordSummary } from "@/lib/lesson-queries";
 import { COURSE_CHIP, GRADE_PILL, SLOT_CHIP } from "@/lib/ui";
 
 const WARN: Record<string, string> = {
@@ -30,6 +31,8 @@ export default async function Detail({ params, searchParams }: {
     query<{ id: string; student_name: string; grade: number }>("select distinct on (student_name) id, student_name, grade from applications where guardian_phone = $1 and student_name <> $2 order by student_name, created_at desc", [r.guardian_phone, r.student_name]),
   ]);
   const label = (k: string) => fields.find((f) => f.key === k)?.label ?? k;
+  const rec = await recordSummary(id);
+  const bookTotal = rec.days.reduce((n, d) => n + d.books.reduce((m, b) => m + b.volumes, 0), 0);
   const options = ["확정", "대기", "취소", "환불"].filter((s) => s !== r.status);
   const row = (k: string, v: React.ReactNode) => (<><dt className="text-muted">{k}</dt><dd>{v}</dd></>);
 
@@ -101,6 +104,23 @@ export default async function Detail({ params, searchParams }: {
           </form>
         </section>
       </div>
+
+      <section className="card">
+        <h2 className="text-lg text-pine">수업 기록 누적 <span className="text-sm font-normal text-muted">(관리자에게만 보여요)</span></h2>
+        <p className="mt-1 text-[15px]">출석 {rec.counts.present}회 · 지각 {rec.counts.late}회 · 결석 {rec.counts.absent}회 / 활동지 {rec.counts.worksheets}장 (첨삭 {rec.counts.graded}장) / 읽은 책 {bookTotal}권</p>
+        <ul className="mt-3 divide-y divide-line text-[15px]">
+          {rec.days.map((d) => (
+            <li key={d.d} className="py-2">
+              <b className="tabular-nums">{d.d}</b> <span className="text-muted">{d.status ?? "출석 미기록"}</span>
+              {d.activity && <p>활동: {d.activity}</p>}
+              {d.books.length > 0 && <p>책: {d.books.map((b) => `${b.title} ${b.volumes}권`).join(", ")}</p>}
+              {d.worksheet_count > 0 && <p>활동지 {d.worksheet_count}장 · {d.worksheet_graded ? "첨삭 완료" : "첨삭 전"} · 수업 {d.taught_name ?? "미기록"}</p>}
+              {d.comment && <p className="text-muted">코멘트: {d.comment}</p>}
+            </li>
+          ))}
+          {rec.days.length === 0 && <li className="py-2 text-muted">아직 기록이 없어요.</li>}
+        </ul>
+      </section>
 
       <section className="card">
         <h2 className="text-lg text-pine">변경 기록</h2>
