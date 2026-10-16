@@ -38,8 +38,11 @@ export async function POST(req: Request) {
   // 스팸 로봇은 성공한 것처럼 보이게 하고 저장하지 않아요
   if (d.website) return NextResponse.json({ ok: true, status: "확정" });
 
-  // 같은 IP에서 1분에 12회까지 (학원 와이파이에서 여러 명이 동시에 신청해도 되도록 넉넉하게)
-  if (!(await checkRate(`apply:${clientIp(req)}`, 60, 12))) {
+  // 학원 와이파이·통신사 망에서는 학부모 100명이 같은 IP로 보일 수 있어요.
+  // 그래서 IP는 로봇 폭주만 막는 넉넉한 한도(1분 300회)로 두고,
+  // 실제 방어는 '같은 연락처로 반복 제출'(10분 6회)과 중복 신청·함정 필드로 해요.
+  const phoneKey = d.guardian_phone.replace(/\D/g, "");
+  if (!(await checkRate(`apply:${clientIp(req)}`, 60, 300)) || !(await checkRate(`applyphone:${phoneKey}`, 600, 6))) {
     return NextResponse.json({ ok: false, message: "잠시 후 다시 시도해 주세요." }, { status: 429 });
   }
 
