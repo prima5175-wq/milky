@@ -48,6 +48,19 @@ export default function ApplyForm({ branch: b, fields, confirmNotice, paymentInf
   const valid =
     !blockedByPriority && extraOk && name.trim() && grade && school.trim() && phoneOk && (!need1 || slot1) && (!need2 || effSlot2) && agreeA && agreeB;
 
+  // 버튼이 눌리지 않을 때 어떤 칸이 비었는지 알려줘요
+  const missing = [
+    need1 && !slot1 && "1차 타임",
+    need2 && !effSlot2 && "2차 타임",
+    !name.trim() && "학생 이름",
+    !grade && "학년",
+    !school.trim() && "학교",
+    !phoneOk && "보호자 연락처(010으로 시작하는 11자리)",
+    ...fields.filter((f) => f.required && (extra[f.key] === undefined || extra[f.key] === "" || extra[f.key] === false)).map((f) => f.label),
+    !agreeA && "운영 규정 확인 체크",
+    !agreeB && "개인정보 동의 체크",
+  ].filter(Boolean) as string[];
+
   const courseCards = useMemo(
     () => [
       { c: "1차" as Course, t: "1차만", d: `${kDate(s1.start_date)} ~ ${kDate(s1.end_date)} · ${s1.lesson_count}회`, p: s1.price },
@@ -299,6 +312,9 @@ export default function ApplyForm({ branch: b, fields, confirmNotice, paymentInf
         </label>
       </section>
 
+      {!valid && !blockedByPriority && missing.length > 0 && (
+        <p role="status" className="rounded-xl border border-gold bg-white p-3 text-center text-[14px]">아직 입력이 필요한 항목: <b>{missing.join(", ")}</b></p>
+      )}
       {blockedByPriority && <p className="text-center text-sm text-alert">재원생 우대 기간에는 「정규 재원생」을 선택한 분만 신청할 수 있어요.</p>}
       <button type="submit" className="btn w-full" disabled={!valid}>신청 내용 확인하기</button>
     </form>
