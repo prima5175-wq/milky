@@ -52,6 +52,11 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
             <li key={t.id} className="py-2">{slotText(t)}</li>
           ))}
         </ul>
+        {b.regular_hours && (
+          <p className="mt-3 rounded-xl bg-mint p-3 text-[15px]">
+            <b>방학에도 정규 수업이 있어요.</b> 정규 수업은 평일 {b.regular_hours}에 운영돼요. (위 특강 시간과 별개예요)
+          </p>
+        )}
       </div>
 
       {b.notice && (

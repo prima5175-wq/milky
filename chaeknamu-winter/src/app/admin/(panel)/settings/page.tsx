@@ -3,7 +3,7 @@ import { query } from "@/lib/db";
 import { deleteCurriculum, deleteField, saveBranch, saveTexts, saveCurriculum, saveField, sheetRebuild, sheetSyncNow } from "../../actions";
 import { sheetStatus } from "@/lib/sheets";
 
-type B = { id: string; name: string; open_at: string | null; close_at: string | null; refund_deadline: string; bundle_price: number; contact_url: string | null; notice: string | null; makeup_limit: number; partial_full_mode: string; makeup_start_date: string | null; priority_end_at: string | null; general_open_at: string | null; final_deadline_at: string | null };
+type B = { id: string; name: string; open_at: string | null; close_at: string | null; refund_deadline: string; bundle_price: number; contact_url: string | null; notice: string | null; makeup_limit: number; partial_full_mode: string; makeup_start_date: string | null; regular_hours: string | null; priority_end_at: string | null; general_open_at: string | null; final_deadline_at: string | null };
 type S = { id: string; branch_id: string; code: string; price: number; lesson_count: number };
 type L = { id: string; session_id: string; label: string; capacity: number | null };
 
@@ -14,7 +14,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   const texts = Object.fromEntries((await query<{ key: string; value: string }>("select key, value from app_settings where key in ('confirm_notice', 'payment_info')")).map((r) => [r.key, r.value]));
   const kstv = (c: string) => `to_char(${c} at time zone 'Asia/Seoul', 'YYYY-MM-DD"T"HH24:MI')`;
   const [branches, sessions, slots, curriculum, fields, note] = await Promise.all([
-    query<B>(`select id, name, ${kstv("open_at")} open_at, ${kstv("close_at")} close_at, ${kstv("refund_deadline")} refund_deadline, bundle_price, contact_url, notice, makeup_limit, partial_full_mode, to_char(makeup_start_date, 'YYYY-MM-DD') makeup_start_date, ${kstv("priority_end_at")} priority_end_at, ${kstv("general_open_at")} general_open_at, ${kstv("final_deadline_at")} final_deadline_at from branches order by sort_order`),
+    query<B>(`select id, name, ${kstv("open_at")} open_at, ${kstv("close_at")} close_at, ${kstv("refund_deadline")} refund_deadline, bundle_price, contact_url, notice, regular_hours, makeup_limit, partial_full_mode, to_char(makeup_start_date, 'YYYY-MM-DD') makeup_start_date, ${kstv("priority_end_at")} priority_end_at, ${kstv("general_open_at")} general_open_at, ${kstv("final_deadline_at")} final_deadline_at from branches order by sort_order`),
     query<S>("select id, branch_id, code, price, lesson_count from sessions order by code"),
     query<L>("select id, session_id, label, capacity from slots order by sort_order"),
     query<{ id: string; grade_group: string; items: string[] }>("select id, grade_group, items from curriculum order by sort_order"),
@@ -72,6 +72,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 <select name="partial_full_mode" defaultValue={b.partial_full_mode} className="input"><option value="all_wait">전체 대기로 접수</option><option value="split">차수별로 나눠 접수</option></select></div>
             </div>
             <div><label className="label">문의 링크</label><input name="contact_url" defaultValue={b.contact_url ?? ""} className="input" placeholder="https://" /></div>
+            <div><label className="label">방학 중 정규 수업 시간 (예: 14:00~19:00, 도곡초점처럼 정규가 따로 없으면 비워 두세요)</label><input name="regular_hours" defaultValue={b.regular_hours ?? ""} className="input" placeholder="14:00~19:00" /></div>
             <div><label className="label">지점 안내 메모 (안내 페이지에 표시)</label><textarea name="notice" defaultValue={b.notice ?? ""} className="input !min-h-20 py-2" /></div>
             {sessions.filter((s) => s.branch_id === b.id).map((s) => (
               <div key={s.id} className="rounded-xl bg-snow p-3">

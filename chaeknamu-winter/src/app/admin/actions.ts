@@ -74,10 +74,11 @@ export async function saveBranch(fd: FormData) {
        makeup_start_date = nullif($10, '')::date,
        priority_end_at = ($11::text)::timestamp at time zone 'Asia/Seoul',
        general_open_at = ($12::text)::timestamp at time zone 'Asia/Seoul',
-       final_deadline_at = ($13::text)::timestamp at time zone 'Asia/Seoul'
+       final_deadline_at = ($13::text)::timestamp at time zone 'Asia/Seoul',
+       regular_hours = nullif($14, '')
      where id = $1`,
     [id, kst(fd.get("open_at")), kst(fd.get("close_at")), kst(fd.get("refund_deadline")), Number(fd.get("bundle_price")),
-     String(fd.get("contact_url") ?? "").trim(), String(fd.get("notice") ?? "").trim(), Number(fd.get("makeup_limit")), String(fd.get("partial_full_mode")), String(fd.get("makeup_start_date") ?? ""), kst(fd.get("priority_end_at")), kst(fd.get("general_open_at")), kst(fd.get("final_deadline_at"))],
+     String(fd.get("contact_url") ?? "").trim(), String(fd.get("notice") ?? "").trim(), Number(fd.get("makeup_limit")), String(fd.get("partial_full_mode")), String(fd.get("makeup_start_date") ?? ""), kst(fd.get("priority_end_at")), kst(fd.get("general_open_at")), kst(fd.get("final_deadline_at")), String(fd.get("regular_hours") ?? "").trim()],
   );
   for (const [k, v] of fd.entries()) {
     if (k.startsWith("cap_")) await query("update slots set capacity = $2 where id = $1", [k.slice(4), toNum(v)]);

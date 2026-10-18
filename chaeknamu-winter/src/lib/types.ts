@@ -23,6 +23,7 @@ export type Branch = {
   refund_deadline: string;
   contact_url: string | null;
   notice: string | null;
+  regular_hours: string | null;
   bundle_price: number;
   makeup_limit: number;
   makeup_start_date: string | null;

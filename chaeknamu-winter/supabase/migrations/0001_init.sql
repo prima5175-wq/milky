@@ -17,6 +17,7 @@ create table branches (
   final_deadline_at timestamptz,          -- 결제 확인까지 끝나는 최종 마감(안내용)
   contact_url text,
   notice text,                            -- 지점별 운영 메모
+  regular_hours text,                     -- 방학 중 정규 수업 시간 안내(예: 14:00~19:00). 비우면 표시하지 않음
   bundle_price int not null,              -- 1·2차 모두 금액
   makeup_limit int not null default 3,    -- 보강 가능 횟수(지점별 설정)
   makeup_start_date date,                 -- 보강을 미리 신청할 수 있는 시작일 (null이면 차수 시작일부터)
@@ -297,7 +298,7 @@ begin
   select jsonb_build_object(
     'slug', b.slug, 'name', b.name, 'open_at', b.open_at, 'close_at', b.close_at,
     'refund_deadline', b.refund_deadline, 'contact_url', b.contact_url, 'notice', b.notice,
-    'bundle_price', b.bundle_price, 'makeup_limit', b.makeup_limit, 'makeup_start_date', b.makeup_start_date,
+    'regular_hours', b.regular_hours, 'bundle_price', b.bundle_price, 'makeup_limit', b.makeup_limit, 'makeup_start_date', b.makeup_start_date,
     'phase', branch_phase(b), 'priority_end_at', b.priority_end_at, 'general_open_at', b.general_open_at,
     'final_deadline_at', b.final_deadline_at,
     'next_change_at', case branch_phase(b) when 'before' then b.open_at when 'priority' then b.priority_end_at
