@@ -36,7 +36,10 @@ const ERR: Record<string, string> = {
 
 export async function POST(req: Request) {
   const parsed = body.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ ok: false, message: ERR.invalid }, { status: 400 });
+  if (!parsed.success) {
+    console.error("[신청 입력 오류]", JSON.stringify(parsed.error.issues.map((i) => ({ path: i.path.join("."), msg: i.message }))));
+    return NextResponse.json({ ok: false, message: ERR.invalid }, { status: 400 });
+  }
   const d = parsed.data;
 
   // 스팸 로봇은 성공한 것처럼 보이게 하고 저장하지 않아요
@@ -70,6 +73,7 @@ export async function POST(req: Request) {
     );
     const r = rows[0].r;
     if (!r.ok) {
+      if (r.code === "invalid") console.error("[신청 거절: invalid]", d.branch_slug, d.course, d.slot1_id, d.slot2_id);
       let message = ERR[r.code ?? "invalid"] ?? MSG.error;
       if (r.code === "paused" || r.code === "priority_only") {
         const b = await getBranch(d.branch_slug);

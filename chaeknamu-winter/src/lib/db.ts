@@ -36,6 +36,13 @@ async function init(): Promise<Runner> {
       await db.exec(readFileSync(path.join(root, "migrations", f), "utf8"));
     }
     await db.exec(readFileSync(path.join(root, "seed.sql"), "utf8"));
+    // 체험용은 서버가 여러 대로 나뉘어 각자 DB를 만들어요. 타임 번호를 모든 서버에서 똑같이 맞춰야 신청이 어느 서버로 가도 통해요.
+    await db.exec(
+      `update slots set id = (substr(h, 1, 12) || '4' || substr(h, 14, 3) || '8' || substr(h, 18, 15))::uuid
+         from (select sl.id as old_id, md5(b.slug || s.code || sl.label) as h
+                 from slots sl join sessions s on s.id = sl.session_id join branches b on b.id = s.branch_id) x
+        where slots.id = x.old_id`,
+    );
     await db.exec(readFileSync(path.join(root, "dev-seed.sql"), "utf8"));
   }
   return async (sql, params) => (await db.query(sql, params as unknown[])).rows as Record<string, unknown>[];
