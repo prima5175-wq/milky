@@ -206,7 +206,7 @@ export async function markSmsSent(fd: FormData) {
 
 export async function saveTexts(fd: FormData) {
   await requireAdmin(["owner"]);
-  for (const key of ["confirm_notice", "payment_info"]) {
+  for (const key of ["confirm_notice", "payment_info", "youtube_url", "youtube_title", "youtube_desc"]) {
     await query("insert into app_settings (key, value) values ($1, $2) on conflict (key) do update set value = excluded.value", [key, String(fd.get(key) ?? "").trim()]);
   }
   redirect("/admin/settings?msg=" + encodeURIComponent("안내 문구를 저장했어요.") + "#texts");

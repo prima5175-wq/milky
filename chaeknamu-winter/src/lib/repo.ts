@@ -47,3 +47,14 @@ export async function checkRate(key: string, windowSec: number, max: number) {
   const rows = await query<{ r: boolean }>("select check_rate($1, $2, $3) r", [key, windowSec, max]);
   return rows[0].r;
 }
+
+// 원장 영상(유튜브) 안내. 관리자 설정에 값이 없으면 기본 문구를 써요.
+export async function getYoutube() {
+  const rows = await query<{ key: string; value: string }>("select key, value from app_settings where key in ('youtube_url', 'youtube_title', 'youtube_desc')");
+  const m = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return {
+    url: m.youtube_url ?? "https://tinyurl.com/3pfkxtjn",
+    title: m.youtube_title || "원장님 영상 보기",
+    desc: m.youtube_desc || "방학 독서에 대한 생각을 영상으로도 나눴어요.",
+  };
+}
