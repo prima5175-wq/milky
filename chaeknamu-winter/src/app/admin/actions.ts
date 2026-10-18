@@ -23,7 +23,9 @@ export async function requestLogin(_: LoginState, fd: FormData): Promise<LoginSt
   }
   if (allowed && hasSupabase()) {
     const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    await (await supabaseServer()).auth.signInWithOtp({ email, options: { emailRedirectTo: `${site}/admin/callback`, shouldCreateUser: true } });
+    const { error } = await (await supabaseServer()).auth.signInWithOtp({ email, options: { emailRedirectTo: `${site}/admin/callback`, shouldCreateUser: true } });
+    // 메일 발송이 실패해도 화면에는 같은 안내를 보여요(허용 목록을 알아내지 못하게). 대신 이유를 기록에 남겨요.
+    if (error) console.error("[로그인 메일 발송 실패]", error.status, error.code, error.message);
   }
   return { message: "허용된 이메일이라면 로그인 링크를 보냈어요. 메일함을 확인해 주세요." };
 }
