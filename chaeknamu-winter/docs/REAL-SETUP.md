@@ -33,7 +33,7 @@
 |---|---|---|
 | Supabase 데이터베이스 비밀번호 | B-3에서 내가 만듦 | |
 | NEXT_PUBLIC_SUPABASE_URL | B-5 | |
-| NEXT_PUBLIC_SUPABASE_ANON_KEY | B-5 | |
+| NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY | B-5 | |
 | DATABASE_URL | B-6 | |
 | Vercel 주소 | C-7 | |
 | Gmail 앱 비밀번호 (16자리) | D-5 | |
@@ -118,7 +118,7 @@
 2. **값 ① Project URL**: 
    - Project Settings → **API**(또는 **Data API**) 화면에서 `Project URL`을 복사 → 모양: `https://abcdefghij.supabase.co` → 메모표 `NEXT_PUBLIC_SUPABASE_URL`에 적기.
 3. **값 ② anon public 키**:
-   - 같은 API 화면의 **Project API keys** 중 **`anon` `public`** 키(아주 긴 글자 `eyJ…`로 시작) 복사 → 메모표 `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+   - 같은 API 화면의 **Project API keys** 중 **`anon` `public`** 키(아주 긴 글자 `eyJ…`로 시작) 복사 → 메모표 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
    - ⚠️ **`service_role` 키는 복사하지 마세요.** 이 앱에서 쓰지 않아요.
    - (키 이름이 "publishable key"로 바뀐 화면이면 그 키를 복사하세요.)
 4. **값 ③ DATABASE_URL (제일 중요)**:
@@ -153,7 +153,7 @@
    | Key | Value |
    |---|---|
    | `NEXT_PUBLIC_SUPABASE_URL` | B-7 ① |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | B-7 ② |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | B-7 ② |
    | `DATABASE_URL` | B-7 ③ (비밀번호 바꾼 것) |
    | `NEXT_PUBLIC_SITE_URL` | 일단 `https://example.com` (C-6에서 고쳐요) |
 

@@ -57,7 +57,7 @@
 왼쪽 아래 톱니바퀴 **Project Settings**로 들어가요.
 
 - **API** 메뉴 → `Project URL` (https://○○○.supabase.co 모양) → 복사해서 메모에 적기 → 이름: **NEXT_PUBLIC_SUPABASE_URL**
-- 같은 화면 `Project API keys`의 **anon / public** 키 → 이름: **NEXT_PUBLIC_SUPABASE_ANON_KEY**
+- 같은 화면 `Project API keys`의 **anon / public** 키 → 이름: **NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY**
   (이 키는 공개돼도 괜찮은 키예요.)
 - **Database** 메뉴 → `Connection string` → 탭에서 **Transaction pooler**(포트 6543)를 고르고 주소를 복사 → 안의 `[YOUR-PASSWORD]` 부분을 위에서 만든 비밀번호로 바꾸기 → 이름: **DATABASE_URL**
   (이 주소는 **비밀**이에요. 남에게 보여주거나 채팅창에 붙여 넣지 마세요.)
@@ -108,7 +108,7 @@
    | 이름 | 값 |
    |---|---|
    | `NEXT_PUBLIC_SUPABASE_URL` | 1-1에서 복사한 Project URL |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 1-1의 anon 키 |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 1-1의 anon 키 |
    | `DATABASE_URL` | 1-1의 Transaction pooler 주소(비밀번호 넣은 것) |
    | `NEXT_PUBLIC_SITE_URL` | 배포 후 나오는 주소 (처음에는 임시로 `https://example.com` 넣고, 배포 뒤에 진짜 주소로 고쳐요) |
 4. **Deploy** 클릭 → 1~3분 후 폭죽 화면과 함께 주소(`https://○○○.vercel.app`)가 나와요.

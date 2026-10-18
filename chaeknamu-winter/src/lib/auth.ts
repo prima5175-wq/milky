@@ -8,7 +8,9 @@ import { query } from "./db";
 export type Role = "owner" | "branch_admin" | "teacher";
 export type Admin = { email: string; role: Role; branch_id: string | null };
 
-export const hasSupabase = () => !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Supabase가 열쇠 이름을 바꿔서(anon → publishable) 두 이름 모두 받아요
+const supabaseKey = () => process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+export const hasSupabase = () => !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!supabaseKey();
 // 내 컴퓨터 임시 DB를 쓰는 경우에만 '간편 로그인'을 허용해요. (DATABASE_URL이 있으면 절대 켜지지 않아요)
 export const devLoginEnabled = () => !hasSupabase() && !process.env.DATABASE_URL;
 
@@ -17,7 +19,7 @@ const sign = (v: string) => crypto.createHmac("sha256", secret()).update(v).dige
 
 export async function supabaseServer() {
   const store = await cookies();
-  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, supabaseKey(), {
     cookies: {
       getAll: () => store.getAll(),
       setAll: (list) => {
