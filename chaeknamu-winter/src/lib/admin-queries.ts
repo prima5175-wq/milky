@@ -72,11 +72,11 @@ export async function getApplication(admin: Admin, id: string): Promise<AppRow |
   return r;
 }
 
-export type DashRow = { branch_name: string; branch_slug: string; code: string; label: string; start_time: string; capacity: number | null; confirmed: number; paid: number; waiting: number };
+export type DashRow = { slot_id: string; branch_name: string; branch_slug: string; code: string; label: string; start_time: string; capacity: number | null; confirmed: number; paid: number; waiting: number };
 
 export async function dashboard(admin: Admin): Promise<DashRow[]> {
   return query<DashRow>(
-    `select b.name branch_name, b.slug branch_slug, s.code, sl.label, to_char(sl.start_time, 'HH24:MI') start_time, sl.capacity,
+    `select sl.id slot_id, b.name branch_name, b.slug branch_slug, s.code, sl.label, to_char(sl.start_time, 'HH24:MI') start_time, sl.capacity,
        (select count(*)::int from applications a where a.status = '확정' and (a.slot1_id = sl.id or a.slot2_id = sl.id)) confirmed,
        (select count(*)::int from applications a where a.status = '확정' and a.payment_status = '결제완료' and (a.slot1_id = sl.id or a.slot2_id = sl.id)) paid,
        (select count(*)::int from applications a where a.status = '대기' and (a.slot1_id = sl.id or a.slot2_id = sl.id)) waiting
@@ -91,4 +91,18 @@ export async function logsFor(id: string) {
   return query<{ changed_by: string; from_status: string | null; to_status: string; note: string | null; at: string }>(
     `select changed_by, from_status, to_status, note, to_char(created_at at time zone 'Asia/Seoul', 'MM/DD HH24:MI') at
      from application_logs where application_id = $1 order by id desc`, [id]);
+}
+
+export type SlotApplicant = { slot_id: string; id: string; student_name: string; grade: number; school: string; status: string; waitlist_order: number | null; payment_status: string; guardian_phone: string };
+
+// 타임별 신청자 (대시보드에서 타임을 눌렀을 때 펼쳐 보여줘요)
+export async function slotApplicants(admin: Admin): Promise<SlotApplicant[]> {
+  return query<SlotApplicant>(
+    `select sl.id slot_id, a.id, a.student_name, a.grade, a.school, a.status, a.waitlist_order, a.payment_status
+     from slots sl join sessions s on s.id = sl.session_id join branches b on b.id = s.branch_id
+     join applications a on (a.slot1_id = sl.id or a.slot2_id = sl.id) and a.status in ('확정', '대기')
+     where ($1::uuid is null or b.id = $1)
+     order by a.status, a.waitlist_order nulls first, a.grade, a.student_name`,
+    [admin.role === "owner" ? null : admin.branch_id],
+  );
 }
