@@ -11,7 +11,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   await requireAdmin(["owner"]);
   const { msg } = await searchParams;
   const sheet = await sheetStatus();
-  const texts = Object.fromEntries((await query<{ key: string; value: string }>("select key, value from app_settings where key in ('confirm_notice', 'payment_info')")).map((r) => [r.key, r.value]));
+  const texts = Object.fromEntries((await query<{ key: string; value: string }>("select key, value from app_settings where key in ('confirm_notice', 'payment_info', 'youtube_url', 'youtube_title', 'youtube_desc')")).map((r) => [r.key, r.value]));
   const kstv = (c: string) => `to_char(${c} at time zone 'Asia/Seoul', 'YYYY-MM-DD"T"HH24:MI')`;
   const [branches, sessions, slots, curriculum, fields, note] = await Promise.all([
     query<B>(`select id, name, ${kstv("open_at")} open_at, ${kstv("close_at")} close_at, ${kstv("refund_deadline")} refund_deadline, bundle_price, contact_url, notice, regular_hours, makeup_limit, partial_full_mode, to_char(makeup_start_date, 'YYYY-MM-DD') makeup_start_date, ${kstv("priority_end_at")} priority_end_at, ${kstv("general_open_at")} general_open_at, ${kstv("final_deadline_at")} final_deadline_at from branches order by sort_order`),
@@ -71,7 +71,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <div><label className="label">1·2차 중 한쪽만 마감일 때</label>
                 <select name="partial_full_mode" defaultValue={b.partial_full_mode} className="input"><option value="all_wait">전체 대기로 접수</option><option value="split">차수별로 나눠 접수</option></select></div>
             </div>
-            <div><label className="label">문의 링크</label><input name="contact_url" defaultValue={b.contact_url ?? ""} className="input" placeholder="https://" /></div>
+            <div><label className="label">문의 전화번호 (예: 02-000-0000. 비우면 문의 안내가 표시되지 않아요)</label><input name="contact_url" defaultValue={b.contact_url ?? ""} className="input" placeholder="02-000-0000" inputMode="tel" /></div>
             <div><label className="label">방학 중 정규 수업 시간 (예: 14:00~19:00, 도곡초점처럼 정규가 따로 없으면 비워 두세요)</label><input name="regular_hours" defaultValue={b.regular_hours ?? ""} className="input" placeholder="14:00~19:00" /></div>
             <div><label className="label">지점 안내 메모 (안내 페이지에 표시)</label><textarea name="notice" defaultValue={b.notice ?? ""} className="input !min-h-20 py-2" /></div>
             {sessions.filter((s) => s.branch_id === b.id).map((s) => (
@@ -101,6 +101,12 @@ export default async function Settings({ searchParams }: { searchParams: Promise
             <textarea id="cn" name="confirm_notice" defaultValue={texts.confirm_notice ?? ""} className="input !min-h-20 py-2" /></div>
           <div><label className="label" htmlFor="pi">입금 안내 (계좌 등, 비우면 &ldquo;입금 안내는 문자로 따로 드려요&rdquo;가 보여요)</label>
             <textarea id="pi" name="payment_info" defaultValue={texts.payment_info ?? ""} className="input !min-h-24 py-2" placeholder={"예: ○○은행 000-0000-0000 (예금주 ○○○)\n입금자명은 학생 이름으로 해 주세요."} /></div>
+          <div className="rounded-xl bg-snow p-3 space-y-3">
+            <p className="font-bold">유튜브 영상 카드 (첫 화면과 지점 안내에 표시)</p>
+            <div><label className="label" htmlFor="yu">유튜브 주소 (비우면 카드가 사라져요)</label><input id="yu" name="youtube_url" defaultValue={texts.youtube_url ?? "https://tinyurl.com/3pfkxtjn"} className="input" /></div>
+            <div><label className="label" htmlFor="yt">제목</label><input id="yt" name="youtube_title" defaultValue={texts.youtube_title ?? "원장님 영상 보기"} className="input" /></div>
+            <div><label className="label" htmlFor="yd">설명 한 줄</label><input id="yd" name="youtube_desc" defaultValue={texts.youtube_desc ?? "방학 독서에 대한 생각을 영상으로도 나눴어요."} className="input" /></div>
+          </div>
           <button className="btn">안내 문구 저장</button>
         </form>
       </section>

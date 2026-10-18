@@ -4,7 +4,9 @@ import OpenGate from "@/components/OpenGate";
 import Hero from "@/components/Hero";
 import ScheduleCard from "@/components/ScheduleCard";
 import PolicyBox from "@/components/PolicyBox";
-import { getBranch, getCurriculum, getSetting } from "@/lib/repo";
+import { getBranch, getCurriculum, getSetting, getYoutube } from "@/lib/repo";
+import YoutubeCard from "@/components/YoutubeCard";
+import ContactLink from "@/components/ContactLink";
 import { kDate, slotText, won } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
   const CURRICULUM = await getCurriculum();
   const curriculumNote = await getSetting("curriculum_note");
   const confirmNotice = await getSetting("confirm_notice");
+  const yt = await getYoutube();
   const [s1, s2] = b.sessions;
   const totalLessons = s1.lesson_count + s2.lesson_count;
 
@@ -79,6 +82,8 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
       </div>
       <p className="mt-3 text-[15px] text-muted">{curriculumNote}</p>
 
+      <div className="mt-8"><YoutubeCard yt={yt} /></div>
+
       <h2 className="mt-8 text-lg text-pine">신청 전 꼭 확인해 주세요</h2>
       <div className="card mt-2 border-gold">
         <PolicyBox refundDeadline={b.refund_deadline} makeupLimit={b.makeup_limit} makeupStart={b.makeup_start_date} />
@@ -86,7 +91,7 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
 
       {b.contact_url && (
         <p className="mt-6 text-center text-[15px]">
-          궁금한 점은 <a href={b.contact_url} className="font-bold text-pine underline">문의하기</a>
+          궁금한 점은 전화로 문의해 주세요 · <ContactLink value={b.contact_url} />
         </p>
       )}
 

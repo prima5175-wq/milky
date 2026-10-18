@@ -2,7 +2,7 @@
 -- 신청 오픈 시각(open_at)은 [미정]이라 비워 둠 → 관리자가 지점별로 입력해야 신청이 열린다.
 
 insert into branches (slug, name, sort_order, refund_deadline, contact_url, notice, bundle_price) values
- ('daechi',  '1관 대치점(한티역)',   1, '2026-12-27 23:59:00+09', 'https://tinyurl.com/3pfkxtjn',
+ ('daechi',  '1관 대치점(한티역)',   1, '2026-12-27 23:59:00+09', null,
   '방학에도 정규 수업이 있어요. 특강 시간과 별개로 운영돼요.', 850000),
  ('dogok',   '2관 대치도곡초점',     2, '2026-12-27 23:59:00+09', null,
   '방학 동안 특강·정규 구분 없이 5타임으로 운영해요. 정규 수강생도 이 앱에서 타임을 신청해 주세요.', 850000),
@@ -49,6 +49,9 @@ insert into curriculum (grade_group, items, sort_order) values
 insert into app_settings (key, value) values
  ('confirm_notice', '확정은 입금·결제가 완료된 분께 확정 문자로 안내해요. 확정 문자는 10월 25일(일)까지 모두 발송돼요.'),
  ('payment_info', ''),
+ ('youtube_url', 'https://tinyurl.com/3pfkxtjn'),
+ ('youtube_title', '원장님 영상 보기'),
+ ('youtube_desc', '방학 독서에 대한 생각을 영상으로도 나눴어요.'),
  ('curriculum_note', '모든 수업은 개인 진도와 상담에 따라 개별 시간표로 진행돼요.'),
  ('closed_days', '2027-02-06~2027-02-09 설 연휴 휴원 (월~금만 진행, 주말 수업 없음)');
 

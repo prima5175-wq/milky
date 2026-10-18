@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { getSetting, listBranches } from "@/lib/repo";
+import { getSetting, getYoutube, listBranches } from "@/lib/repo";
+import YoutubeCard from "@/components/YoutubeCard";
+import ContactLink from "@/components/ContactLink";
 import ScheduleCard from "@/components/ScheduleCard";
 import { kDate } from "@/lib/format";
 import { LETTER } from "@/lib/texts";
@@ -10,6 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const BRANCHES = await listBranches();
   const confirmNotice = await getSetting("confirm_notice");
+  const yt = await getYoutube();
   return (
     <main className="mx-auto max-w-xl px-4 pb-16 pt-10">
       <Hero kicker="책나무 강남서초지사 · 2027 겨울방학특강" title="몰입독서반" sub="방학의 오전을 책으로 함께 시작해요." />
@@ -22,6 +25,8 @@ export default async function Home() {
         ))}
         <p className="text-right font-bold text-pine">— 책나무 강남서초지사 원장 드림</p>
       </section>
+
+      <div className="mt-4"><YoutubeCard yt={yt} /></div>
 
       <h2 className="mt-8 text-xl text-pine">지점을 골라 주세요</h2>
       <div className="mt-3 space-y-3">
@@ -47,14 +52,13 @@ export default async function Home() {
       </p>
 
       <section className="mt-10 border-t border-line pt-4 text-sm text-muted">
-        <p>방학 독서에 대한 제 생각을 영상으로도 나눴어요. (영상 링크는 준비 중이에요)</p>
         <p className="mt-3 font-bold text-ink">문의</p>
         <ul className="mt-1 space-y-0.5">
           {BRANCHES.map((b) => (
             <li key={b.slug}>
               {b.name}{" "}
               {b.contact_url ? (
-                <a href={b.contact_url} className="text-pine underline">문의하기</a>
+                <ContactLink value={b.contact_url} className="text-pine underline" />
               ) : (
                 <span>(준비 중)</span>
               )}
