@@ -1,0 +1,100 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import OpenGate from "@/components/OpenGate";
+import Hero from "@/components/Hero";
+import ScheduleCard from "@/components/ScheduleCard";
+import PolicyBox from "@/components/PolicyBox";
+import { getBranch, getCurriculum, getSetting } from "@/lib/repo";
+import { kDate, slotText, won } from "@/lib/format";
+
+export const dynamic = "force-dynamic";
+
+export default async function BranchPage({ params }: { params: Promise<{ branch: string }> }) {
+  const { branch: slug } = await params;
+  const b = await getBranch(slug);
+  if (!b) notFound();
+  const CURRICULUM = await getCurriculum();
+  const curriculumNote = await getSetting("curriculum_note");
+  const confirmNotice = await getSetting("confirm_notice");
+  const [s1, s2] = b.sessions;
+  const totalLessons = s1.lesson_count + s2.lesson_count;
+
+  return (
+    <main className="mx-auto max-w-xl px-4 pb-32 pt-8">
+      <Link href="/" className="text-sm text-muted">← 처음으로</Link>
+      <div className="mt-3"><Hero kicker="2027 겨울방학특강 · 몰입독서반" title={b.name} sub="아이를 바꾸는 건 ‘많이’가 아니라 ‘매일’이에요." /></div>
+
+      <div className="mt-6"><ScheduleCard b={b} confirmNotice={confirmNotice} /></div>
+
+      <h2 className="mt-8 text-lg text-pine">일정과 수강료</h2>
+      <div className="mt-2 space-y-3">
+        {b.sessions.map((s) => (
+          <div key={s.code} className="card">
+            <p className="font-bold">{s.code}</p>
+            <p className="text-[15px] text-muted">{kDate(s.start_date)} ~ {kDate(s.end_date)} · {s.lesson_count}회</p>
+            <p className="mt-1 text-xl font-bold text-pine">{won(s.price)}</p>
+          </div>
+        ))}
+        <div className="card border-gold">
+          <p className="font-bold">1·2차 모두</p>
+          <p className="text-[15px] text-muted">총 {totalLessons}회</p>
+          <p className="mt-1 text-xl font-bold text-pine">{won(b.bundle_price)}</p>
+        </div>
+      </div>
+      <p className="mt-3 text-[15px] text-muted">
+        방학특강은 월~금만 진행해요. 2/6(토)~2/9(화)는 설 연휴로 쉬어요.
+      </p>
+
+      <h2 className="mt-8 text-lg text-pine">수업 시간표</h2>
+      <div className="card mt-2">
+        <ul className="divide-y divide-line text-[15px]">
+          {s1.slots.map((t) => (
+            <li key={t.id} className="py-2">{slotText(t)}</li>
+          ))}
+        </ul>
+        {b.regular_hours && (
+          <p className="mt-3 rounded-xl bg-mint p-3 text-[15px]">
+            <b>방학에도 정규 수업이 있어요.</b> 정규 수업은 평일 {b.regular_hours}에 운영돼요. (위 특강 시간과 별개예요)
+          </p>
+        )}
+      </div>
+
+      {b.notice && (
+        <>
+          <h2 className="mt-8 text-lg text-pine">지점 안내</h2>
+          <div className="card mt-2 text-[15px]">{b.notice}</div>
+        </>
+      )}
+
+      <h2 className="mt-8 text-lg text-pine">학년별 수업</h2>
+      <div className="mt-2 space-y-3">
+        {CURRICULUM.map((c) => (
+          <div key={c.group} className="card">
+            <p className="font-bold">{c.group}</p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-5 text-[15px]">
+              {c.items.map((i) => <li key={i}>{i}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[15px] text-muted">{curriculumNote}</p>
+
+      <h2 className="mt-8 text-lg text-pine">신청 전 꼭 확인해 주세요</h2>
+      <div className="card mt-2 border-gold">
+        <PolicyBox refundDeadline={b.refund_deadline} makeupLimit={b.makeup_limit} makeupStart={b.makeup_start_date} />
+      </div>
+
+      {b.contact_url && (
+        <p className="mt-6 text-center text-[15px]">
+          궁금한 점은 <a href={b.contact_url} className="font-bold text-pine underline">문의하기</a>
+        </p>
+      )}
+
+      <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white/95 p-3 backdrop-blur">
+        <div className="mx-auto max-w-xl">
+          <OpenGate slug={b.slug} href={`/${b.slug}/apply`} phase={b.phase} open_at={b.open_at} priority_end_at={b.priority_end_at} general_open_at={b.general_open_at} next_change_at={b.next_change_at} server_now={b.server_now} />
+        </div>
+      </div>
+    </main>
+  );
+}

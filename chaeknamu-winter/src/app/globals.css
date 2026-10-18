@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold: #f2c14e;
+  --color-snow: #f8faf9;
+  --color-ink: #1c2a25;
+  --color-muted: #64736c;
+  --color-line: #e6ece8;
+  --color-sky: #eaf2fb;
+  --color-alert: #e0735f;
+
+  --font-serif: var(--font-noto-serif), "Noto Serif KR", serif;
+  --font-sans: var(--font-noto-sans), "Noto Sans KR", sans-serif;
+}
+
+/* 관마다 포인트 색이 달라요: 바깥(공통) 에메랄드, 대치점 에메랄드, 도곡초점 블루, 구룡초점 오렌지 */
+@theme inline {
+  --color-pine: var(--accent);
+  --color-pine-dark: var(--accent-d);
+  --color-mint: var(--accent-soft);
+}
+:root, [data-branch="daechi"] { --accent: #14806a; --accent-d: #0f6654; --accent-soft: #e8f5f1; }
+[data-branch="dogok"] { --accent: #2570c0; --accent-d: #1c5a9c; --accent-soft: #e9f1fb; }
+[data-branch="guryong"] { --accent: #d4600d; --accent-d: #a84a08; --accent-soft: #fdf0e6; }
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-snow);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+}
+
+@layer components {
+  .card {
+    @apply rounded-[20px] border border-line bg-white p-5;
+  }
+  .btn {
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-pine px-5 font-bold text-white transition-colors hover:bg-pine-dark disabled:opacity-50;
+  }
+}
+
+@layer components {
+  .input {
+    @apply min-h-11 w-full rounded-xl border border-line bg-white px-3 text-base text-ink outline-none focus:border-pine;
+  }
+  .label {
+    @apply mb-1 block text-sm font-bold text-ink;
+  }
+  .chip {
+    @apply flex min-h-11 cursor-pointer items-center rounded-xl border border-line bg-white px-3 py-2 text-[15px] has-[:checked]:border-pine has-[:checked]:bg-mint has-[:checked]:font-bold;
+  }
+}
+

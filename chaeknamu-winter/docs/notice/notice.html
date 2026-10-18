@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>2027 겨울방학특강 안내</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2a25;--muted:#64736c;--line:#e6ece8;--snow:#f8faf9;--gold:#f2c14e;--g1:#14806a;--g1s:#e8f5f1;--g2:#2570c0;--g2s:#e9f1fb;--g3:#d4600d;--g3s:#fdf0e6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1080px;background:var(--snow);color:var(--ink);font-family:'Noto Sans KR',sans-serif;font-size:30px;line-height:1.6}
+.serif{font-family:'Noto Serif KR',serif;font-weight:900}
+.hero{position:relative;overflow:hidden;background:var(--g1s);padding:92px 72px 80px}
+.hero .c1{position:absolute;right:-90px;top:-90px;width:380px;height:380px;border-radius:50%;background:rgba(255,255,255,.75)}
+.hero .c2{position:absolute;right:120px;top:120px;width:28px;height:28px;border-radius:50%;background:var(--gold)}
+.hero p,.hero h1{position:relative}
+.kicker{font-size:30px;font-weight:700;color:var(--g1)}
+h1{font-size:122px;line-height:1.1;margin-top:16px}
+.tag{margin-top:24px;font-size:34px;color:var(--muted);font-weight:500}
+.wrap{padding:56px 56px 8px}
+h2{font-family:'Noto Serif KR',serif;font-weight:900;font-size:44px;color:var(--g1);margin:0 0 24px}
+.card{background:#fff;border:2px solid var(--line);border-radius:30px;padding:0;margin-bottom:26px;overflow:hidden}
+/* 신청 일정 타임라인 */
+.tl{padding:14px 44px 10px}
+.step{position:relative;padding:26px 0 26px 78px;border-top:2px solid var(--line)}
+.step:first-child{border-top:0}
+.step .n{position:absolute;left:0;top:28px;width:50px;height:50px;border-radius:50%;background:var(--g1);color:#fff;font-weight:900;font-size:28px;text-align:center;line-height:50px}
+.step.rest .n{background:#fff;color:var(--muted);box-shadow:inset 0 0 0 3px var(--line)}
+.step.end .n{background:var(--ink)}
+.step b{display:block;font-size:34px}
+.step .d{font-size:36px;font-weight:900;color:var(--g1);margin-top:2px}
+.step.rest .d{color:var(--muted)}
+.step.end .d{color:var(--ink)}
+.step small{display:block;font-size:26px;color:var(--muted);font-weight:400;margin-top:2px}
+.note{font-size:26px;color:var(--muted);margin-top:16px}
+/* 관별 카드 */
+.bhead{padding:28px 40px;color:#fff;display:flex;align-items:baseline;gap:14px}
+.bhead .nm{font-family:'Noto Serif KR',serif;font-weight:900;font-size:42px}
+.bhead .sb{font-size:26px;opacity:.9}
+.b1 .bhead{background:var(--g1)}.b2 .bhead{background:var(--g2)}.b3 .bhead{background:var(--g3)}
+.body{padding:10px 40px 30px}
+.row{display:flex;align-items:center;gap:18px;padding:18px 0;border-top:2px solid var(--line)}
+.row:first-child{border-top:0}
+.chip{flex:none;min-width:104px;text-align:center;font-weight:900;font-size:27px;padding:6px 14px;border-radius:14px}
+.k1{background:var(--ink);color:#fff}.k2{background:var(--gold);color:var(--ink);box-shadow:inset 0 0 0 3px var(--ink)}.k3{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 3px var(--ink)}
+.row .t{flex:1;font-size:30px}.row .t small{display:block;font-size:24px;color:var(--muted)}
+.price{font-weight:900;font-size:36px;white-space:nowrap}
+.b1 .price{color:var(--g1)}.b2 .price{color:var(--g2)}.b3 .price{color:var(--g3)}
+.link{margin-top:6px;border:3px dashed;border-radius:20px;padding:18px 24px;font-size:30px;font-weight:700}
+.b1 .link{border-color:var(--g1);background:var(--g1s);color:var(--g1)}.b2 .link{border-color:var(--g2);background:var(--g2s);color:var(--g2)}.b3 .link{border-color:var(--g3);background:var(--g3s);color:var(--g3)}
+.link span{color:var(--ink);font-weight:500;font-size:26px;margin-left:8px}
+/* 시간 */
+.slots{display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+.slot{flex:0 0 calc((100% - 28px)/3);border-radius:22px;padding:22px 10px;text-align:center;color:#fff}
+.slot b{display:block;font-size:42px;font-weight:900}.slot span{font-size:28px;font-weight:500}
+.slot small{display:inline-block;font-size:22px;margin-top:8px;background:rgba(255,255,255,.28);border-radius:10px;padding:2px 12px;font-weight:700}
+.s1{background:#14806a}.s2{background:#3b78c2}.s3{background:#c9822a}.s4{background:#8a5cc2}.s5{background:#c2506b}
+ol{list-style:none;counter-reset:n;padding:10px 40px}
+ol li{counter-increment:n;position:relative;padding:20px 0 20px 76px;border-top:2px solid var(--line);font-size:29px}
+ol li:first-child{border-top:0}
+ol li:before{content:counter(n);position:absolute;left:0;top:20px;width:52px;height:52px;border-radius:50%;background:var(--gold);color:var(--ink);font-weight:900;font-size:30px;text-align:center;line-height:52px}
+ol li b{color:var(--g1)}
+.foot{margin:34px 0 0;background:var(--ink);color:#fff;padding:54px 72px 60px;text-align:center}
+.foot .q{font-family:'Noto Serif KR',serif;font-weight:900;font-size:44px;line-height:1.5}
+.foot .q i{font-style:normal;color:var(--gold)}
+.foot p{margin-top:22px;font-size:28px;opacity:.85}
+</style></head><body>
+
+<header class="hero">
+  <span class="c1"></span><span class="c2"></span>
+  <p class="kicker">책나무 강남서초지사 · 2027 겨울방학특강</p>
+  <h1 class="serif">몰입독서반</h1>
+  <p class="tag">방학의 오전을 책으로 함께 시작해요.</p>
+</header>
+
+<div class="wrap">
+  <h2>신청 일정</h2>
+  <div class="card"><div class="tl">
+    <div class="step"><span class="n">1</span><b>재원생 우대 신청</b><div class="d">10월 21일(수) ~ 23일(금)</div><small>21일 오전 10시에 열려요</small></div>
+    <div class="step rest"><span class="n">2</span><b>입금·결제 확인 및 확정 문자 발송</b><div class="d">10월 25일(일)까지</div><small>입금·결제가 완료된 분이 확정이에요. 확정 문자는 25일까지 모두 발송돼요.</small></div>
+    <div class="step"><span class="n">3</span><b>비재원생 신청</b><div class="d">10월 26일(월) ~ 28일(수)</div><small>26일 오전 10시에 열려요</small></div>
+    <div class="step end"><span class="n">4</span><b>모든 방학특강 신청 마감</b><div class="d">10월 30일(금)</div><small>결제 완료까지 확인한 뒤 마감해요.</small></div>
+  </div></div>
+
+  <h2 id="p2" style="margin-top:46px">관별 신청과 수강료</h2>
+
+  <div class="card b1">
+    <div class="bhead"><span class="nm">1관 대치점</span><span class="sb">한티역</span></div>
+    <div class="body">
+      <div class="row"><span class="chip k1">1차</span><div class="t">1/11(월) ~ 2/5(금)<small>20회</small></div><div class="price">520,000원</div></div>
+      <div class="row"><span class="chip k2">2차</span><div class="t">2/10(수) ~ 2/26(금)<small>13회</small></div><div class="price">330,000원</div></div>
+      <div class="row"><span class="chip k3">1·2차</span><div class="t">모두 신청<small>33회</small></div><div class="price">850,000원</div></div>
+      <div class="link">1관 대치점 신청<span>(주소 확정 후 입력)</span></div>
+    </div>
+  </div>
+
+  <div class="card b2">
+    <div class="bhead"><span class="nm">2관 대치도곡초점</span></div>
+    <div class="body">
+      <div class="row"><span class="chip k1">1차</span><div class="t">1/11(월) ~ 2/5(금)<small>20회</small></div><div class="price">520,000원</div></div>
+      <div class="row"><span class="chip k2">2차</span><div class="t">2/10(수) ~ 2/26(금)<small>13회</small></div><div class="price">330,000원</div></div>
+      <div class="row"><span class="chip k3">1·2차</span><div class="t">모두 신청<small>33회</small></div><div class="price">850,000원</div></div>
+      <div class="link">2관 대치도곡초점 신청<span>(주소 확정 후 입력)</span></div>
+    </div>
+  </div>
+
+  <div class="card b3">
+    <div class="bhead"><span class="nm">3관 대치구룡초점</span></div>
+    <div class="body">
+      <div class="row"><span class="chip k1">1차</span><div class="t">1/4(월) ~ 1/29(금)<small>20회</small></div><div class="price">520,000원</div></div>
+      <div class="row"><span class="chip k2">2차</span><div class="t">2/1(월) ~ 2/26(금)<small>18회</small></div><div class="price">460,000원</div></div>
+      <div class="row"><span class="chip k3">1·2차</span><div class="t">모두 신청<small>38회</small></div><div class="price">980,000원</div></div>
+      <div class="link">3관 대치구룡초점 신청<span>(주소 확정 후 입력)</span></div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:-4px">방학특강은 <b>월~금</b>만 진행해요. <b>2/6(토)~2/9(화)</b>는 설 연휴로 쉬어요. 정원이 차면 대기 신청으로 접수되고, 자리가 나면 신청 순서대로 연락드려요.</p>
+
+  <h2 id="p3" style="margin-top:46px">수업 시간</h2>
+  <div class="slots">
+    <div class="slot s1"><b>1부</b><span>09:00~10:30</span></div>
+    <div class="slot s2"><b>2부</b><span>10:30~12:00</span></div>
+    <div class="slot s3"><b>3부</b><span>12:30~14:00</span></div>
+    <div class="slot s4"><b>4부</b><span>14:00~15:30</span><br><small>도곡초점만</small></div>
+    <div class="slot s5"><b>5부</b><span>15:30~17:00</span><br><small>도곡초점만</small></div>
+  </div>
+  <p class="note"><b>대치도곡초점</b>은 방학 동안 특강·정규 구분 없이 5타임으로 운영해요. <b>대치점은 평일 14:00~19:00</b>, <b>대치구룡초점은 평일 14:00~18:00</b>에 방학에도 정규 수업이 있어요. 모든 수업은 개인 진도와 상담에 따라 개별 시간표로 진행돼요.</p>
+
+  <h2 style="margin-top:46px">신청 전에 꼭 확인해 주세요</h2>
+  <div class="card"><ol>
+    <li><b>확정</b>은 입금·결제가 완료된 분께 확정 문자로 안내해요. 신청만으로는 확정이 아니에요.</li>
+    <li><b>환불·변경</b>은 대치점·대치도곡초점 <b>12월 27일(일)</b>, 대치구룡초점 <b>12월 20일(일)</b>까지만 가능해요. 그 다음 날부터는 환불과 변경이 모두 불가해요.</li>
+    <li><b>보강</b>은 특강 기간 중 평일 정규시간에 <b>3회까지</b> 가능해요. 주말 보강은 없어요. 대치점·대치도곡초점은 <b>1월 4일(월)부터</b> 미리 신청하실 수 있어요.</li>
+    <li>보강은 <b>신청하신 차수의 기간 안에서만</b> 가능해요. 1차만 신청하시면 2차 기간에는 보강이 안 돼요. 특강이 끝난 뒤에는 보강이 불가해요.</li>
+    <li>보강 신청은 <b>희망 날짜와 시간을 문자로</b> 남겨 주셔야 확인과 진행이 가능해요.</li>
+    <li>특강 기간에는 등하원 체크 문자가 발송되지 않아요. 수업 시작 후 <b>30분이 지나도록 등원하지 않으면 결석</b>으로 처리되고 안내 문자가 발송돼요.</li>
+  </ol></div>
+</div>
+
+<footer class="foot">
+  <p class="q">아이를 바꾸는 건 ‘많이’가 아니라 <i>‘매일’</i>이에요.</p>
+  <p>— 책나무 강남서초지사 원장 드림</p>
+</footer>
+</body></html>
