@@ -38,9 +38,10 @@ export default async function Home() {
         {BRANCHES.map((b) => (
           <section key={b.slug} data-branch={b.slug} className="card relative overflow-hidden !p-0">
             <div className="relative bg-[linear-gradient(135deg,var(--accent),var(--accent-d))] px-5 py-4 text-white">
-              <span aria-hidden className="absolute -right-8 -top-10 size-32 rounded-full border border-white/25" />
-              <span aria-hidden className="absolute -right-2 -top-4 size-20 rounded-full border border-white/20" />
-              <p className="relative text-[11px] uppercase tracking-[0.2em] text-white/70">{b.name.match(/^\d관/)?.[0] ?? ""} BRANCH</p>
+              <span aria-hidden className="absolute inset-2 rounded-xl border border-gold-l/30" />
+              <span aria-hidden className="absolute -right-6 top-1/2 size-24 -translate-y-1/2 rotate-45 border border-gold-l/50" />
+              <span aria-hidden className="absolute right-1 top-1/2 size-12 -translate-y-1/2 rotate-45 bg-gold-l/25" />
+              <p className="relative text-[11px] font-display uppercase tracking-[0.3em] text-gold-l">{b.name.match(/^\d관/)?.[0] ?? ""} BRANCH</p>
               <h3 className="relative mt-0.5 text-[20px] text-white">{b.name.replace(/^\d관 /, "")}</h3>
             </div>
             <div className="p-5">

@@ -1,13 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
+import { Noto_Sans_KR, Gowun_Batang, Cormorant_Garamond } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 
-const serif = Noto_Serif_KR({
-  weight: ["700", "900"],
+const serif = Gowun_Batang({
+  weight: ["400", "700"],
   variable: "--font-noto-serif",
   display: "swap",
   preload: false,
+});
+const display = Cormorant_Garamond({
+  weight: ["500", "600", "700"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
 });
 const sans = Noto_Sans_KR({
   weight: ["400", "500", "700"],
@@ -25,7 +32,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={`${serif.variable} ${sans.variable}`}>
+    <html lang="ko" className={`${serif.variable} ${sans.variable} ${display.variable}`}>
       <body>
         {process.env.NEXT_PUBLIC_DEMO_MODE && (
           <div className="bg-gold px-3 py-2 text-center text-[13px] text-ink">
