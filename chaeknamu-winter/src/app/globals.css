@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-gold: #f2c14e;
-  --color-snow: #f8faf9;
-  --color-ink: #1c2a25;
-  --color-muted: #64736c;
-  --color-line: #e6ece8;
+  --color-gold: #ffd84d;
+  --color-lime: #c8f169;
+  --color-snow: #f3fbee;
+  --color-ink: #10231a;
+  --color-muted: #587063;
+  --color-line: #cfe6d3;
   --color-sky: #eaf2fb;
   --color-alert: #e0735f;
 
-  --font-serif: var(--font-noto-serif), "Noto Serif KR", serif;
+  --font-serif: var(--font-noto-sans), "Noto Sans KR", sans-serif;
   --font-sans: var(--font-noto-sans), "Noto Sans KR", sans-serif;
 }
 
@@ -19,9 +20,9 @@
   --color-pine-dark: var(--accent-d);
   --color-mint: var(--accent-soft);
 }
-:root, [data-branch="daechi"] { --accent: #14806a; --accent-d: #0f6654; --accent-soft: #e8f5f1; }
-[data-branch="dogok"] { --accent: #2570c0; --accent-d: #1c5a9c; --accent-soft: #e9f1fb; }
-[data-branch="guryong"] { --accent: #d4600d; --accent-d: #a84a08; --accent-soft: #fdf0e6; }
+:root, [data-branch="daechi"] { --accent: #17a34a; --accent-d: #0d7a35; --accent-soft: #dcf7d6; }
+[data-branch="dogok"] { --accent: #1f7ae0; --accent-d: #1559ad; --accent-soft: #dcecff; }
+[data-branch="guryong"] { --accent: #f07a0e; --accent-d: #b85a06; --accent-soft: #ffe7cf; }
 
 html {
   color-scheme: light;
@@ -38,27 +39,28 @@ body {
 
 h1, h2, h3 {
   font-family: var(--font-serif);
-  font-weight: 700;
+  font-weight: 900;
+  letter-spacing: -0.02em;
 }
 
 @layer components {
   .card {
-    @apply rounded-[20px] border border-line bg-white p-5;
+    @apply rounded-[20px] border-2 border-ink bg-white p-5 shadow-[3px_3px_0_0_var(--color-ink)];
   }
   .btn {
-    @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-pine px-5 font-bold text-white transition-colors hover:bg-pine-dark disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl border-2 border-ink bg-pine px-5 font-black text-white shadow-[3px_3px_0_0_var(--color-ink)] transition-all hover:bg-pine-dark active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:shadow-none;
   }
 }
 
 @layer components {
   .input {
-    @apply min-h-11 w-full rounded-xl border border-line bg-white px-3 text-base text-ink outline-none focus:border-pine;
+    @apply min-h-11 w-full rounded-xl border-2 border-line bg-white px-3 text-base text-ink outline-none focus:border-ink focus:shadow-[3px_3px_0_0_var(--color-lime)];
   }
   .label {
     @apply mb-1 block text-sm font-bold text-ink;
   }
   .chip {
-    @apply flex min-h-11 cursor-pointer items-center rounded-xl border border-line bg-white px-3 py-2 text-[15px] has-[:checked]:border-pine has-[:checked]:bg-mint has-[:checked]:font-bold;
+    @apply flex min-h-11 cursor-pointer items-center rounded-xl border-2 border-line bg-white px-3 py-2 text-[15px] has-[:checked]:border-ink has-[:checked]:bg-lime has-[:checked]:font-bold has-[:checked]:shadow-[2px_2px_0_0_var(--color-ink)];
   }
 }
 
