@@ -12,12 +12,12 @@ export const GRADE_PILL: Record<number, string> = {
   4: "bg-[#5bb98a] text-white", 5: "bg-[#5a9fd4] text-white", 6: "bg-[#9a7fd1] text-white",
 };
 export const SLOT_CHIP: Record<string, string> = {
-  "1부": "bg-[#2f7a68] text-white", "2부": "bg-[#3b78c2] text-white", "3부": "bg-[#c9822a] text-white",
-  "4부": "bg-[#8a5cc2] text-white", "5부": "bg-[#c2506b] text-white",
+  "1부": "bg-[#cdeee4] text-[#0b6b58]", "2부": "bg-[#d5defb] text-[#2e47b8]", "3부": "bg-[#fbe0c2] text-[#b45f12]",
+  "4부": "bg-[#e8d6f7] text-[#7a3fae]", "5부": "bg-[#fbd3df] text-[#b83a5c]",
 };
 export const COURSE_CHIP: Record<string, string> = {
   "1차": "bg-ink text-white",
-  "2차": "bg-gold text-ink ring-2 ring-ink/70",
+  "2차": "bg-white text-ink ring-2 ring-ink",
 };
 export const STATUS_BADGE: Record<string, string> = {
   확정: "bg-pine text-white", 대기: "bg-white text-alert ring-2 ring-alert", 취소: "bg-line text-muted", 환불: "bg-line text-muted",
