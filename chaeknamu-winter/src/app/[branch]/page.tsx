@@ -7,6 +7,8 @@ import PolicyBox from "@/components/PolicyBox";
 import { getBranch, getCurriculum, getSetting, getYoutube } from "@/lib/repo";
 import YoutubeCard from "@/components/YoutubeCard";
 import ContactLink from "@/components/ContactLink";
+import { Icon, SectionTitle, Wave } from "@/components/deco";
+import { SLOT_CHIP } from "@/lib/ui";
 import { kDate, slotText, won } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -29,30 +31,43 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
 
       <div className="mt-6"><ScheduleCard b={b} confirmNotice={confirmNotice} /></div>
 
-      <h2 className="mt-8 text-lg text-pine">일정과 수강료</h2>
+      <SectionTitle no="01" title="일정과 수강료" icon="ticket" />
       <div className="mt-2 space-y-3">
         {b.sessions.map((s) => (
-          <div key={s.code} className="card">
-            <p className="font-bold">{s.code}</p>
-            <p className="text-[15px] text-muted">{kDate(s.start_date)} ~ {kDate(s.end_date)} · {s.lesson_count}회</p>
-            <p className="mt-1 text-xl font-bold text-pine">{won(s.price)}</p>
+          <div key={s.code} className="card flex items-stretch gap-4 !p-0">
+            <div className="flex w-20 shrink-0 flex-col items-center justify-center rounded-l-[20px] bg-pine py-4 text-white">
+              <span className="font-serif text-[26px] font-bold leading-none">{s.code}</span>
+              <span className="mt-1 text-[12px] text-white/75">{s.lesson_count}회</span>
+            </div>
+            <div className="flex-1 border-l border-dashed border-gold/70 py-4 pr-4 pl-4">
+              <p className="text-[14px] text-muted">{kDate(s.start_date)} ~ {kDate(s.end_date)}</p>
+              <p className="mt-0.5 font-serif text-[24px] font-bold text-pine">{won(s.price)}</p>
+            </div>
           </div>
         ))}
-        <div className="card border-gold">
-          <p className="font-bold">1·2차 모두</p>
-          <p className="text-[15px] text-muted">총 {totalLessons}회</p>
-          <p className="mt-1 text-xl font-bold text-pine">{won(b.bundle_price)}</p>
+        <div className="card relative flex items-stretch gap-4 overflow-hidden !border-gold !p-0">
+          <div className="flex w-20 shrink-0 flex-col items-center justify-center rounded-l-[20px] bg-ink py-4 text-gold">
+            <span className="font-serif text-[22px] font-bold leading-none">1·2차</span>
+            <span className="mt-1 text-[12px] text-white/70">{totalLessons}회</span>
+          </div>
+          <div className="flex-1 border-l border-dashed border-gold/70 py-4 pr-4 pl-4">
+            <p className="text-[14px] text-muted">두 기간을 한 번에 신청해요</p>
+            <p className="mt-0.5 font-serif text-[24px] font-bold text-pine">{won(b.bundle_price)}</p>
+          </div>
         </div>
       </div>
       <p className="mt-3 text-[15px] text-muted">
         방학특강은 월~금만 진행해요. 2/6(토)~2/9(화)는 설 연휴로 쉬어요.
       </p>
 
-      <h2 className="mt-8 text-lg text-pine">수업 시간표</h2>
+      <SectionTitle no="02" title="수업 시간표" icon="clock" />
       <div className="card mt-2">
-        <ul className="divide-y divide-line text-[15px]">
+        <ul className="relative space-y-3 pl-1 text-[15px] before:absolute before:bottom-2 before:left-[29px] before:top-2 before:w-px before:bg-gold/50">
           {s1.slots.map((t) => (
-            <li key={t.id} className="py-2">{slotText(t)}</li>
+            <li key={t.id} className="relative flex items-center gap-3">
+              <span className={`z-10 grid size-[30px] shrink-0 place-items-center rounded-full text-[12px] font-bold ring-4 ring-white ${SLOT_CHIP[t.label]}`}>{t.label.replace("부", "")}</span>
+              <span>{slotText(t)}</span>
+            </li>
           ))}
         </ul>
         {b.regular_hours && (
@@ -64,18 +79,18 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
 
       {b.notice && (
         <>
-          <h2 className="mt-8 text-lg text-pine">지점 안내</h2>
+          <SectionTitle no="03" title="지점 안내" icon="bell" />
           <div className="card mt-2 text-[15px]">{b.notice}</div>
         </>
       )}
 
-      <h2 className="mt-8 text-lg text-pine">학년별 수업</h2>
+      <SectionTitle no="04" title="학년별 수업" icon="book" />
       <div className="mt-2 space-y-3">
         {CURRICULUM.map((c) => (
           <div key={c.group} className="card">
-            <p className="font-bold">{c.group}</p>
-            <ul className="mt-1 list-disc space-y-0.5 pl-5 text-[15px]">
-              {c.items.map((i) => <li key={i}>{i}</li>)}
+            <p className="flex items-center gap-2 font-serif text-[18px] font-bold text-pine"><span className="grid size-7 place-items-center rounded-full bg-mint ring-1 ring-gold/60"><Icon name="sparkle" className="size-4" /></span>{c.group}</p>
+            <ul className="mt-3 space-y-1.5 text-[15px]">
+              {c.items.map((i) => <li key={i} className="flex gap-2"><span aria-hidden className="mt-2.5 size-1.5 shrink-0 rotate-45 bg-gold" />{i}</li>)}
             </ul>
           </div>
         ))}
@@ -84,11 +99,12 @@ export default async function BranchPage({ params }: { params: Promise<{ branch:
 
       <div className="mt-8"><YoutubeCard yt={yt} /></div>
 
-      <h2 className="mt-8 text-lg text-pine">신청 전 꼭 확인해 주세요</h2>
+      <SectionTitle no="05" title="신청 전 꼭 확인해 주세요" icon="check" />
       <div className="card mt-2 border-gold">
         <PolicyBox refundDeadline={b.refund_deadline} makeupLimit={b.makeup_limit} makeupStart={b.makeup_start_date} />
       </div>
 
+      <Wave className="mt-10" />
       {b.contact_url && (
         <p className="mt-6 text-center text-[15px]">
           궁금한 점은 전화로 문의해 주세요 · <ContactLink value={b.contact_url} />

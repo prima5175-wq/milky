@@ -29,7 +29,10 @@ html {
 }
 
 body {
-  background: var(--color-snow);
+  background-color: var(--color-snow);
+  background-image: radial-gradient(circle at 1px 1px, rgba(201,164,92,0.22) 1px, transparent 0), radial-gradient(60% 40% at 100% 0%, var(--accent-soft), transparent 70%), radial-gradient(50% 30% at 0% 35%, rgba(201,164,92,0.10), transparent 70%);
+  background-size: 22px 22px, auto, auto;
+  background-attachment: scroll;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 16px;
