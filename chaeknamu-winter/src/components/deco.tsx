@@ -25,9 +25,9 @@ export function SectionTitle({ no, title, icon, sub }: { no?: string; title: str
   return (
     <div className="mt-12">
       <div className="flex items-center gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-mint text-pine ring-1 ring-gold/60"><Icon name={icon} /></span>
+        <span className="grid size-10 shrink-0 rotate-45 place-items-center rounded-lg bg-mint text-pine ring-1 ring-gold/60"><span className="-rotate-45"><Icon name={icon} /></span></span>
         <div className="min-w-0 flex-1">
-          {no && <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-gold">{no}</p>}
+          {no && <p className="font-display text-[13px] font-semibold uppercase tracking-[0.3em] text-gold">{no}</p>}
           <h2 className="text-[22px] leading-tight text-ink">{title}</h2>
         </div>
       </div>
@@ -37,27 +37,45 @@ export function SectionTitle({ no, title, icon, sub }: { no?: string; title: str
   );
 }
 
-// 책 더미와 새싹, 반짝이는 별을 그린 대표 그림 (히어로 오른쪽 아래)
+// 원·반원·마름모를 겹쳐 그린 기하학 무늬 (히어로 오른쪽)
 export function HeroArt({ className = "" }: { className?: string }) {
+  const g = "#dcc08a";
   return (
-    <svg viewBox="0 0 220 190" className={className} aria-hidden>
-      <g fill="#fff" opacity=".9"><circle cx="30" cy="40" r="2.2" /><circle cx="190" cy="30" r="1.6" /><circle cx="160" cy="70" r="1.4" /><circle cx="55" cy="95" r="1.4" /></g>
-      <g stroke="#e3c887" strokeWidth="1.6" strokeLinecap="round" fill="none">
-        <path d="M185 52v14M178 59h14M180 54l10 10M190 54l-10 10" />
-        <path d="M40 58v10M35 63h10" />
+    <svg viewBox="0 0 220 200" className={className} aria-hidden fill="none" stroke={g} strokeWidth="1.1">
+      <g opacity=".9">
+        <circle cx="150" cy="100" r="70" />
+        <circle cx="150" cy="100" r="52" strokeOpacity=".6" />
+        <circle cx="150" cy="100" r="34" strokeOpacity=".4" />
+        <path d="M150 30v140M80 100h140" strokeOpacity=".35" />
+        <path d="M100.5 50.5l99 99M199.5 50.5l-99 99" strokeOpacity=".2" />
       </g>
-      <ellipse cx="112" cy="172" rx="82" ry="8" fill="#000" opacity=".16" />
-      <rect x="38" y="142" width="144" height="26" rx="5" fill="#f6efe0" />
-      <rect x="38" y="142" width="144" height="7" rx="3" fill="#e3c887" />
-      <rect x="56" y="114" width="118" height="26" rx="5" fill="#fff" />
-      <rect x="56" y="114" width="118" height="6" rx="3" fill="#c9a45c" opacity=".85" />
-      <rect x="72" y="86" width="92" height="26" rx="5" fill="#f6efe0" />
-      <rect x="72" y="86" width="92" height="6" rx="3" fill="#e3c887" />
-      <path d="M118 86V62" stroke="#f6efe0" strokeWidth="3" strokeLinecap="round" />
-      <path d="M118 66c-2-14-14-20-26-18 0 13 10 21 26 18z" fill="#fff" opacity=".95" />
-      <path d="M118 62c2-16 15-24 30-20-1 16-13 24-30 20z" fill="#e3c887" />
-      <path d="M118 66c-6-6-12-9-19-10" stroke="#0a4a3d" strokeOpacity=".25" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      <path d="M150 62l38 38-38 38-38-38z" fill={g} fillOpacity=".16" />
+      <path d="M150 80l20 20-20 20-20-20z" fill={g} fillOpacity=".5" stroke="none" />
+      <path d="M30 200a60 60 0 0 1 60-60v60z" fill="#fff" fillOpacity=".09" stroke="none" />
+      <path d="M30 200a60 60 0 0 1 60-60M30 180a40 40 0 0 1 40-40" strokeOpacity=".5" />
+      <path d="M200 30a30 30 0 0 0-30-30v30z" fill={g} fillOpacity=".3" stroke="none" />
+      <circle cx="40" cy="60" r="3" fill={g} stroke="none" />
+      <circle cx="88" cy="28" r="1.8" fill="#fff" stroke="none" opacity=".8" />
+      <path d="M62 112l6 6-6 6-6-6z" fill="none" />
     </svg>
+  );
+}
+
+// 로고: 기하학 마크 + 영문 워드마크
+export function Logo({ className = "", light = false }: { className?: string; light?: boolean }) {
+  const c = light ? "#dcc08a" : "var(--color-gold)";
+  return (
+    <span className={`inline-flex items-center gap-2.5 ${className}`}>
+      <svg viewBox="0 0 32 32" className="size-8" aria-hidden fill="none" stroke={c} strokeWidth="1.3">
+        <circle cx="16" cy="16" r="14" />
+        <path d="M16 5l11 11-11 11L5 16z" />
+        <path d="M16 11l5 5-5 5-5-5z" fill={c} stroke="none" />
+      </svg>
+      <span className="leading-none">
+        <span className="block font-display text-[19px] font-semibold uppercase tracking-[0.28em]">Chaeknamu</span>
+        <span className="mt-1 block font-display text-[10px] uppercase tracking-[0.4em] opacity-70">Winter Class 2027</span>
+      </span>
+    </span>
   );
 }
 
@@ -67,7 +85,7 @@ export function KeyFacts({ items }: { items: { big: string; small: string }[] })
     <div className="mt-4 grid grid-cols-3 divide-x divide-line overflow-hidden rounded-[20px] border border-line bg-white shadow-[0_14px_34px_-18px_rgba(60,45,20,0.28)]">
       {items.map((x) => (
         <div key={x.small} className="px-2 py-4 text-center">
-          <p className="whitespace-nowrap font-serif text-[23px] font-bold leading-none text-pine">{x.big}</p>
+          <p className="whitespace-nowrap font-display text-[28px] font-bold leading-none text-pine">{x.big}</p>
           <p className="mt-1.5 text-[12px] tracking-wide text-muted">{x.small}</p>
         </div>
       ))}
@@ -75,11 +93,15 @@ export function KeyFacts({ items }: { items: { big: string; small: string }[] })
   );
 }
 
-// 물결 모양 구분선
+// 기하학 구분선: 선 + 마름모 + 원
 export function Wave({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 400 24" preserveAspectRatio="none" className={`h-5 w-full text-pine/15 ${className}`} aria-hidden>
-      <path d="M0 12c25-14 50-14 75 0s50 14 75 0 50-14 75 0 50 14 75 0 50-14 75 0V24H0z" fill="currentColor" />
-    </svg>
+    <div aria-hidden className={`flex items-center justify-center gap-3 text-gold ${className}`}>
+      <span className="h-px w-16 bg-gradient-to-r from-transparent to-gold/70" />
+      <span className="size-1.5 rotate-45 border border-current" />
+      <span className="size-2.5 rotate-45 bg-current" />
+      <span className="size-1.5 rotate-45 border border-current" />
+      <span className="h-px w-16 bg-gradient-to-l from-transparent to-gold/70" />
+    </div>
   );
 }

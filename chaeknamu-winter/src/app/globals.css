@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-gold: #c9a45c;
-  --color-lime: #f1ede4;
-  --color-snow: #f7f4ee;
-  --color-ink: #14201c;
-  --color-muted: #6f7773;
-  --color-line: #e5dece;
+  --color-gold: #a98650;
+  --color-gold-l: #dcc08a;
+  --color-lime: #f1ece3;
+  --color-snow: #f8f5ef;
+  --color-ink: #1b1917;
+  --color-muted: #77726b;
+  --color-line: #e6dfd2;
   --color-sky: #eaf2fb;
-  --color-alert: #e0735f;
+  --color-alert: #b4533f;
 
-  --font-serif: var(--font-noto-serif), "Noto Serif KR", serif;
+  --font-serif: var(--font-noto-serif), "Gowun Batang", "Noto Serif KR", serif;
+  --font-display: var(--font-display), "Cormorant Garamond", serif;
   --font-sans: var(--font-noto-sans), "Noto Sans KR", sans-serif;
 }
 
@@ -20,9 +22,9 @@
   --color-pine-dark: var(--accent-d);
   --color-mint: var(--accent-soft);
 }
-:root, [data-branch="daechi"] { --accent: #0f6b57; --accent-d: #0a4a3d; --accent-soft: #e8f1ed; }
-[data-branch="dogok"] { --accent: #2d4396; --accent-d: #1f2f6e; --accent-soft: #eaedf8; }
-[data-branch="guryong"] { --accent: #b4532d; --accent-d: #85391b; --accent-soft: #f6e9e1; }
+:root, [data-branch="daechi"] { --accent: #26221e; --accent-d: #14110f; --accent-soft: #f1ebe0; }
+[data-branch="dogok"] { --accent: #343f4c; --accent-d: #1b222b; --accent-soft: #e9edf0; }
+[data-branch="guryong"] { --accent: #53302b; --accent-d: #2e1815; --accent-soft: #f3e8e3; }
 
 html {
   color-scheme: light;
@@ -30,9 +32,8 @@ html {
 
 body {
   background-color: var(--color-snow);
-  background-image: radial-gradient(circle at 1px 1px, rgba(201,164,92,0.22) 1px, transparent 0), radial-gradient(60% 40% at 100% 0%, var(--accent-soft), transparent 70%), radial-gradient(50% 30% at 0% 35%, rgba(201,164,92,0.10), transparent 70%);
-  background-size: 22px 22px, auto, auto;
-  background-attachment: scroll;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M20 6l14 14-14 14L6 20z' fill='none' stroke='%23a98650' stroke-opacity='.16'/%3E%3C/svg%3E"), radial-gradient(60% 40% at 100% 0%, var(--accent-soft), transparent 70%);
+  background-size: 40px 40px, auto;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -43,7 +44,7 @@ body {
 h1, h2, h3 {
   font-family: var(--font-serif);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 @layer components {
@@ -51,7 +52,7 @@ h1, h2, h3 {
     @apply rounded-[20px] border border-line bg-white p-5 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_14px_34px_-18px_rgba(60,45,20,0.28)];
   }
   .btn {
-    @apply inline-flex min-h-12 items-center justify-center rounded-full bg-pine px-7 font-bold tracking-wide text-white shadow-[0_12px_26px_-12px_var(--accent-d)] ring-1 ring-inset ring-white/20 transition-all hover:bg-pine-dark active:scale-[0.98] disabled:opacity-40 disabled:shadow-none;
+    @apply inline-flex min-h-12 items-center justify-center rounded-full bg-pine px-7 font-bold tracking-wide text-white shadow-[0_12px_26px_-12px_var(--accent-d)] ring-1 ring-inset ring-gold-l/60 transition-all hover:bg-pine-dark active:scale-[0.98] disabled:opacity-40 disabled:shadow-none;
   }
 }
 
